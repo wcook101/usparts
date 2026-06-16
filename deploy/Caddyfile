@@ -1,0 +1,7 @@
+# USParts LAN reverse proxy (HTTP).
+# Caddy listens on port 80 and forwards to the app on localhost only.
+# When you have a public domain, replace :80 with your hostname for automatic HTTPS.
+
+:80 {
+	reverse_proxy 127.0.0.1:3000
+}

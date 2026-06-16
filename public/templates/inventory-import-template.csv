@@ -1,0 +1,4 @@
+mpn,manufacturer,quantity,price,description,category,condition,date_code,lead_time_days,location,datasheet_url
+STM32F407VGT6,STMicroelectronics,2400,8.45,32-bit ARM Cortex-M4 MCU,INTEGRATED_CIRCUIT,NEW,2234,3,Main warehouse,
+LM358DR,Texas Instruments,18000,0.19,Dual operational amplifier,INTEGRATED_CIRCUIT,NEW,2345,1,Main warehouse,
+1N4148,onsemi,50000,0.03,Small signal switching diode,SEMICONDUCTOR,NEW,2249,2,Chicago warehouse,

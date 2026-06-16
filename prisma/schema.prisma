@@ -1,0 +1,245 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum PartCondition {
+  NEW
+  REFURBISHED
+  USED
+}
+
+enum PartCategory {
+  SEMICONDUCTOR
+  PASSIVE
+  CONNECTOR
+  INTEGRATED_CIRCUIT
+  POWER
+  SENSOR
+  MEMORY
+  DISPLAY
+  RF_WIRELESS
+  OTHER
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  FULFILLED
+}
+
+enum CompanyMemberRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+enum CompanyInviteStatus {
+  PENDING
+  ACCEPTED
+  REVOKED
+  EXPIRED
+}
+
+model User {
+  id           String          @id @default(cuid())
+  email        String          @unique
+  passwordHash String
+  name         String?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  company      Company?
+  sessions     Session[]
+  memberships  CompanyMember[]
+  invitesSent  CompanyInvite[] @relation("InvitesSent")
+  orders              Order[]
+  quoteRequests       QuoteRequest[]
+  passwordResetTokens PasswordResetToken[]
+
+  @@index([email])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([token])
+  @@index([expiresAt])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([token])
+  @@index([expiresAt])
+}
+
+model Company {
+  id                 String              @id @default(cuid())
+  ownerId            String?             @unique
+  owner              User?               @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  name               String
+  slug               String              @unique
+  description        String?
+  website            String?
+  email              String              @unique
+  emailDomain        String
+  phone              String?
+  city               String?
+  state              String?
+  country            String              @default("US")
+  lastImportAt       DateTime?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  listings           PartListing[]
+  inventoryLocations InventoryLocation[]
+  members            CompanyMember[]
+  invites            CompanyInvite[]
+
+  @@index([name])
+  @@index([emailDomain])
+}
+
+model CompanyMember {
+  id        String            @id @default(cuid())
+  userId    String
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyId String
+  company   Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  role      CompanyMemberRole @default(MEMBER)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  @@unique([userId, companyId])
+  @@index([userId])
+  @@index([companyId])
+}
+
+model CompanyInvite {
+  id          String              @id @default(cuid())
+  companyId   String
+  company     Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  email       String
+  role        CompanyMemberRole   @default(MEMBER)
+  token       String              @unique
+  invitedById String
+  invitedBy   User                @relation("InvitesSent", fields: [invitedById], references: [id], onDelete: Cascade)
+  status      CompanyInviteStatus @default(PENDING)
+  expiresAt   DateTime
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  @@unique([companyId, email])
+  @@index([token])
+  @@index([companyId])
+  @@index([status])
+}
+
+model InventoryLocation {
+  id        String        @id @default(cuid())
+  companyId String
+  company   Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  label     String?
+  city      String
+  state     String?
+  country   String        @default("US")
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  listings  PartListing[]
+
+  @@index([companyId])
+}
+
+model PartListing {
+  id                  String             @id @default(cuid())
+  companyId           String
+  company             Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  inventoryLocationId String?
+  inventoryLocation   InventoryLocation? @relation(fields: [inventoryLocationId], references: [id], onDelete: SetNull)
+  mpn                 String
+  manufacturer        String
+  description         String?
+  category            PartCategory       @default(OTHER)
+  quantity            Int
+  price               Decimal?           @db.Decimal(12, 4)
+  currency            String             @default("USD")
+  condition           PartCondition      @default(NEW)
+  dateCode            String?
+  leadTimeDays        Int?
+  datasheetUrl        String?
+  isActive            Boolean            @default(true)
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  orders              Order[]
+  quoteRequests       QuoteRequest[]
+
+  @@index([mpn])
+  @@index([manufacturer])
+  @@index([category])
+  @@index([isActive])
+  @@index([mpn, manufacturer])
+  @@index([inventoryLocationId])
+}
+
+model Order {
+  id           String      @id @default(cuid())
+  listingId    String
+  listing      PartListing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  userId       String?
+  user         User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  buyerName    String
+  buyerEmail   String
+  buyerCompany String?
+  quantity     Int
+  unitPrice    Decimal     @db.Decimal(12, 4)
+  currency     String      @default("USD")
+  totalPrice   Decimal     @db.Decimal(12, 4)
+  status       OrderStatus @default(PENDING)
+  notes        String?
+  accessToken  String      @unique @default(cuid())
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  @@index([listingId])
+  @@index([status])
+  @@index([buyerEmail])
+  @@index([userId])
+}
+
+model QuoteRequest {
+  id           String      @id @default(cuid())
+  listingId    String
+  listing      PartListing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  userId       String?
+  user         User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  buyerName    String
+  buyerEmail   String
+  buyerCompany String?
+  quantity     Int
+  notes        String?
+  status       OrderStatus @default(PENDING)
+  accessToken  String      @unique @default(cuid())
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  @@index([listingId])
+  @@index([buyerEmail])
+  @@index([userId])
+  @@index([status])
+}

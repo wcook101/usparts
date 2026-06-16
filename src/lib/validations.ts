@@ -1,0 +1,212 @@
+import { z } from "zod";
+import { isValidWebsiteUrl, normalizeWebsiteUrl } from "@/lib/format";
+
+const optionalWebsiteField = z
+  .string()
+  .trim()
+  .optional()
+  .transform((value) => normalizeWebsiteUrl(value ?? ""))
+  .refine(isValidWebsiteUrl, {
+    message: "Enter a valid website address (e.g. aplusindustry.com)",
+  });
+
+export const searchQuerySchema = z.object({
+  q: z.string().trim().optional(),
+  manufacturer: z.string().trim().optional(),
+  category: z.string().trim().optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(50).default(20),
+});
+
+export const createListingSchema = z.object({
+  companyId: z.string().min(1).optional(),
+  mpn: z.string().trim().min(1).max(120),
+  manufacturer: z.string().trim().min(1).max(120),
+  description: z.string().trim().max(2000).optional().or(z.literal("")),
+  category: z.enum([
+    "SEMICONDUCTOR",
+    "PASSIVE",
+    "CONNECTOR",
+    "INTEGRATED_CIRCUIT",
+    "POWER",
+    "SENSOR",
+    "MEMORY",
+    "DISPLAY",
+    "RF_WIRELESS",
+    "OTHER",
+  ]),
+  quantity: z.coerce.number().int().min(0),
+  price: z.preprocess(
+    (value) => (value === "" || value == null ? undefined : value),
+    z.coerce.number().positive().optional(),
+  ),
+  currency: z.string().trim().length(3).default("USD"),
+  condition: z.enum(["NEW", "REFURBISHED", "USED"]).default("NEW"),
+  dateCode: z.string().trim().max(40).optional().or(z.literal("")),
+  leadTimeDays: z.coerce.number().int().min(0).optional(),
+  inventoryLocationId: z.string().trim().min(1),
+  datasheetUrl: optionalWebsiteField,
+});
+
+const inventoryLocationSchema = z.object({
+  label: z.string().trim().max(80).optional().or(z.literal("")),
+  city: z.string().trim().min(1).max(80),
+  state: z.string().trim().max(40).optional().or(z.literal("")),
+  country: z.string().trim().max(80).default("US"),
+});
+
+export const createCompanySchema = z.object({
+  name: z.string().trim().min(2).max(120),
+  email: z.string().trim().email().optional(),
+  description: z.string().trim().max(2000).optional(),
+  website: optionalWebsiteField,
+  phone: z.string().trim().max(40).optional(),
+  city: z.string().trim().max(80).optional(),
+  state: z.string().trim().max(40).optional(),
+  country: z.string().trim().max(80).default("US"),
+  inventoryLocations: z
+    .array(inventoryLocationSchema)
+    .min(1, "Add at least one inventory storage location"),
+});
+
+export type SearchQuery = z.infer<typeof searchQuerySchema>;
+export type CreateListingInput = z.infer<typeof createListingSchema>;
+export type CreateCompanyInput = z.infer<typeof createCompanySchema>;
+
+export const createOrderSchema = z.object({
+  listingId: z.string().min(1),
+  buyerName: z.string().trim().min(2).max(120),
+  buyerEmail: z.string().trim().email(),
+  buyerCompany: z.string().trim().max(120).optional().or(z.literal("")),
+  quantity: z.coerce.number().int().min(1),
+  notes: z.string().trim().max(1000).optional().or(z.literal("")),
+});
+
+export type CreateOrderInput = z.infer<typeof createOrderSchema>;
+
+export const importModeSchema = z.enum(["append", "replace"]);
+
+export type ImportMode = z.infer<typeof importModeSchema>;
+
+export const importInventoryRequestSchema = z.object({
+  companyId: z.string().min(1).optional(),
+  defaultInventoryLocationId: z.string().min(1),
+  mode: importModeSchema.default("append"),
+  columnMap: z.record(z.string(), z.string()).optional(),
+  excludedColumns: z.array(z.string()).optional(),
+  parts: z.array(z.record(z.string(), z.unknown())).min(1).max(100_000),
+});
+
+export type ImportInventoryRequest = z.infer<typeof importInventoryRequestSchema>;
+
+export const signupSchema = z.object({
+  name: z.string().trim().min(2).max(120).optional().or(z.literal("")),
+  email: z.string().trim().email(),
+  password: z.string().min(8).max(128),
+  inviteToken: z.string().trim().min(1).optional(),
+});
+
+export const loginSchema = z.object({
+  email: z.string().trim().email(),
+  password: z.string().min(1).max(128),
+  inviteToken: z.string().trim().min(1).optional(),
+});
+
+export const createCompanyInviteSchema = z.object({
+  email: z.string().trim().email(),
+  role: z.enum(["ADMIN", "MEMBER"]).default("MEMBER"),
+});
+
+export type SignupInput = z.infer<typeof signupSchema>;
+export type LoginInput = z.infer<typeof loginSchema>;
+export const createQuoteSchema = z.object({
+  listingId: z.string().min(1),
+  buyerName: z.string().trim().min(2).max(120),
+  buyerEmail: z.string().trim().email(),
+  buyerCompany: z.string().trim().max(120).optional().or(z.literal("")),
+  quantity: z.coerce.number().int().min(1),
+  notes: z.string().trim().max(1000).optional().or(z.literal("")),
+});
+
+export type CreateQuoteInput = z.infer<typeof createQuoteSchema>;
+
+export const updateProfileSchema = z.object({
+  name: z.string().trim().min(2).max(120),
+});
+
+export const forgotPasswordSchema = z.object({
+  email: z.string().trim().email(),
+});
+
+export const resetPasswordSchema = z.object({
+  token: z.string().trim().min(1),
+  password: z.string().min(8).max(128),
+});
+
+export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
+export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
+
+export const orderStatusSchema = z.enum([
+  "PENDING",
+  "CONFIRMED",
+  "CANCELLED",
+  "FULFILLED",
+]);
+
+export const updateOrderStatusSchema = z.object({
+  status: orderStatusSchema,
+});
+
+export const updateQuoteStatusSchema = z.object({
+  status: orderStatusSchema,
+});
+
+export type UpdateOrderStatusInput = z.infer<typeof updateOrderStatusSchema>;
+export type UpdateQuoteStatusInput = z.infer<typeof updateQuoteStatusSchema>;
+
+export const updateListingSchema = z.object({
+  mpn: z.string().trim().min(1).max(120).optional(),
+  manufacturer: z.string().trim().min(1).max(120).optional(),
+  description: z.string().trim().max(2000).optional().or(z.literal("")),
+  category: z
+    .enum([
+      "SEMICONDUCTOR",
+      "PASSIVE",
+      "CONNECTOR",
+      "INTEGRATED_CIRCUIT",
+      "POWER",
+      "SENSOR",
+      "MEMORY",
+      "DISPLAY",
+      "RF_WIRELESS",
+      "OTHER",
+    ])
+    .optional(),
+  quantity: z.coerce.number().int().min(0).optional(),
+  price: z.preprocess(
+    (value) => (value === "" || value == null ? undefined : value),
+    z.coerce.number().positive().optional().nullable(),
+  ),
+  currency: z.string().trim().length(3).optional(),
+  condition: z.enum(["NEW", "REFURBISHED", "USED"]).optional(),
+  dateCode: z.string().trim().max(40).optional().or(z.literal("")),
+  leadTimeDays: z.coerce.number().int().min(0).optional().nullable(),
+  inventoryLocationId: z.string().trim().min(1).optional(),
+  datasheetUrl: optionalWebsiteField.optional(),
+  isActive: z.boolean().optional(),
+});
+
+export type UpdateListingInput = z.infer<typeof updateListingSchema>;
+
+export const updateCompanySchema = z.object({
+  name: z.string().trim().min(2).max(120).optional(),
+  description: z.string().trim().max(2000).optional().or(z.literal("")),
+  website: optionalWebsiteField.optional(),
+  phone: z.string().trim().max(40).optional().or(z.literal("")),
+  city: z.string().trim().max(80).optional().or(z.literal("")),
+  state: z.string().trim().max(40).optional().or(z.literal("")),
+  country: z.string().trim().max(80).optional(),
+});
+
+export type UpdateCompanyInput = z.infer<typeof updateCompanySchema>;

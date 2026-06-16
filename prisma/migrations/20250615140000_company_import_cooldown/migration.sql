@@ -1,0 +1,1 @@
+ALTER TABLE "Company" ADD COLUMN "lastImportAt" TIMESTAMP(3);

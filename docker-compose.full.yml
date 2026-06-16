@@ -1,0 +1,32 @@
+# Full stack for testing a production-like build (use later, not for day-to-day dev)
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: usparts
+      POSTGRES_USER: usparts
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-usparts}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U usparts -d usparts"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://usparts:${POSTGRES_PASSWORD:-usparts}@db:5432/usparts?schema=public
+      NEXT_PUBLIC_APP_URL: http://192.168.1.153
+      NODE_ENV: production
+    ports:
+      - "3000:3000"
+
+volumes:
+  postgres_data:

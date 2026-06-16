@@ -1,0 +1,21 @@
+[Unit]
+Description=USParts production server
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=simple
+User=bill
+WorkingDirectory=/home/bill/usparts
+EnvironmentFile=/home/bill/usparts/.env
+Environment=NODE_ENV=production
+Environment=HOSTNAME=127.0.0.1
+Environment=PORT=3000
+ExecStart=/usr/bin/node .next/standalone/server.js
+Restart=on-failure
+RestartSec=5
+StandardOutput=append:/home/bill/usparts/logs/app.log
+StandardError=append:/home/bill/usparts/logs/app.log
+
+[Install]
+WantedBy=multi-user.target

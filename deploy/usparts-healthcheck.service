@@ -1,0 +1,10 @@
+[Unit]
+Description=USParts health check
+After=network.target usparts.service
+
+[Service]
+Type=oneshot
+User=bill
+WorkingDirectory=/home/bill/usparts
+EnvironmentFile=/home/bill/usparts/.env
+ExecStart=/home/bill/usparts/scripts/healthcheck.sh
