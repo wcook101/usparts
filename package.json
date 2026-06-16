@@ -3,9 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "postinstall": "prisma generate",
     "dev": "next dev -H 0.0.0.0",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "postbuild": "node scripts/prepare-standalone.mjs",
     "start": "node .next/standalone/server.js",
     "start:lan": "HOSTNAME=0.0.0.0 node .next/standalone/server.js",
