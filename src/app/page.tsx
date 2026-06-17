@@ -17,7 +17,7 @@ export default async function HomePage() {
         <div className="relative mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
           <div className="mx-auto max-w-3xl text-center">
             <p className="mb-4 text-sm font-semibold uppercase tracking-[0.2em] text-blue-600">
-              Electronic component marketplace
+              We prioritize parts located in the US
             </p>
             <h1 className="text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
               Find the parts you need. List the inventory you have.

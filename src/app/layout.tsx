@@ -21,7 +21,7 @@ export const metadata: Metadata = {
     template: "%s | USParts",
   },
   description:
-    "Search electronic components from verified suppliers and list your available inventory for buyers filling production orders.",
+    "Search electronic components from verified US suppliers. We prioritize parts located in the US—list inventory or find stock for production and repair orders.",
 };
 
 export default function RootLayout({

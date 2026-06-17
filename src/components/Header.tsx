@@ -19,7 +19,7 @@ export function Header() {
               USParts
             </p>
             <p className="hidden text-xs text-slate-500 sm:block">
-              Electronic component marketplace
+              We prioritize parts located in the US
             </p>
           </div>
         </Link>
