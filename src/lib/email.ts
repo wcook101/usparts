@@ -5,6 +5,7 @@ export type SendEmailInput = {
   subject: string;
   text: string;
   html?: string;
+  replyTo?: string;
 };
 
 function getAppUrl(): string {
@@ -52,6 +53,7 @@ export async function sendEmail(input: SendEmailInput): Promise<void> {
     subject: input.subject,
     text: input.text,
     html: input.html ?? input.text.replace(/\n/g, "<br>"),
+    ...(input.replyTo ? { replyTo: input.replyTo } : {}),
   });
 }
 

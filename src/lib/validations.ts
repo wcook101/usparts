@@ -213,3 +213,12 @@ export const updateCompanySchema = z.object({
 });
 
 export type UpdateCompanyInput = z.infer<typeof updateCompanySchema>;
+
+export const supportContactSchema = z.object({
+  name: z.string().trim().min(2).max(120),
+  email: z.string().trim().email(),
+  company: z.string().trim().max(120).optional().or(z.literal("")),
+  message: z.string().trim().min(10).max(5000),
+});
+
+export type SupportContactInput = z.infer<typeof supportContactSchema>;

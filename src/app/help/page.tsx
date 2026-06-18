@@ -1,12 +1,26 @@
 import Link from "next/link";
-import { SUPPORT_EMAIL, SUPPORT_MAILTO } from "@/lib/site";
+import { SupportContactForm } from "@/components/SupportContactForm";
+import { getBuyerDefaults, getSessionUser } from "@/lib/auth";
+import { SUPPORT_EMAIL } from "@/lib/site";
 
 export const metadata = {
   title: "Help",
   description: "Get help using USParts — contact support, browse parts, or list inventory.",
 };
 
-export default function HelpPage() {
+export const dynamic = "force-dynamic";
+
+export default async function HelpPage() {
+  const user = await getSessionUser();
+  const buyerDefaults = getBuyerDefaults(user);
+  const contactDefaults = buyerDefaults
+    ? {
+        name: buyerDefaults.buyerName,
+        email: buyerDefaults.buyerEmail,
+        company: buyerDefaults.buyerCompany || undefined,
+      }
+    : null;
+
   return (
     <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
       <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-600">
@@ -21,24 +35,20 @@ export default function HelpPage() {
         fulfillment directly with buyers.
       </p>
 
-      <section className="mt-10 rounded-2xl border border-blue-200 bg-blue-50 p-6">
+      <section
+        id="contact"
+        className="mt-10 rounded-2xl border border-blue-200 bg-blue-50 p-6"
+      >
         <h2 className="text-lg font-semibold text-slate-900">Contact support</h2>
         <p className="mt-2 text-sm leading-7 text-slate-700">
-          For account issues, listing problems, order or quote questions, or
-          anything else about the platform, email us and we will get back to you.
+          Send us a message below for account issues, listing problems, order or
+          quote questions, or anything else about the platform. We will reply to
+          the email address you provide.
         </p>
-        <div className="mt-4 flex flex-wrap items-center gap-3">
-          <a
-            href={SUPPORT_MAILTO}
-            className="inline-flex rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700"
-          >
-            Email {SUPPORT_EMAIL}
-          </a>
-          <p className="font-mono text-sm text-slate-700">{SUPPORT_EMAIL}</p>
-        </div>
-        <p className="mt-3 text-xs text-slate-500">
-          If the email button does not open your mail app, copy the address above
-          into your inbox.
+        <SupportContactForm contactDefaults={contactDefaults} />
+        <p className="mt-4 text-xs text-slate-500">
+          You can also email us directly at{" "}
+          <span className="font-mono text-slate-600">{SUPPORT_EMAIL}</span>.
         </p>
       </section>
 

@@ -48,6 +48,12 @@ const rateLimitRules: RateLimitRule[] = [
     intervalMs: 60 * 60 * 1000,
     maxRequests: 30,
   },
+  {
+    test: (pathname, method) =>
+      pathname === "/api/support/contact" && method === "POST",
+    intervalMs: 60 * 60 * 1000,
+    maxRequests: 10,
+  },
 ];
 
 function applyRateLimit(request: NextRequest): NextResponse | null {

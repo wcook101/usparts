@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { SUPPORT_EMAIL, SUPPORT_MAILTO } from "@/lib/site";
-
+import { SUPPORT_EMAIL } from "@/lib/site";
 export function Footer() {
   return (
     <footer className="relative border-t border-slate-200 bg-white/90 backdrop-blur">
@@ -20,12 +19,12 @@ export function Footer() {
           </nav>
         </div>
         <p>
-          Questions? Email{" "}
-          <a href={SUPPORT_MAILTO} className="font-medium text-blue-600 hover:text-blue-700">
-            {SUPPORT_EMAIL}
-          </a>
-        </p>
-      </div>
+          Questions?{" "}
+          <Link href="/help#contact" className="font-medium text-blue-600 hover:text-blue-700">
+            Contact support
+          </Link>{" "}
+          or email {SUPPORT_EMAIL}.
+        </p>      </div>
     </footer>
   );
 }

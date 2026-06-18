@@ -1,5 +1,6 @@
 import { appUrl, sendEmail } from "@/lib/email";
 import { formatPrice } from "@/lib/format";
+import { SUPPORT_EMAIL } from "@/lib/site";
 
 type OrderNotification = {
   id: string;
@@ -180,5 +181,33 @@ export async function notifyCompanyInvite(input: {
       "",
       "This invite expires in 7 days.",
     ].join("\n"),
+  });
+}
+
+export async function notifySupportContact(input: {
+  name: string;
+  email: string;
+  company?: string;
+  message: string;
+}): Promise<void> {
+  const subject = `Support request from ${input.name}`;
+  const lines = [
+    "New support message from the USParts help form.",
+    "",
+    `Name: ${input.name}`,
+    `Email: ${input.email}`,
+    `Company: ${input.company?.trim() || "—"}`,
+    "",
+    "Message:",
+    input.message,
+    "",
+    `Reply directly to ${input.email} to respond.`,
+  ];
+
+  await sendEmail({
+    to: SUPPORT_EMAIL,
+    replyTo: input.email,
+    subject,
+    text: lines.join("\n"),
   });
 }
