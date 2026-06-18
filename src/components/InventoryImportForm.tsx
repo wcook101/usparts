@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ColumnMappingPanel } from "@/components/ColumnMappingPanel";
+import { ImportProgressOverlay } from "@/components/ImportProgressOverlay";
 import { formatInventoryLocation } from "@/lib/format";
 import {
   formatImportCooldownMessage,
@@ -84,6 +85,57 @@ export function InventoryImportForm({ companies }: InventoryImportFormProps) {
   >({});
   const [isLoadingPreview, setIsLoadingPreview] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [importProgress, setImportProgress] = useState(0);
+
+  const isImportBusy = isLoadingPreview || isSubmitting;
+
+  useEffect(() => {
+    if (!isImportBusy) {
+      return;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isImportBusy]);
+
+  useEffect(() => {
+    if (!isSubmitting) {
+      setImportProgress(0);
+      return;
+    }
+
+    setImportProgress(6);
+    const interval = window.setInterval(() => {
+      setImportProgress((current) => {
+        if (current >= 92) {
+          return current;
+        }
+
+        const remaining = 92 - current;
+        return current + Math.max(0.4, remaining * 0.05);
+      });
+    }, 450);
+
+    return () => window.clearInterval(interval);
+  }, [isSubmitting]);
+
+  useEffect(() => {
+    if (!isSubmitting) {
+      return;
+    }
+
+    function handleBeforeUnload(event: BeforeUnloadEvent) {
+      event.preventDefault();
+      event.returnValue = "";
+    }
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [isSubmitting]);
 
   useEffect(() => {
     if (companies.length === 1) {
@@ -222,6 +274,9 @@ export function InventoryImportForm({ companies }: InventoryImportFormProps) {
         throw new Error(data.error ?? "Import failed");
       }
 
+      setImportProgress(100);
+      await new Promise((resolve) => window.setTimeout(resolve, 350));
+
       setResult(data);
       setCompanyLastImportAt((current) => ({
         ...current,
@@ -307,6 +362,14 @@ export function InventoryImportForm({ companies }: InventoryImportFormProps) {
   if (step === "mapping" && preview) {
     return (
       <div className="space-y-6">
+        {isSubmitting ? (
+          <ImportProgressOverlay
+            title="Importing inventory"
+            message="We are matching your columns and loading parts into USParts. Large files can take several minutes."
+            progress={importProgress}
+          />
+        ) : null}
+
         {error ? (
           <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {error}
@@ -322,22 +385,27 @@ export function InventoryImportForm({ companies }: InventoryImportFormProps) {
           sampleRows={sampleRows}
         />
 
-        <div className="flex flex-wrap gap-3">
-          <button
-            type="button"
-            onClick={() => setStep("setup")}
-            className="rounded-lg border border-slate-300 bg-white px-5 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50"
-          >
-            Back
-          </button>
-          <button
-            type="button"
-            onClick={handleImport}
-            disabled={isSubmitting || importBlocked}
-            className="rounded-lg bg-blue-600 px-5 py-3 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
-          >
-            {isSubmitting ? "Importing inventory..." : "Import with this mapping"}
-          </button>
+        <div
+          className={isSubmitting ? "pointer-events-none opacity-60" : undefined}
+        >
+          <div className="flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={() => setStep("setup")}
+              disabled={isSubmitting}
+              className="rounded-lg border border-slate-300 bg-white px-5 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed"
+            >
+              Back
+            </button>
+            <button
+              type="button"
+              onClick={handleImport}
+              disabled={isSubmitting || importBlocked}
+              className="rounded-lg bg-blue-600 px-5 py-3 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+            >
+              {isSubmitting ? "Importing inventory..." : "Import with this mapping"}
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -345,7 +413,17 @@ export function InventoryImportForm({ companies }: InventoryImportFormProps) {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={handlePrepareMapping} className="space-y-6">
+      {isLoadingPreview ? (
+        <ImportProgressOverlay
+          title="Preparing field matching"
+          message="Reading your file and detecting columns. This usually takes a few seconds."
+        />
+      ) : null}
+
+      <form
+        onSubmit={handlePrepareMapping}
+        className={`space-y-6 ${isLoadingPreview ? "pointer-events-none opacity-60" : ""}`}
+      >
         {error ? (
           <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {error}
