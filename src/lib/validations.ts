@@ -18,6 +18,14 @@ export const searchQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(50).default(20),
 });
 
+export const MAX_BULK_SEARCH_PARTS = 500;
+
+export const bulkSearchSchema = z.object({
+  mpns: z.string().trim().min(1).max(50_000),
+  manufacturer: z.string().trim().optional(),
+  category: z.string().trim().optional(),
+});
+
 export const createListingSchema = z.object({
   companyId: z.string().min(1).optional(),
   mpn: z.string().trim().min(1).max(120),
@@ -70,6 +78,7 @@ export const createCompanySchema = z.object({
 });
 
 export type SearchQuery = z.infer<typeof searchQuerySchema>;
+export type BulkSearchInput = z.infer<typeof bulkSearchSchema>;
 export type CreateListingInput = z.infer<typeof createListingSchema>;
 export type CreateCompanyInput = z.infer<typeof createCompanySchema>;
 

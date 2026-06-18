@@ -75,12 +75,20 @@ export default async function HomePage() {
                 upload inventory.
               </p>
             </div>
-            <Link
-              href="/search"
-              className="text-sm font-medium text-blue-600 hover:text-blue-700"
-            >
-              Search parts
-            </Link>
+            <div className="flex flex-wrap gap-4">
+              <Link
+                href="/search"
+                className="text-sm font-medium text-blue-600 hover:text-blue-700"
+              >
+                Search parts
+              </Link>
+              <Link
+                href="/search?mode=bulk"
+                className="text-sm font-medium text-blue-600 hover:text-blue-700"
+              >
+                Multi-part search
+              </Link>
+            </div>
           </div>
 
           {hasUploads ? (

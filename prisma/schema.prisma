@@ -173,6 +173,7 @@ model PartListing {
   inventoryLocationId String
   inventoryLocation   InventoryLocation @relation(fields: [inventoryLocationId], references: [id], onDelete: Restrict)
   mpn                 String
+  mpnNormalized       String
   manufacturer        String
   description         String?
   category            PartCategory       @default(OTHER)
@@ -190,9 +191,11 @@ model PartListing {
   quoteRequests       QuoteRequest[]
 
   @@index([mpn])
+  @@index([mpnNormalized])
   @@index([manufacturer])
   @@index([category])
   @@index([isActive])
+  @@index([isActive, mpnNormalized])
   @@index([mpn, manufacturer])
   @@index([inventoryLocationId])
 }

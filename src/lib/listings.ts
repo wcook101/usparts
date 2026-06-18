@@ -1,7 +1,9 @@
 import type { Prisma, PartCategory, PartCondition } from "@/generated/prisma/client";
 import type { Company, InventoryLocation, PartListing } from "@/generated/prisma/client";
-import type { SearchQuery } from "@/lib/validations";
+import type { BulkSearchInput, SearchQuery } from "@/lib/validations";
+import { MAX_BULK_SEARCH_PARTS } from "@/lib/validations";
 import { db } from "@/lib/db";
+import { normalizeMpn, parseMpnList } from "@/lib/mpn-normalize";
 
 export const RECENT_COMPANIES_LIMIT = 10;
 export const RECENT_LISTINGS_PER_COMPANY = 10;
@@ -20,6 +22,127 @@ export type CompanyRecentListings = {
 
 export function hasSearchCriteria(query: Pick<SearchQuery, "q" | "manufacturer" | "category">) {
   return Boolean(query.q?.trim() || query.manufacturer?.trim() || query.category?.trim());
+}
+
+function buildSearchFilters(
+  query: Pick<SearchQuery, "q" | "manufacturer" | "category">,
+): Prisma.PartListingWhereInput {
+  const trimmedQuery = query.q?.trim();
+  const normalizedQuery = trimmedQuery ? normalizeMpn(trimmedQuery) : "";
+  const category = query.category?.trim();
+  const manufacturer = query.manufacturer?.trim();
+
+  return {
+    isActive: true,
+    ...(category ? { category: category as Prisma.EnumPartCategoryFilter["equals"] } : {}),
+    ...(manufacturer
+      ? { manufacturer: { contains: manufacturer, mode: "insensitive" } }
+      : {}),
+    ...(trimmedQuery
+      ? normalizedQuery.length >= 2
+        ? {
+            OR: [
+              { mpnNormalized: { startsWith: normalizedQuery } },
+              { mpnNormalized: normalizedQuery },
+              { mpn: { contains: trimmedQuery, mode: "insensitive" } },
+              { manufacturer: { contains: trimmedQuery, mode: "insensitive" } },
+              { description: { contains: trimmedQuery, mode: "insensitive" } },
+            ],
+          }
+        : {
+            OR: [
+              { mpn: { contains: trimmedQuery, mode: "insensitive" } },
+              { manufacturer: { contains: trimmedQuery, mode: "insensitive" } },
+              { description: { contains: trimmedQuery, mode: "insensitive" } },
+            ],
+          }
+      : {}),
+  };
+}
+
+export type BulkSearchRow = {
+  input: string;
+  normalizedMpn: string;
+  found: boolean;
+  listings: ListingWithCompany[];
+};
+
+export type BulkSearchResult = {
+  rows: BulkSearchRow[];
+  queriedCount: number;
+  foundPartCount: number;
+  notFoundPartCount: number;
+  totalListingCount: number;
+  durationMs: number;
+};
+
+export async function bulkSearchListings(
+  input: BulkSearchInput,
+): Promise<BulkSearchResult> {
+  const startedAt = Date.now();
+  const entries = parseMpnList(input.mpns).slice(0, MAX_BULK_SEARCH_PARTS);
+
+  if (entries.length === 0) {
+    return {
+      rows: [],
+      queriedCount: 0,
+      foundPartCount: 0,
+      notFoundPartCount: 0,
+      totalListingCount: 0,
+      durationMs: Date.now() - startedAt,
+    };
+  }
+
+  const normalizedMpns = entries.map((entry) => entry.normalized);
+  const category = input.category?.trim();
+  const manufacturer = input.manufacturer?.trim();
+
+  const listings = await db.partListing.findMany({
+    where: {
+      isActive: true,
+      mpnNormalized: { in: normalizedMpns },
+      ...(category ? { category: category as Prisma.EnumPartCategoryFilter["equals"] } : {}),
+      ...(manufacturer
+        ? { manufacturer: { contains: manufacturer, mode: "insensitive" } }
+        : {}),
+    },
+    include: { company: true, inventoryLocation: true },
+    orderBy: [{ mpnNormalized: "asc" }, { quantity: "desc" }, { updatedAt: "desc" }],
+  });
+
+  const listingsByMpn = new Map<string, ListingWithCompany[]>();
+  for (const listing of listings) {
+    const bucket = listingsByMpn.get(listing.mpnNormalized) ?? [];
+    bucket.push(listing);
+    listingsByMpn.set(listing.mpnNormalized, bucket);
+  }
+
+  let foundPartCount = 0;
+  let totalListingCount = 0;
+
+  const rows = entries.map((entry) => {
+    const matched = listingsByMpn.get(entry.normalized) ?? [];
+    if (matched.length > 0) {
+      foundPartCount += 1;
+      totalListingCount += matched.length;
+    }
+
+    return {
+      input: entry.input,
+      normalizedMpn: entry.normalized,
+      found: matched.length > 0,
+      listings: matched,
+    };
+  });
+
+  return {
+    rows,
+    queriedCount: entries.length,
+    foundPartCount,
+    notFoundPartCount: entries.length - foundPartCount,
+    totalListingCount,
+    durationMs: Date.now() - startedAt,
+  };
 }
 
 export async function getRecentListingsByCompany(
@@ -100,22 +223,7 @@ export async function searchListings(query: SearchQuery) {
     };
   }
 
-  const where: Prisma.PartListingWhereInput = {
-    isActive: true,
-    ...(category ? { category: category as Prisma.EnumPartCategoryFilter["equals"] } : {}),
-    ...(manufacturer
-      ? { manufacturer: { contains: manufacturer, mode: "insensitive" } }
-      : {}),
-    ...(q
-      ? {
-          OR: [
-            { mpn: { contains: q, mode: "insensitive" } },
-            { manufacturer: { contains: q, mode: "insensitive" } },
-            { description: { contains: q, mode: "insensitive" } },
-          ],
-        }
-      : {}),
-  };
+  const where = buildSearchFilters({ q, manufacturer, category });
 
   const maxPages = Math.max(1, Math.ceil(MAX_SEARCH_RESULTS / limit));
   const effectivePage = Math.min(page, maxPages);
@@ -225,7 +333,9 @@ export async function updateListingForCompany(
   return db.partListing.update({
     where: { id: listingId },
     data: {
-      ...(input.mpn !== undefined ? { mpn: input.mpn } : {}),
+      ...(input.mpn !== undefined
+        ? { mpn: input.mpn, mpnNormalized: normalizeMpn(input.mpn) }
+        : {}),
       ...(input.manufacturer !== undefined
         ? { manufacturer: input.manufacturer }
         : {}),

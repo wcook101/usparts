@@ -5,6 +5,7 @@ import {
   isAuthError,
   requireOwnedCompany,
 } from "@/lib/auth";
+import { normalizeMpn } from "@/lib/mpn-normalize";
 import { createListingSchema } from "@/lib/validations";
 
 export async function POST(request: Request) {
@@ -54,6 +55,7 @@ export async function POST(request: Request) {
         companyId: company.id,
         inventoryLocationId: location.id,
         mpn: data.mpn,
+        mpnNormalized: normalizeMpn(data.mpn),
         manufacturer: data.manufacturer,
         description: data.description || null,
         category: data.category,

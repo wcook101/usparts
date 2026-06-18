@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { formatInventoryLocation } from "@/lib/format";
 import type { ImportFileFormat } from "@/lib/import-file";
+import { normalizeMpn } from "@/lib/mpn-normalize";
 import {
   assertImportAllowed,
   MAX_IMPORT_ROWS,
@@ -87,6 +88,7 @@ async function writeListingBatch(
             companyId: options.companyId,
             inventoryLocationId,
             mpn: row.mpn,
+            mpnNormalized: normalizeMpn(row.mpn),
             manufacturer: row.manufacturer ?? "",
             description: row.description ?? null,
             category: row.category,

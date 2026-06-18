@@ -50,9 +50,9 @@ const rateLimitRules: RateLimitRule[] = [
   },
   {
     test: (pathname, method) =>
-      pathname === "/api/support/contact" && method === "POST",
-    intervalMs: 60 * 60 * 1000,
-    maxRequests: 10,
+      pathname === "/api/search/bulk" && method === "POST",
+    intervalMs: 60 * 1000,
+    maxRequests: 30,
   },
 ];
 
@@ -121,5 +121,6 @@ export const config = {
     "/api/orders",
     "/api/quotes",
     "/api/support/contact",
+    "/api/search/bulk",
   ],
 };

@@ -1,6 +1,7 @@
 import "dotenv/config";
 import { PrismaClient } from "../src/generated/prisma/client";
 import { createPrismaClient } from "../src/lib/db";
+import { normalizeMpn } from "../src/lib/mpn-normalize";
 
 const db: PrismaClient = createPrismaClient();
 
@@ -55,8 +56,7 @@ async function main() {
   const apexLocationId = apex.inventoryLocations[0].id;
   const midwestLocationId = midwest.inventoryLocations[0].id;
 
-  await db.partListing.createMany({
-    data: [
+  const seedListings = [
       {
         companyId: apex.id,
         inventoryLocationId: apexLocationId,
@@ -131,8 +131,12 @@ async function main() {
         condition: "NEW",
         leadTimeDays: 1,
       },
-    ],
-  });
+    ].map((listing) => ({
+      ...listing,
+      mpnNormalized: normalizeMpn(listing.mpn),
+    }));
+
+  await db.partListing.createMany({ data: seedListings });
 }
 
 main()
