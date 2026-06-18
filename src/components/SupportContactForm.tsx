@@ -46,7 +46,6 @@ export function SupportContactForm({
       }
 
       setSubmittedEmail(String(payload.email));
-      event.currentTarget.reset();
     } catch (submitError) {
       setError(
         submitError instanceof Error
@@ -68,7 +67,10 @@ export function SupportContactForm({
         </p>
         <button
           type="button"
-          onClick={() => setSubmittedEmail(null)}
+          onClick={() => {
+            setSubmittedEmail(null);
+            setError(null);
+          }}
           className="mt-3 text-sm font-medium text-green-700 hover:text-green-800"
         >
           Send another message
