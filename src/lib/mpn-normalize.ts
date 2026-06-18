@@ -58,20 +58,37 @@ export function parseMpnList(input: string): ParsedMpnEntry[] {
   const seen = new Set<string>();
   const entries: ParsedMpnEntry[] = [];
 
-  for (const raw of input.split(/[\n,;\t]+/)) {
-    const trimmed = raw.trim();
-    if (!trimmed) {
+  for (const chunk of input.split(/[\r\n,;\t]+/)) {
+    const trimmedChunk = chunk.replace(/\r/g, "").trim();
+    if (!trimmedChunk) {
       continue;
     }
 
-    const normalized = normalizeMpn(trimmed);
-    if (!normalized || seen.has(normalized)) {
-      continue;
-    }
+    const tokens =
+      trimmedChunk.includes(" ") &&
+      trimmedChunk.split(/\s+/).every((token) => normalizeMpn(token).length >= 3)
+        ? trimmedChunk.split(/\s+/).filter(Boolean)
+        : [trimmedChunk];
 
-    seen.add(normalized);
-    entries.push({ input: trimmed, normalized });
+    for (const raw of tokens) {
+      const trimmed = raw.trim();
+      if (!trimmed) {
+        continue;
+      }
+
+      const normalized = normalizeMpn(trimmed);
+      if (!normalized || seen.has(normalized)) {
+        continue;
+      }
+
+      seen.add(normalized);
+      entries.push({ input: trimmed, normalized });
+    }
   }
 
   return entries;
+}
+
+export function looksLikeMultiPartQuery(input: string): boolean {
+  return parseMpnList(input).length > 1;
 }

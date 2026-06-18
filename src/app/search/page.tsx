@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { ListingResultsList } from "@/components/ListingResultsList";
 import { MultiPartSearchForm } from "@/components/MultiPartSearchForm";
 import { RecentUploadsList } from "@/components/RecentUploadsList";
@@ -9,6 +10,7 @@ import {
   RECENT_LISTINGS_PER_COMPANY,
   searchListings,
 } from "@/lib/listings";
+import { looksLikeMultiPartQuery } from "@/lib/mpn-normalize";
 import { searchQuerySchema } from "@/lib/validations";
 
 type SearchPageProps = {
@@ -25,6 +27,12 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   const params = await searchParams;
   const mode = typeof params.mode === "string" ? params.mode : "single";
   const isBulkMode = mode === "bulk";
+  const bulkMpns =
+    typeof params.mpns === "string"
+      ? params.mpns
+      : typeof params.q === "string" && isBulkMode
+        ? params.q
+        : "";
 
   const parsed = searchQuerySchema.parse({
     q: typeof params.q === "string" ? params.q : undefined,
@@ -34,6 +42,10 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
       typeof params.category === "string" ? params.category : undefined,
     page: typeof params.page === "string" ? params.page : undefined,
   });
+
+  if (!isBulkMode && parsed.q && looksLikeMultiPartQuery(parsed.q)) {
+    redirect(`/search?mode=bulk&mpns=${encodeURIComponent(parsed.q)}`);
+  }
 
   const { listings, companyGroups, total, totalCount, page, totalPages, recentOnly } =
     isBulkMode
@@ -49,10 +61,15 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
       : await searchListings(parsed);
 
   function buildSearchHref(nextMode: "single" | "bulk") {
-    const query = new URLSearchParams();
     if (nextMode === "bulk") {
-      query.set("mode", "bulk");
+      const query = new URLSearchParams({ mode: "bulk" });
+      if (bulkMpns.trim()) {
+        query.set("mpns", bulkMpns);
+      }
+      return `/search?${query.toString()}`;
     }
+
+    const query = new URLSearchParams();
     if (parsed.q) {
       query.set("q", parsed.q);
     }
@@ -112,14 +129,14 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
             </p>
             <ul className="mt-4 space-y-2 text-sm text-slate-600">
               <li>One part number per line, or comma-separated</li>
-              <li>Dashes and spaces are ignored when matching</li>
-              <li>Results grouped by part with supplier stock</li>
+              <li>Base numbers match variants (LM358 → LM358N, LM358ND)</li>
+              <li>Results appear below after you click Search all parts</li>
             </ul>
           </aside>
 
           <MultiPartSearchForm
-            defaultManufacturer={parsed.manufacturer ?? ""}
-            defaultCategory={parsed.category ?? ""}
+            initialMpns={bulkMpns}
+            autoSearch={Boolean(bulkMpns.trim())}
           />
         </div>
       ) : (

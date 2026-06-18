@@ -1,4 +1,8 @@
+"use client";
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { looksLikeMultiPartQuery } from "@/lib/mpn-normalize";
 
 type SearchBarProps = {
   defaultQuery?: string;
@@ -11,8 +15,24 @@ export function SearchBar({
   action = "/search",
   large = false,
 }: SearchBarProps) {
+  const router = useRouter();
+
+  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    const form = event.currentTarget;
+    const input = form.elements.namedItem("q");
+    if (!(input instanceof HTMLInputElement)) {
+      return;
+    }
+
+    const query = input.value.trim();
+    if (query && looksLikeMultiPartQuery(query)) {
+      event.preventDefault();
+      router.push(`/search?mode=bulk&mpns=${encodeURIComponent(query)}`);
+    }
+  }
+
   return (
-    <form action={action} method="get" className="w-full">
+    <form action={action} method="get" className="w-full" onSubmit={handleSubmit}>
       <div
         className={`flex w-full overflow-hidden rounded-xl border border-white/70 bg-white/90 shadow-md shadow-blue-100/40 backdrop-blur-sm focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-100 ${
           large ? "text-base" : "text-sm"
@@ -55,6 +75,12 @@ export function QuickSearchLinks() {
           {term}
         </Link>
       ))}
+      <Link
+        href="/search?mode=bulk"
+        className="rounded-full border border-blue-200 bg-blue-50 px-3 py-1 font-medium text-blue-700 transition hover:border-blue-300"
+      >
+        Paste a part list
+      </Link>
     </div>
   );
 }

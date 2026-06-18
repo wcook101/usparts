@@ -1,28 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { ListingResultsList } from "@/components/ListingResultsList";
 import type { BulkSearchResult } from "@/lib/listings";
 import { MAX_BULK_SEARCH_PARTS } from "@/lib/validations";
 
 type MultiPartSearchFormProps = {
-  defaultManufacturer?: string;
-  defaultCategory?: string;
+  initialMpns?: string;
+  autoSearch?: boolean;
 };
 
 export function MultiPartSearchForm({
-  defaultManufacturer = "",
-  defaultCategory = "",
+  initialMpns = "",
+  autoSearch = false,
 }: MultiPartSearchFormProps) {
-  const [mpns, setMpns] = useState("");
-  const [manufacturer, setManufacturer] = useState(defaultManufacturer);
-  const [category, setCategory] = useState(defaultCategory);
+  const resultsId = useId();
+  const hasAutoSearched = useRef(false);
+  const [mpns, setMpns] = useState(initialMpns);
   const [isSearching, setIsSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [results, setResults] = useState<BulkSearchResult | null>(null);
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  async function runSearch(partList: string) {
     setError(null);
     setIsSearching(true);
 
@@ -30,11 +29,7 @@ export function MultiPartSearchForm({
       const response = await fetch("/api/search/bulk", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          mpns,
-          ...(manufacturer.trim() ? { manufacturer: manufacturer.trim() } : {}),
-          ...(category.trim() ? { category: category.trim() } : {}),
-        }),
+        body: JSON.stringify({ mpns: partList }),
       });
 
       const data = await response.json();
@@ -43,6 +38,13 @@ export function MultiPartSearchForm({
       }
 
       setResults(data as BulkSearchResult);
+
+      requestAnimationFrame(() => {
+        document.getElementById(resultsId)?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      });
     } catch (submitError) {
       setResults(null);
       setError(
@@ -54,6 +56,20 @@ export function MultiPartSearchForm({
       setIsSearching(false);
     }
   }
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    await runSearch(mpns);
+  }
+
+  useEffect(() => {
+    if (!autoSearch || hasAutoSearched.current || !initialMpns.trim()) {
+      return;
+    }
+
+    hasAutoSearched.current = true;
+    void runSearch(initialMpns);
+  }, [autoSearch, initialMpns]);
 
   const foundRows = results?.rows.filter((row) => row.found) ?? [];
   const missingRows = results?.rows.filter((row) => !row.found) ?? [];
@@ -79,31 +95,6 @@ export function MultiPartSearchForm({
           </span>
         </label>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <label className="block space-y-2">
-            <span className="text-sm font-medium text-slate-700">
-              Manufacturer filter (optional)
-            </span>
-            <input
-              value={manufacturer}
-              onChange={(event) => setManufacturer(event.target.value)}
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-            />
-          </label>
-
-          <label className="block space-y-2">
-            <span className="text-sm font-medium text-slate-700">
-              Category filter (optional)
-            </span>
-            <input
-              value={category}
-              onChange={(event) => setCategory(event.target.value)}
-              placeholder="e.g. SEMICONDUCTOR"
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-            />
-          </label>
-        </div>
-
         <button
           type="submit"
           disabled={isSearching || !mpns.trim()}
@@ -120,26 +111,29 @@ export function MultiPartSearchForm({
       ) : null}
 
       {results ? (
-        <div className="space-y-6">
-          <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+        <div id={resultsId} className="space-y-6 scroll-mt-24">
+          <div
+            className={`rounded-lg border px-4 py-3 text-sm ${
+              results.foundPartCount > 0
+                ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+                : "border-amber-200 bg-amber-50 text-amber-900"
+            }`}
+          >
             Searched {results.queriedCount.toLocaleString()} part
             {results.queriedCount === 1 ? "" : "s"} in {results.durationMs} ms —{" "}
-            <span className="font-medium text-emerald-700">
+            <span className="font-semibold">
               {results.foundPartCount} found
             </span>
             {results.notFoundPartCount > 0 ? (
               <>
-                ,{" "}
-                <span className="font-medium text-slate-900">
-                  {results.notFoundPartCount} not in stock
-                </span>
+                , {results.notFoundPartCount} not in stock
               </>
             ) : null}
             {results.totalListingCount > 0 ? (
               <>
                 {" "}
-                ({results.totalListingCount.toLocaleString()} listing
-                {results.totalListingCount === 1 ? "" : "s"} across suppliers)
+                ({results.totalListingCount.toLocaleString()} supplier listing
+                {results.totalListingCount === 1 ? "" : "s"})
               </>
             ) : null}
           </div>
@@ -166,8 +160,7 @@ export function MultiPartSearchForm({
               <p className="text-lg font-medium text-slate-900">No matches found</p>
               <p className="mt-2 text-sm text-slate-600">
                 None of the pasted part numbers match current supplier inventory.
-                Try a base part number (LM358 instead of LM358N) or search single
-                parts on the Single search tab.
+                Try a base part number (LM358 instead of LM358N).
               </p>
             </div>
           )}
