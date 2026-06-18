@@ -52,7 +52,7 @@ const inventoryLocationSchema = z.object({
   label: z.string().trim().max(80).optional().or(z.literal("")),
   city: z.string().trim().min(1).max(80),
   state: z.string().trim().max(40).optional().or(z.literal("")),
-  country: z.string().trim().max(80).default("US"),
+  country: z.string().trim().min(1).max(80).default("US"),
 });
 
 export const createCompanySchema = z.object({
@@ -104,6 +104,9 @@ export const signupSchema = z.object({
   email: z.string().trim().email(),
   password: z.string().min(8).max(128),
   inviteToken: z.string().trim().min(1).optional(),
+  acceptedTerms: z.literal(true, {
+    error: "You must agree to the Terms of Service and Privacy Policy",
+  }),
 });
 
 export const loginSchema = z.object({

@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { InventoryLocationText } from "@/components/InventoryLocationText";
 import { PlaceOrderForm } from "@/components/PlaceOrderForm";
 import { RequestQuoteForm } from "@/components/RequestQuoteForm";
 import {
   canBuyListingNow,
   CATEGORY_LABELS,
   CONDITION_LABELS,
-  formatInventoryLocation,
   formatListingPrice,
   formatPrice,
   formatQuantity,
@@ -53,12 +53,6 @@ export default async function ListingPage({ params }: ListingPageProps) {
 
   const buyerDefaults = getBuyerDefaults(user);
 
-  const companyLocation = [listing.company.city, listing.company.state, listing.company.country]
-    .filter(Boolean)
-    .join(", ");
-  const stockLocation = listing.inventoryLocation
-    ? formatInventoryLocation(listing.inventoryLocation)
-    : companyLocation || "United States";
   const buyNow = canBuyListingNow(listing.price, listing.quantity);
   const inStock = listing.quantity > 0;
   const listingPrice = listing.price;
@@ -128,8 +122,11 @@ export default async function ListingPage({ params }: ListingPageProps) {
               <p className="text-xs uppercase tracking-wide text-slate-500">
                 Location
               </p>
-              <p className="mt-1 text-lg font-semibold text-slate-900">
-                {stockLocation}
+              <p className="mt-1">
+                <InventoryLocationText
+                  location={listing.inventoryLocation}
+                  emphasize
+                />
               </p>
             </div>
           </div>
@@ -185,10 +182,14 @@ export default async function ListingPage({ params }: ListingPageProps) {
                   {listing.company.phone}
                 </p>
               ) : null}
-              {companyLocation ? (
+              {[listing.company.city, listing.company.state, listing.company.country]
+                .filter(Boolean)
+                .join(", ") ? (
                 <p>
-                  <span className="font-medium text-slate-800">Location:</span>{" "}
-                  {companyLocation}
+                  <span className="font-medium text-slate-800">Headquarters:</span>{" "}
+                  {[listing.company.city, listing.company.state, listing.company.country]
+                    .filter(Boolean)
+                    .join(", ")}
                 </p>
               ) : null}
             </div>

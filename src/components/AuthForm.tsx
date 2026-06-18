@@ -36,6 +36,7 @@ function AuthFormFields({
       name: formData.get("name"),
       email: formData.get("email"),
       password: formData.get("password"),
+      acceptedTerms: formData.get("acceptedTerms") === "on",
       ...(inviteToken ? { inviteToken } : {}),
     };
 
@@ -124,6 +125,38 @@ function AuthFormFields({
         )}
       </label>
 
+      {isSignup ? (
+        <label className="flex items-start gap-3">
+          <input
+            type="checkbox"
+            name="acceptedTerms"
+            required
+            className="mt-1 h-4 w-4 shrink-0 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+          />
+          <span className="text-sm leading-6 text-slate-600">
+            I agree to the{" "}
+            <Link
+              href="/terms"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-blue-600 hover:text-blue-700"
+            >
+              Terms of Service
+            </Link>{" "}
+            and{" "}
+            <Link
+              href="/privacy"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-blue-600 hover:text-blue-700"
+            >
+              Privacy Policy
+            </Link>
+            .
+          </span>
+        </label>
+      ) : null}
+
       <button
         type="submit"
         disabled={isSubmitting}
@@ -191,6 +224,12 @@ function AuthFormSkeleton({ isSignup }: { isSignup: boolean }) {
         <div className="h-4 w-16 rounded bg-slate-200" />
         <div className="h-10 w-full rounded-lg bg-slate-100" />
       </div>
+      {isSignup ? (
+        <div className="flex items-start gap-3">
+          <div className="mt-1 h-4 w-4 shrink-0 rounded bg-slate-200" />
+          <div className="h-10 flex-1 rounded bg-slate-100" />
+        </div>
+      ) : null}
       <div className="h-11 w-full rounded-lg bg-slate-200" />
     </div>
   );

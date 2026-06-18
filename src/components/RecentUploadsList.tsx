@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { CompanyRecentListings } from "@/lib/listings";
+import { InventoryLocationText } from "@/components/InventoryLocationText";
 import {
   CONDITION_LABELS,
   formatListingPrice,
@@ -55,6 +56,7 @@ export function RecentUploadsList({ groups }: RecentUploadsListProps) {
                 <tr className="border-b border-slate-100 bg-slate-50/80 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
                   <th className="px-4 py-3 sm:px-5">Part number</th>
                   <th className="px-4 py-3 sm:px-5">Manufacturer</th>
+                  <th className="px-4 py-3 sm:px-5">Location</th>
                   <th className="px-4 py-3 sm:px-5">Qty</th>
                   <th className="px-4 py-3 sm:px-5">Price</th>
                   <th className="px-4 py-3 sm:px-5">Condition</th>
@@ -76,6 +78,9 @@ export function RecentUploadsList({ groups }: RecentUploadsListProps) {
                     </td>
                     <td className="px-4 py-3 text-slate-600 sm:px-5">
                       {listing.manufacturer || "—"}
+                    </td>
+                    <td className="px-4 py-3 sm:px-5">
+                      <InventoryLocationText location={listing.inventoryLocation} />
                     </td>
                     <td className="px-4 py-3 text-slate-900 sm:px-5">
                       {formatQuantity(listing.quantity)}

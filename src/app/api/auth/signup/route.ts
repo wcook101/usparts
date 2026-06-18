@@ -21,8 +21,15 @@ export async function POST(request: Request) {
     const parsed = signupSchema.safeParse(body);
 
     if (!parsed.success) {
+      const acceptedTermsIssue = parsed.error.issues.find(
+        (issue) => issue.path[0] === "acceptedTerms",
+      );
+      const message =
+        acceptedTermsIssue?.message ??
+        (parsed.error.issues[0]?.message || "Invalid signup data");
+
       return NextResponse.json(
-        { error: "Invalid signup data", details: parsed.error.flatten() },
+        { error: message, details: parsed.error.flatten() },
         { status: 400 },
       );
     }

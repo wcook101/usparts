@@ -170,8 +170,8 @@ model PartListing {
   id                  String             @id @default(cuid())
   companyId           String
   company             Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  inventoryLocationId String?
-  inventoryLocation   InventoryLocation? @relation(fields: [inventoryLocationId], references: [id], onDelete: SetNull)
+  inventoryLocationId String
+  inventoryLocation   InventoryLocation @relation(fields: [inventoryLocationId], references: [id], onDelete: Restrict)
   mpn                 String
   manufacturer        String
   description         String?

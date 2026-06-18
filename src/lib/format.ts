@@ -116,12 +116,26 @@ export function formatQuantity(quantity: number): string {
   return new Intl.NumberFormat("en-US").format(quantity);
 }
 
-type InventoryLocationLike = {
+export type InventoryLocationLike = {
   label?: string | null;
   city: string;
   state?: string | null;
   country?: string | null;
 };
+
+const US_COUNTRY_ALIASES = new Set([
+  "us",
+  "usa",
+  "u.s.",
+  "u.s.a.",
+  "united states",
+  "united states of america",
+]);
+
+export function isUnitedStatesLocation(location: InventoryLocationLike): boolean {
+  const country = (location.country ?? "US").trim().toLowerCase();
+  return US_COUNTRY_ALIASES.has(country);
+}
 
 export function formatInventoryLocation(location: InventoryLocationLike): string {
   const place = [location.city, location.state, location.country]

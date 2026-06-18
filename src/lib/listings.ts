@@ -9,7 +9,7 @@ export const MAX_SEARCH_RESULTS = 100;
 
 export type ListingWithCompany = PartListing & {
   company: Company;
-  inventoryLocation: InventoryLocation | null;
+  inventoryLocation: InventoryLocation;
 };
 
 export type CompanyRecentListings = {

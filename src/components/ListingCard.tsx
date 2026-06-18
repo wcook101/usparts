@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Company, InventoryLocation, PartListing } from "@/generated/prisma/client";
+import { InventoryLocationText } from "@/components/InventoryLocationText";
 import {
   canBuyListingNow,
   CATEGORY_LABELS,
@@ -11,7 +12,7 @@ import {
 
 type ListingWithCompany = PartListing & {
   company: Company;
-  inventoryLocation: InventoryLocation | null;
+  inventoryLocation: InventoryLocation;
 };
 
 type ListingCardProps = {
@@ -72,6 +73,10 @@ export function ListingCard({ listing }: ListingCardProps) {
               Buy now
             </span>
           ) : null}
+        </p>
+        <p className="text-xs">
+          <span className="text-slate-500">Stock location: </span>
+          <InventoryLocationText location={listing.inventoryLocation} />
         </p>
       </div>
     </Link>

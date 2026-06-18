@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { InventoryLocationText } from "@/components/InventoryLocationText";
 import {
   CATEGORY_LABELS,
   CONDITION_LABELS,
-  formatInventoryLocation,
   formatPrice,
   formatQuantity,
 } from "@/lib/format";
@@ -48,9 +48,6 @@ export default async function OrderPage({ params, searchParams }: OrderPageProps
   }
 
   const listing = order.listing;
-  const stockLocation = listing.inventoryLocation
-    ? formatInventoryLocation(listing.inventoryLocation)
-    : null;
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
@@ -113,12 +110,12 @@ export default async function OrderPage({ params, searchParams }: OrderPageProps
             </a>
           </div>
 
-          {stockLocation ? (
-            <div>
-              <p className="text-sm font-medium text-slate-700">Ships from</p>
-              <p className="mt-1 text-sm text-slate-900">{stockLocation}</p>
-            </div>
-          ) : null}
+          <div>
+            <p className="text-sm font-medium text-slate-700">Ships from</p>
+            <p className="mt-1">
+              <InventoryLocationText location={listing.inventoryLocation} />
+            </p>
+          </div>
         </div>
 
         {order.notes ? (

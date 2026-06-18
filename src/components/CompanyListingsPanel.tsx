@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { InventoryLocationText } from "@/components/InventoryLocationText";
 import {
   CATEGORY_LABELS,
-  formatInventoryLocation,
   formatListingPrice,
   formatQuantity,
 } from "@/lib/format";
@@ -25,7 +25,7 @@ type ListingRow = {
     city: string;
     state: string | null;
     country: string;
-  } | null;
+  };
 };
 
 type CompanyListingsPanelProps = {
@@ -157,9 +157,7 @@ export function CompanyListingsPanel({
                     {formatListingPrice(listing.price, listing.currency)}
                   </td>
                   <td className="px-4 py-3 text-slate-700">
-                    {listing.inventoryLocation
-                      ? formatInventoryLocation(listing.inventoryLocation)
-                      : "—"}
+                    <InventoryLocationText location={listing.inventoryLocation} />
                   </td>
                   <td className="px-4 py-3">
                     <span

@@ -7,12 +7,14 @@ type InventoryLocationInput = {
   label: string;
   city: string;
   state: string;
+  country: string;
 };
 
 const emptyLocation = (): InventoryLocationInput => ({
   label: "",
   city: "",
   state: "",
+  country: "US",
 });
 
 export function CompanyRegistrationForm() {
@@ -78,7 +80,7 @@ export function CompanyRegistrationForm() {
         label: location.label,
         city: location.city,
         state: location.state,
-        country: "US",
+        country: location.country.trim() || "US",
       })),
     };
 
@@ -202,8 +204,8 @@ export function CompanyRegistrationForm() {
                 ) : null}
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-3">
-                <label className="block space-y-2 sm:col-span-3">
+              <div className="grid gap-4 sm:grid-cols-4">
+                <label className="block space-y-2 sm:col-span-4">
                   <span className="text-sm font-medium text-slate-700">
                     Location name (optional)
                   </span>
@@ -238,6 +240,19 @@ export function CompanyRegistrationForm() {
                       updateLocation(index, "state", event.target.value)
                     }
                     placeholder="TX"
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  />
+                </label>
+
+                <label className="block space-y-2">
+                  <span className="text-sm font-medium text-slate-700">Country</span>
+                  <input
+                    value={location.country}
+                    onChange={(event) =>
+                      updateLocation(index, "country", event.target.value)
+                    }
+                    required
+                    placeholder="US"
                     className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                   />
                 </label>

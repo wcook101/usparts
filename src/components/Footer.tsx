@@ -8,9 +8,9 @@ export function Footer() {
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p>© {new Date().getFullYear()} USParts. Electronic component marketplace.</p>
           <nav className="flex flex-wrap gap-4">
-            <a href={SUPPORT_MAILTO} className="hover:text-slate-900">
+            <Link href="/help" className="hover:text-slate-900">
               Help
-            </a>
+            </Link>
             <Link href="/privacy" className="hover:text-slate-900">
               Privacy
             </Link>
