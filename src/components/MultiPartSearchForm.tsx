@@ -69,13 +69,13 @@ export function MultiPartSearchForm({
             value={mpns}
             onChange={(event) => setMpns(event.target.value)}
             rows={10}
-            placeholder={"STM32F407VGT6\nLM358N\n1N4148\nESP32-WROOM-32"}
+            placeholder={"LM358\n1N4148\nZX74HCTLS245N"}
             className="w-full rounded-lg border border-slate-300 px-3 py-2 font-mono text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             required
           />
           <span className="block text-xs text-slate-500">
             Up to {MAX_BULK_SEARCH_PARTS.toLocaleString()} parts per search.
-            Dashes and spaces are ignored when matching.
+            Matches exact MPNs and variants (e.g. LM358 finds LM358N, LM358ND).
           </span>
         </label>
 
@@ -165,7 +165,9 @@ export function MultiPartSearchForm({
             <div className="rounded-xl border border-dashed border-slate-300 bg-white/90 p-10 text-center backdrop-blur-sm">
               <p className="text-lg font-medium text-slate-900">No matches found</p>
               <p className="mt-2 text-sm text-slate-600">
-                None of the pasted part numbers are currently listed by suppliers.
+                None of the pasted part numbers match current supplier inventory.
+                Try a base part number (LM358 instead of LM358N) or search single
+                parts on the Single search tab.
               </p>
             </div>
           )}

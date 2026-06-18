@@ -3,7 +3,7 @@ import type { Company, InventoryLocation, PartListing } from "@/generated/prisma
 import type { BulkSearchInput, SearchQuery } from "@/lib/validations";
 import { MAX_BULK_SEARCH_PARTS } from "@/lib/validations";
 import { db } from "@/lib/db";
-import { normalizeMpn, parseMpnList } from "@/lib/mpn-normalize";
+import { normalizeMpn, parseMpnList, bulkQueryMatchesListing, buildQueryPrefixSet } from "@/lib/mpn-normalize";
 
 export const RECENT_COMPANIES_LIMIT = 10;
 export const RECENT_LISTINGS_PER_COMPANY = 10;
@@ -96,11 +96,19 @@ export async function bulkSearchListings(
   const normalizedMpns = entries.map((entry) => entry.normalized);
   const category = input.category?.trim();
   const manufacturer = input.manufacturer?.trim();
+  const queryPrefixes = buildQueryPrefixSet(normalizedMpns);
 
   const listings = await db.partListing.findMany({
     where: {
       isActive: true,
-      mpnNormalized: { in: normalizedMpns },
+      OR: [
+        ...normalizedMpns.map((term) => ({
+          mpnNormalized: { startsWith: term },
+        })),
+        ...(queryPrefixes.length > 0
+          ? [{ mpnNormalized: { in: queryPrefixes } }]
+          : []),
+      ],
       ...(category ? { category: category as Prisma.EnumPartCategoryFilter["equals"] } : {}),
       ...(manufacturer
         ? { manufacturer: { contains: manufacturer, mode: "insensitive" } }
@@ -110,18 +118,13 @@ export async function bulkSearchListings(
     orderBy: [{ mpnNormalized: "asc" }, { quantity: "desc" }, { updatedAt: "desc" }],
   });
 
-  const listingsByMpn = new Map<string, ListingWithCompany[]>();
-  for (const listing of listings) {
-    const bucket = listingsByMpn.get(listing.mpnNormalized) ?? [];
-    bucket.push(listing);
-    listingsByMpn.set(listing.mpnNormalized, bucket);
-  }
-
   let foundPartCount = 0;
   let totalListingCount = 0;
 
   const rows = entries.map((entry) => {
-    const matched = listingsByMpn.get(entry.normalized) ?? [];
+    const matched = listings.filter((listing) =>
+      bulkQueryMatchesListing(entry.normalized, listing.mpnNormalized),
+    );
     if (matched.length > 0) {
       foundPartCount += 1;
       totalListingCount += matched.length;
