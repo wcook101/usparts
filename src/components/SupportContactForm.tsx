@@ -33,11 +33,17 @@ export function SupportContactForm({
     };
 
     try {
+      const controller = new AbortController();
+      const timeoutId = window.setTimeout(() => controller.abort(), 30_000);
+
       const response = await fetch("/api/support/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
+        signal: controller.signal,
       });
+
+      window.clearTimeout(timeoutId);
 
       const data = (await response.json()) as { error?: string };
 
@@ -47,6 +53,13 @@ export function SupportContactForm({
 
       setSubmittedEmail(String(payload.email));
     } catch (submitError) {
+      if (submitError instanceof Error && submitError.name === "AbortError") {
+        setError(
+          "Sending timed out. Please try again in a moment or email support@usparts.us directly.",
+        );
+        return;
+      }
+
       setError(
         submitError instanceof Error
           ? submitError.message

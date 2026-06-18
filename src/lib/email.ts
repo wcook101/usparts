@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import type SMTPTransport from "nodemailer/lib/smtp-transport";
 
 export type SendEmailInput = {
   to: string;
@@ -14,33 +15,65 @@ function getAppUrl(): string {
 
 function isEmailConfigured(): boolean {
   return Boolean(
-    process.env.SMTP_HOST &&
-      process.env.SMTP_FROM &&
-      process.env.SMTP_USER &&
-      process.env.SMTP_PASS,
+    readEnv("SMTP_HOST") &&
+      readEnv("SMTP_FROM") &&
+      readEnv("SMTP_USER") &&
+      readEnv("SMTP_PASS"),
   );
 }
 
+function readEnv(name: string): string | undefined {
+  const raw = process.env[name]?.trim();
+  if (!raw) {
+    return undefined;
+  }
+
+  if (
+    (raw.startsWith('"') && raw.endsWith('"')) ||
+    (raw.startsWith("'") && raw.endsWith("'"))
+  ) {
+    return raw.slice(1, -1);
+  }
+
+  return raw;
+}
+
 function getTransport() {
-  const host = process.env.SMTP_HOST;
-  const port = Number(process.env.SMTP_PORT ?? 587);
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
+  const host = readEnv("SMTP_HOST");
+  const port = Number(readEnv("SMTP_PORT") ?? 587);
+  const user = readEnv("SMTP_USER");
+  const pass = readEnv("SMTP_PASS");
+  const secure =
+    readEnv("SMTP_SECURE") === "true" || (port === 465 && readEnv("SMTP_SECURE") !== "false");
 
   if (!host) {
     throw new Error("SMTP_HOST is not configured");
   }
 
-  return nodemailer.createTransport({
+  if (!user || !pass) {
+    throw new Error("SMTP_USER and SMTP_PASS are required");
+  }
+
+  const options = {
     host,
     port,
-    secure: port === 465,
-    auth: user && pass ? { user, pass } : undefined,
-  });
+    secure,
+    auth: { user, pass },
+    connectionTimeout: 15_000,
+    greetingTimeout: 15_000,
+    socketTimeout: 20_000,
+    family: 4,
+    requireTLS: port === 587,
+    tls: {
+      minVersion: "TLSv1.2" as const,
+    },
+  } as SMTPTransport.Options;
+
+  return nodemailer.createTransport(options);
 }
 
 export async function sendEmail(input: SendEmailInput): Promise<void> {
-  const from = process.env.SMTP_FROM ?? "USParts <noreply@usparts.local>";
+  const from = readEnv("SMTP_FROM") ?? "USParts <noreply@usparts.local>";
 
   if (!isEmailConfigured()) {
     console.warn(

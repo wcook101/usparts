@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { notifySupportContact } from "@/lib/notifications";
 import { supportContactSchema } from "@/lib/validations";
 
+export const maxDuration = 30;
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
