@@ -13,7 +13,12 @@ function getAppUrl(): string {
 }
 
 function isEmailConfigured(): boolean {
-  return Boolean(process.env.SMTP_HOST && process.env.SMTP_FROM);
+  return Boolean(
+    process.env.SMTP_HOST &&
+      process.env.SMTP_FROM &&
+      process.env.SMTP_USER &&
+      process.env.SMTP_PASS,
+  );
 }
 
 function getTransport() {
@@ -38,23 +43,27 @@ export async function sendEmail(input: SendEmailInput): Promise<void> {
   const from = process.env.SMTP_FROM ?? "USParts <noreply@usparts.local>";
 
   if (!isEmailConfigured()) {
-    console.log("[email:dev]", {
-      to: input.to,
-      subject: input.subject,
-      text: input.text,
-    });
+    console.warn(
+      "[email:dev] SMTP not fully configured (need SMTP_HOST, SMTP_USER, SMTP_PASS, SMTP_FROM). Logging instead of sending:",
+      { to: input.to, subject: input.subject },
+    );
     return;
   }
 
   const transport = getTransport();
-  await transport.sendMail({
-    from,
-    to: input.to,
-    subject: input.subject,
-    text: input.text,
-    html: input.html ?? input.text.replace(/\n/g, "<br>"),
-    ...(input.replyTo ? { replyTo: input.replyTo } : {}),
-  });
+  try {
+    await transport.sendMail({
+      from,
+      to: input.to,
+      subject: input.subject,
+      text: input.text,
+      html: input.html ?? input.text.replace(/\n/g, "<br>"),
+      ...(input.replyTo ? { replyTo: input.replyTo } : {}),
+    });
+  } catch (error) {
+    console.error("[email] Failed to send:", { to: input.to, subject: input.subject, error });
+    throw error;
+  }
 }
 
 export function appUrl(path: string): string {

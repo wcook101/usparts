@@ -18,7 +18,8 @@
     "db:link-company": "tsx scripts/link-company-owner.ts",
     "db:setup": "npm run db:up && npm run db:deploy && npm run db:seed",
     "dev:setup": "npm install && npm run db:setup",
-    "verify": "tsx scripts/verify.ts"
+    "verify": "tsx scripts/verify.ts",
+    "test:smtp": "tsx scripts/test-smtp.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.8.0",
