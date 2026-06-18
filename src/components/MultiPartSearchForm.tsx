@@ -79,19 +79,20 @@ export function MultiPartSearchForm({
       <form onSubmit={handleSubmit} className="space-y-4">
         <label className="block space-y-2">
           <span className="text-sm font-medium text-slate-700">
-            Part numbers (one per line, or comma-separated)
+            Part numbers (one per line, spaces, or commas)
           </span>
           <textarea
             value={mpns}
             onChange={(event) => setMpns(event.target.value)}
             rows={10}
-            placeholder={"LM358\n1N4148\nZX74HCTLS245N"}
+            placeholder={"LM358N 1N4148\nor one part per line"}
             className="w-full rounded-lg border border-slate-300 px-3 py-2 font-mono text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             required
           />
           <span className="block text-xs text-slate-500">
             Up to {MAX_BULK_SEARCH_PARTS.toLocaleString()} parts per search.
-            Matches exact MPNs and variants (e.g. LM358 finds LM358N, LM358ND).
+            Example: <span className="font-mono">lm358n 1N4148</span> on one line
+            works. Case does not matter.
           </span>
         </label>
 

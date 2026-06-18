@@ -128,9 +128,9 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
               database query — the same workflow legacy surplus search tools use.
             </p>
             <ul className="mt-4 space-y-2 text-sm text-slate-600">
-              <li>One part number per line, or comma-separated</li>
-              <li>Base numbers match variants (LM358 → LM358N, LM358ND)</li>
-              <li>Results appear below after you click Search all parts</li>
+              <li>One line with spaces works: lm358n 1N4148</li>
+              <li>Or one part number per line</li>
+              <li>Base numbers match variants (LM358 → LM358N)</li>
             </ul>
           </aside>
 
