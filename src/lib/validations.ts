@@ -142,6 +142,20 @@ export const createQuoteSchema = z.object({
 
 export type CreateQuoteInput = z.infer<typeof createQuoteSchema>;
 
+export const MAX_BULK_RFQ_LISTINGS = 100;
+
+export const createBulkRfqSchema = z.object({
+  listingIds: z.array(z.string().min(1)).min(1).max(MAX_BULK_RFQ_LISTINGS),
+  buyerName: z.string().trim().min(2).max(120),
+  buyerEmail: z.string().trim().email(),
+  buyerCompany: z.string().trim().max(120).optional().or(z.literal("")),
+  notes: z.string().trim().max(1000).optional().or(z.literal("")),
+  turnstileToken: z.string().trim().optional(),
+  website: z.string().max(0).optional(),
+});
+
+export type CreateBulkRfqInput = z.infer<typeof createBulkRfqSchema>;
+
 export const updateProfileSchema = z.object({
   name: z.string().trim().min(2).max(120),
 });

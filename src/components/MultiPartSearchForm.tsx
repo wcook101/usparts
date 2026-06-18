@@ -2,17 +2,21 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import { ListingResultsList } from "@/components/ListingResultsList";
+import { BulkRfqPanel } from "@/components/BulkRfqPanel";
 import type { BulkSearchResult } from "@/lib/listings";
 import { MAX_BULK_SEARCH_PARTS } from "@/lib/validations";
+import type { BuyerDefaults } from "@/components/BuyerContactFields";
 
 type MultiPartSearchFormProps = {
   initialMpns?: string;
   autoSearch?: boolean;
+  buyerDefaults?: BuyerDefaults | null;
 };
 
 export function MultiPartSearchForm({
   initialMpns = "",
   autoSearch = false,
+  buyerDefaults = null,
 }: MultiPartSearchFormProps) {
   const resultsId = useId();
   const hasAutoSearched = useRef(false);
@@ -138,6 +142,10 @@ export function MultiPartSearchForm({
               </>
             ) : null}
           </div>
+
+          {results.foundPartCount > 0 ? (
+            <BulkRfqPanel results={results} buyerDefaults={buyerDefaults} />
+          ) : null}
 
           {foundRows.length > 0 ? (
             <div className="space-y-6">

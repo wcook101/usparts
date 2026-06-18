@@ -54,6 +54,18 @@ const rateLimitRules: RateLimitRule[] = [
     intervalMs: 60 * 1000,
     maxRequests: 30,
   },
+  {
+    test: (pathname, method) =>
+      pathname === "/api/quotes/bulk" && method === "POST",
+    intervalMs: 60 * 60 * 1000,
+    maxRequests: 5,
+  },
+  {
+    test: (pathname, method) =>
+      pathname === "/api/support/contact" && method === "POST",
+    intervalMs: 60 * 60 * 1000,
+    maxRequests: 10,
+  },
 ];
 
 function applyRateLimit(request: NextRequest): NextResponse | null {
@@ -120,6 +132,7 @@ export const config = {
     "/api/auth/reset-password",
     "/api/orders",
     "/api/quotes",
+    "/api/quotes/bulk",
     "/api/support/contact",
     "/api/search/bulk",
   ],

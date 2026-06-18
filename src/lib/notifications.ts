@@ -211,3 +211,98 @@ export async function notifySupportContact(input: {
     text: lines.join("\n"),
   });
 }
+
+type BulkRfqVendorLine = {
+  quoteId: string;
+  accessToken: string;
+  mpn: string;
+  manufacturer: string;
+  quantity: number;
+  listedQuantity: number;
+};
+
+export async function notifyBulkRfqVendorBundle(input: {
+  buyerName: string;
+  buyerEmail: string;
+  buyerCompany: string | null;
+  notes: string | null;
+  company: {
+    name: string;
+    email: string;
+  };
+  lines: BulkRfqVendorLine[];
+}): Promise<void> {
+  const partRows = input.lines
+    .map((line) => {
+      const quoteUrl = appUrl(`/quotes/${line.quoteId}?token=${line.accessToken}`);
+      return [
+        `- ${line.mpn} (${line.manufacturer})`,
+        `  Qty requested: ${line.quantity}`,
+        `  Listed qty: ${line.listedQuantity}`,
+        `  View: ${quoteUrl}`,
+      ].join("\n");
+    })
+    .join("\n\n");
+
+  await sendEmail({
+    to: input.company.email,
+    replyTo: input.buyerEmail,
+    subject: `Bulk RFQ: ${input.lines.length} part${input.lines.length === 1 ? "" : "s"} requested`,
+    text: [
+      `You received a bulk quote request on USParts.`,
+      "",
+      `Buyer: ${input.buyerName}`,
+      `Email: ${input.buyerEmail}`,
+      input.buyerCompany ? `Company: ${input.buyerCompany}` : "",
+      input.notes ? `Notes: ${input.notes}` : "",
+      "",
+      "Parts requested:",
+      partRows,
+      "",
+      "Reply to the buyer directly to provide pricing and availability.",
+    ]
+      .filter(Boolean)
+      .join("\n"),
+  });
+}
+
+export async function notifyBulkRfqBuyerConfirmation(input: {
+  buyerName: string;
+  buyerEmail: string;
+  totalListings: number;
+  totalVendors: number;
+  notes: string | null;
+  lines: Array<{
+    quoteId: string;
+    accessToken: string;
+    mpn: string;
+    manufacturer: string;
+    supplierName: string;
+    quantity: number;
+  }>;
+}): Promise<void> {
+  const summary = input.lines
+    .map((line) => {
+      const quoteUrl = appUrl(`/quotes/${line.quoteId}?token=${line.accessToken}`);
+      return `- ${line.mpn} (${line.manufacturer}) → ${line.supplierName} · Qty ${line.quantity}\n  ${quoteUrl}`;
+    })
+    .join("\n");
+
+  await sendEmail({
+    to: input.buyerEmail,
+    subject: `Bulk quote requests sent (${input.totalListings} parts)`,
+    text: [
+      `Hi ${input.buyerName},`,
+      "",
+      `Your bulk quote request has been sent to ${input.totalVendors} supplier${input.totalVendors === 1 ? "" : "s"} covering ${input.totalListings} listing${input.totalListings === 1 ? "" : "s"}.`,
+      input.notes ? `\nYour notes: ${input.notes}` : "",
+      "",
+      "Summary:",
+      summary,
+      "",
+      "Suppliers will respond to you directly.",
+    ]
+      .filter(Boolean)
+      .join("\n"),
+  });
+}

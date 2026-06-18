@@ -12,6 +12,7 @@ import {
 } from "@/lib/listings";
 import { looksLikeMultiPartQuery } from "@/lib/mpn-normalize";
 import { searchQuerySchema } from "@/lib/validations";
+import { getBuyerDefaults, getSessionUser } from "@/lib/auth";
 
 type SearchPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -59,6 +60,10 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
           recentOnly: false,
         }
       : await searchListings(parsed);
+
+  const buyerDefaults = isBulkMode
+    ? getBuyerDefaults(await getSessionUser())
+    : null;
 
   function buildSearchHref(nextMode: "single" | "bulk") {
     if (nextMode === "bulk") {
@@ -137,6 +142,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
           <MultiPartSearchForm
             initialMpns={bulkMpns}
             autoSearch={Boolean(bulkMpns.trim())}
+            buyerDefaults={buyerDefaults}
           />
         </div>
       ) : (
