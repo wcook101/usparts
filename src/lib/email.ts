@@ -103,7 +103,7 @@ async function sendViaResend(input: SendEmailInput): Promise<void> {
   }
 
   const resend = new Resend(apiKey);
-  const { error } = await resend.emails.send({
+  const { data, error } = await resend.emails.send({
     from: getFromAddress(),
     to: input.to,
     subject: input.subject,
@@ -115,6 +115,12 @@ async function sendViaResend(input: SendEmailInput): Promise<void> {
   if (error) {
     throw new Error(error.message);
   }
+
+  console.log("[email] Resend accepted message:", {
+    id: data?.id,
+    to: input.to,
+    subject: input.subject,
+  });
 }
 
 async function sendViaSmtp(input: SendEmailInput): Promise<void> {
