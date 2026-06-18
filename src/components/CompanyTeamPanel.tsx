@@ -233,13 +233,16 @@ export function CompanyTeamPanel() {
             disabled={isSubmitting}
             className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:bg-slate-300"
           >
-            {isSubmitting ? "Creating invite..." : "Create invite link"}
+            {isSubmitting ? "Sending invite..." : "Send invite"}
           </button>
         </form>
 
         {inviteLink ? (
           <div className="mt-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-900">
-            <p className="font-medium">Share this invite link</p>
+            <p className="font-medium">Invite sent by email</p>
+            <p className="mt-1 text-green-800">
+              You can also share this link directly:
+            </p>
             <p className="mt-2 break-all font-mono text-xs">{inviteLink}</p>
           </div>
         ) : null}

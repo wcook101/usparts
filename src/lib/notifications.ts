@@ -153,3 +153,32 @@ export async function notifyPasswordReset(input: {
     ].join("\n"),
   });
 }
+
+export async function notifyCompanyInvite(input: {
+  email: string;
+  companyName: string;
+  role: string;
+  invitedByName: string | null;
+  invitedByEmail: string;
+  token: string;
+}): Promise<void> {
+  const inviteUrl = appUrl(`/invite/${input.token}`);
+  const roleLabel = input.role === "ADMIN" ? "team admin" : "team member";
+  const invitedBy = input.invitedByName?.trim() || input.invitedByEmail;
+
+  await sendEmail({
+    to: input.email,
+    subject: `You're invited to join ${input.companyName} on USParts`,
+    text: [
+      `Hi,`,
+      "",
+      `${invitedBy} invited you to join ${input.companyName} on USParts as a ${roleLabel}.`,
+      "",
+      `Accept the invite: ${inviteUrl}`,
+      "",
+      `Sign in or create an account with ${input.email} to accept.`,
+      "",
+      "This invite expires in 7 days.",
+    ].join("\n"),
+  });
+}

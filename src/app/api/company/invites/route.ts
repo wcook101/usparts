@@ -7,6 +7,7 @@ import {
 } from "@/lib/auth";
 import { createCompanyInviteSchema } from "@/lib/validations";
 import { db } from "@/lib/db";
+import { notifyCompanyInvite } from "@/lib/notifications";
 
 export async function GET() {
   try {
@@ -82,6 +83,15 @@ export async function POST(request: Request) {
       email: parsed.data.email,
       role: parsed.data.role,
       invitedById: user.id,
+    });
+
+    await notifyCompanyInvite({
+      email: invite.email,
+      companyName: invite.company.name,
+      role: invite.role,
+      invitedByName: invite.invitedBy.name,
+      invitedByEmail: invite.invitedBy.email,
+      token: invite.token,
     });
 
     return NextResponse.json(
