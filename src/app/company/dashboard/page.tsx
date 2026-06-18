@@ -100,10 +100,20 @@ export default async function CompanyDashboardPage() {
               </p>
             </Link>
             <Link
+              href="/company/upload"
+              className="rounded-xl border border-blue-200 bg-blue-50 p-6 shadow-sm transition hover:border-blue-300 sm:col-span-2"
+            >
+              <h2 className="text-lg font-semibold text-slate-900">Email your inventory</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-700">
+                Attach your spreadsheet and send it to upload@usparts.us — we
+                will import it for you. No online upload required.
+              </p>
+            </Link>
+            <Link
               href="/company/import"
               className="rounded-xl border border-slate-200/80 bg-white/90 p-6 shadow-sm backdrop-blur-sm transition hover:border-blue-300"
             >
-              <h2 className="text-lg font-semibold text-slate-900">Bulk import</h2>
+              <h2 className="text-lg font-semibold text-slate-900">Bulk import online</h2>
               <p className="mt-2 text-sm leading-6 text-slate-600">
                 Upload CSV or Excel files with up to 100,000 parts at once.
               </p>

@@ -83,11 +83,18 @@ export default async function HelpPage() {
               and register your company with at least one warehouse location.
             </li>
             <li>
-              Add listings manually or use{" "}
-              <Link href="/company/import" className="font-medium text-blue-600 hover:text-blue-700">
-                bulk import
+              Email your spreadsheet to{" "}
+              <Link href="/company/upload" className="font-medium text-blue-600 hover:text-blue-700">
+                upload@usparts.us
               </Link>{" "}
-              to upload inventory from a spreadsheet.
+              and our team will import it for you — no online upload required.
+            </li>
+            <li>
+              Or use{" "}
+              <Link href="/company/import" className="font-medium text-blue-600 hover:text-blue-700">
+                bulk import online
+              </Link>{" "}
+              from a CSV or Excel file.
             </li>
             <li>
               Manage orders and quote requests from your{" "}

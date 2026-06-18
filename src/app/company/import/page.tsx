@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { EmailInventoryUploadPanel } from "@/components/EmailInventoryUploadPanel";
 import { InventoryImportForm } from "@/components/InventoryImportForm";
 import { getSessionUser, userCanManageInventory } from "@/lib/auth";
 import { getSessionCompany } from "@/lib/auth/resource-access";
@@ -65,11 +66,32 @@ export default async function ImportInventoryPage() {
           Upload your parts database
         </h1>
         <p className="mt-3 text-sm leading-6 text-slate-600">
-          Importing for <strong>{company.name}</strong>. Upload up to 100,000
-          parts from CSV, Excel (.xlsx/.xls), or JSON.
+          Importing for <strong>{company.name}</strong>. Upload online below, or
+          email your file to us if that is easier.
         </p>
 
-        <div className="mt-6 flex flex-wrap gap-3">
+        <div className="mt-6">
+          <EmailInventoryUploadPanel
+            companyName={company.name}
+            contactEmail={user.email}
+            contactName={user.name}
+            showOnlineImportLink={false}
+          />
+        </div>
+
+        <div className="mt-8 border-t border-slate-200 pt-8">
+          <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+            Option 2
+          </p>
+          <h2 className="mt-2 text-xl font-semibold text-slate-900">
+            Upload online
+          </h2>
+          <p className="mt-2 text-sm text-slate-600">
+            Upload up to 100,000 parts from CSV, Excel (.xlsx/.xls), or JSON.
+          </p>
+        </div>
+
+        <div className="mt-4 flex flex-wrap gap-3">
           <a
             href="/templates/inventory-import-template.csv"
             download

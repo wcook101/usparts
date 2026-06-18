@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { isPlatformAdmin } from "@/lib/admin";
 import { getAdminOverview } from "@/lib/admin-overview";
+import { UPLOAD_EMAIL } from "@/lib/site";
 
 export const metadata = {
   title: "Admin",
@@ -121,6 +122,21 @@ export default async function AdminPage() {
             App URL: {overview.health.appUrl}
           </span>
         </div>
+      </section>
+
+      <section className="mt-8 rounded-2xl border border-amber-200 bg-amber-50 p-6">
+        <h2 className="text-lg font-semibold text-slate-900">Email inventory uploads</h2>
+        <p className="mt-2 text-sm leading-7 text-slate-700">
+          Suppliers can email spreadsheets to{" "}
+          <span className="font-mono font-medium">{UPLOAD_EMAIL}</span>. Check
+          that mailbox in SiteGround webmail, download the attachment, and import
+          it through the supplier&apos;s account or your internal process.
+        </p>
+        <p className="mt-3 text-sm text-slate-600">
+          Make sure the <strong>{UPLOAD_EMAIL}</strong> mailbox exists in
+          SiteGround and is monitored. Match the sender email to a registered
+          company when possible.
+        </p>
       </section>
 
       <section className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">

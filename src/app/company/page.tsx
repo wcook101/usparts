@@ -37,7 +37,8 @@ export default async function CompanyPage() {
           <div className="mt-8 grid gap-4 sm:grid-cols-2">
             {[
               "List manufacturer part numbers and stock levels",
-              "Upload entire inventory databases via CSV or Excel",
+              "Email your spreadsheet to upload@usparts.us for hands-free import",
+              "Upload inventory online via CSV or Excel",
               "Show lead times, condition, and warehouse location",
               "Get orders and quote requests directly from buyers",
             ].map((item) => (
@@ -48,6 +49,15 @@ export default async function CompanyPage() {
                 {item}
               </div>
             ))}
+          </div>
+
+          <div className="mt-6">
+            <Link
+              href="/company/upload"
+              className="inline-flex rounded-lg border border-blue-200 bg-blue-50 px-4 py-2.5 text-sm font-medium text-blue-700 hover:bg-blue-100"
+            >
+              Email inventory to upload@usparts.us
+            </Link>
           </div>
         </section>
 
