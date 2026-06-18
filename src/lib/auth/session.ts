@@ -2,6 +2,7 @@ import { randomBytes } from "node:crypto";
 import { cookies } from "next/headers";
 import type { Company, User } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
+import { isPlatformAdmin } from "@/lib/admin";
 import { AuthError } from "@/lib/auth/errors";
 import {
   claimCompanyForUser,
@@ -244,6 +245,7 @@ export function toAuthUserPayload(user: SessionUser) {
     role,
     canManageInventory: role ? canManageInventory(role) : false,
     canInviteMembers: role ? canInviteMembers(role) : false,
+    isPlatformAdmin: isPlatformAdmin(user.email),
     buyerProfile: company
       ? {
           name: user.name ?? "",

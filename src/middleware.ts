@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 import { SESSION_COOKIE_NAME } from "@/lib/auth/constants";
 import { getClientIp, rateLimit } from "@/lib/rate-limit";
 
-const protectedPaths = ["/company/import", "/company/listings/new"];
+const protectedPaths = ["/company/import", "/company/listings/new", "/admin"];
 
 type RateLimitRule = {
   test: (pathname: string, method: string) => boolean;
@@ -110,6 +110,8 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
+    "/admin",
+    "/admin/:path*",
     "/company/import/:path*",
     "/company/listings/new/:path*",
     "/api/auth/login",
@@ -118,5 +120,6 @@ export const config = {
     "/api/auth/reset-password",
     "/api/orders",
     "/api/quotes",
+    "/api/support/contact",
   ],
 };

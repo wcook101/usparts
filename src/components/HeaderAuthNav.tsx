@@ -12,6 +12,7 @@ type AuthUser = {
   role: string | null;
   canManageInventory: boolean;
   canInviteMembers: boolean;
+  isPlatformAdmin: boolean;
 };
 
 export function HeaderAuthNav() {
@@ -82,6 +83,14 @@ export function HeaderAuthNav() {
 
   return (
     <div className="flex flex-wrap items-center gap-2">
+      {user.isPlatformAdmin ? (
+        <Link
+          href="/admin"
+          className="rounded-md px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+        >
+          Admin
+        </Link>
+      ) : null}
       <Link
         href="/account"
         className="hidden rounded-md px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 sm:inline"
