@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SUPPORT_EMAIL, SUPPORT_MAILTO } from "@/lib/site";
 
 export const metadata = {
   title: "Terms of Service",
@@ -54,6 +55,17 @@ export default function TermsPage() {
           <p className="mt-2">
             The service is provided as-is during development. Use at your own
             risk until formal production terms are published.
+          </p>
+        </section>
+
+        <section>
+          <h2 className="text-lg font-semibold text-slate-900">Contact</h2>
+          <p className="mt-2">
+            Need help with your account, an order, or using the marketplace? Email{" "}
+            <a href={SUPPORT_MAILTO} className="font-medium text-blue-600 hover:text-blue-700">
+              {SUPPORT_EMAIL}
+            </a>
+            .
           </p>
         </section>
       </div>

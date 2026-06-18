@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SUPPORT_EMAIL, SUPPORT_MAILTO } from "@/lib/site";
 
 export const metadata = {
   title: "Privacy Policy",
@@ -52,8 +53,11 @@ export default function PrivacyPage() {
         <section>
           <h2 className="text-lg font-semibold text-slate-900">Contact</h2>
           <p className="mt-2">
-            Questions about privacy can be directed to your USParts site
-            administrator.
+            Questions about privacy? Email{" "}
+            <a href={SUPPORT_MAILTO} className="font-medium text-blue-600 hover:text-blue-700">
+              {SUPPORT_EMAIL}
+            </a>
+            .
           </p>
         </section>
       </div>
