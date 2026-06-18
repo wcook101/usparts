@@ -19,6 +19,9 @@ export const searchQuerySchema = z.object({
 });
 
 export const MAX_BULK_SEARCH_PARTS = 500;
+export const MAX_BULK_RFQ_LISTINGS = 100;
+export const BULK_RFQ_COOLDOWN_MINUTES = 15;
+export const BULK_RFQ_COOLDOWN_MS = BULK_RFQ_COOLDOWN_MINUTES * 60 * 1000;
 
 export const bulkSearchSchema = z.object({
   mpns: z.string().trim().min(1).max(50_000),
@@ -141,8 +144,6 @@ export const createQuoteSchema = z.object({
 });
 
 export type CreateQuoteInput = z.infer<typeof createQuoteSchema>;
-
-export const MAX_BULK_RFQ_LISTINGS = 100;
 
 export const createBulkRfqSchema = z.object({
   listingIds: z.array(z.string().min(1)).min(1).max(MAX_BULK_RFQ_LISTINGS),

@@ -9,7 +9,7 @@ import {
 } from "@/components/BuyerContactFields";
 import { isTurnstileEnabled, TurnstileField } from "@/components/TurnstileField";
 import type { BulkSearchResult, ListingWithCompany } from "@/lib/listings";
-import { MAX_BULK_RFQ_LISTINGS } from "@/lib/validations";
+import { BULK_RFQ_COOLDOWN_MINUTES, MAX_BULK_RFQ_LISTINGS } from "@/lib/validations";
 
 type BulkRfqPanelProps = {
   results: BulkSearchResult;
@@ -182,7 +182,9 @@ export function BulkRfqPanel({ results, buyerDefaults = null }: BulkRfqPanelProp
             Send RFQs for {listings.length} listing
             {listings.length === 1 ? "" : "s"} across {vendorCount} supplier
             {vendorCount === 1 ? "" : "s"}. Each supplier gets one bundled email
-            — not dozens of separate messages.
+            — not dozens of separate messages. You can send another bulk RFQ every{" "}
+            {BULK_RFQ_COOLDOWN_MINUTES} minutes (up to{" "}
+            {MAX_BULK_RFQ_LISTINGS.toLocaleString()} listings per batch).
           </p>
         </div>
         {!expanded ? (

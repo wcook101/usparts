@@ -3,8 +3,8 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { ListingResultsList } from "@/components/ListingResultsList";
 import { BulkRfqPanel } from "@/components/BulkRfqPanel";
+import { MultiPartSearchLimits } from "@/components/MultiPartSearchLimits";
 import type { BulkSearchResult } from "@/lib/listings";
-import { MAX_BULK_SEARCH_PARTS } from "@/lib/validations";
 import type { BuyerDefaults } from "@/components/BuyerContactFields";
 
 type MultiPartSearchFormProps = {
@@ -80,6 +80,8 @@ export function MultiPartSearchForm({
 
   return (
     <div className="space-y-6">
+      <MultiPartSearchLimits compact />
+
       <form onSubmit={handleSubmit} className="space-y-4">
         <label className="block space-y-2">
           <span className="text-sm font-medium text-slate-700">
@@ -94,9 +96,8 @@ export function MultiPartSearchForm({
             required
           />
           <span className="block text-xs text-slate-500">
-            Up to {MAX_BULK_SEARCH_PARTS.toLocaleString()} parts per search.
-            Example: <span className="font-mono">lm358n 1N4148</span> on one line
-            works. Case does not matter.
+            Paste part numbers on one line, separated by spaces, or one per line.
+            Case does not matter.
           </span>
         </label>
 

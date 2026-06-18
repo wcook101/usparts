@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { SESSION_COOKIE_NAME } from "@/lib/auth/constants";
 import { getClientIp, rateLimit } from "@/lib/rate-limit";
+import { BULK_RFQ_COOLDOWN_MS } from "@/lib/validations";
 
 const protectedPaths = ["/company/import", "/company/listings/new", "/admin"];
 
@@ -57,8 +58,8 @@ const rateLimitRules: RateLimitRule[] = [
   {
     test: (pathname, method) =>
       pathname === "/api/quotes/bulk" && method === "POST",
-    intervalMs: 60 * 60 * 1000,
-    maxRequests: 5,
+    intervalMs: BULK_RFQ_COOLDOWN_MS,
+    maxRequests: 1,
   },
   {
     test: (pathname, method) =>

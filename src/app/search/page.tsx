@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ListingResultsList } from "@/components/ListingResultsList";
 import { MultiPartSearchForm } from "@/components/MultiPartSearchForm";
+import { MultiPartSearchLimits } from "@/components/MultiPartSearchLimits";
 import { RecentUploadsList } from "@/components/RecentUploadsList";
 import { SearchBar } from "@/components/SearchBar";
 import { CATEGORY_LABELS } from "@/lib/format";
@@ -137,6 +138,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
               <li>Or one part number per line</li>
               <li>Base numbers match variants (LM358 → LM358N)</li>
             </ul>
+            <MultiPartSearchLimits />
           </aside>
 
           <MultiPartSearchForm
