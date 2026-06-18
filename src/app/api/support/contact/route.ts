@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { formatEmailError, getEmailProvider } from "@/lib/email";
 import { notifySupportContact } from "@/lib/notifications";
 import { supportContactSchema } from "@/lib/validations";
 
@@ -6,6 +7,16 @@ export const maxDuration = 30;
 
 export async function POST(request: Request) {
   try {
+    if (getEmailProvider() === "dev") {
+      return NextResponse.json(
+        {
+          error:
+            "Email is not configured on the server yet. Please email support@usparts.us directly.",
+        },
+        { status: 503 },
+      );
+    }
+
     const body = await request.json();
     const parsed = supportContactSchema.safeParse(body);
 
@@ -27,9 +38,12 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error("Support contact failed:", error);
+    console.error("Support contact failed:", formatEmailError(error), error);
     return NextResponse.json(
-      { error: "Failed to send your message. Please try again later." },
+      {
+        error:
+          "We could not send your message right now. Please email support@usparts.us directly and we will help you there.",
+      },
       { status: 500 },
     );
   }

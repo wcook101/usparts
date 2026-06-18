@@ -1,5 +1,6 @@
 import nodemailer from "nodemailer";
 import type SMTPTransport from "nodemailer/lib/smtp-transport";
+import { Resend } from "resend";
 
 export type SendEmailInput = {
   to: string;
@@ -9,20 +10,13 @@ export type SendEmailInput = {
   replyTo?: string;
 };
 
+export type EmailProvider = "resend" | "smtp" | "dev";
+
 function getAppUrl(): string {
   return process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 }
 
-function isEmailConfigured(): boolean {
-  return Boolean(
-    readEnv("SMTP_HOST") &&
-      readEnv("SMTP_FROM") &&
-      readEnv("SMTP_USER") &&
-      readEnv("SMTP_PASS"),
-  );
-}
-
-function readEnv(name: string): string | undefined {
+export function readEnv(name: string): string | undefined {
   const raw = process.env[name]?.trim();
   if (!raw) {
     return undefined;
@@ -38,13 +32,43 @@ function readEnv(name: string): string | undefined {
   return raw;
 }
 
+function getFromAddress(): string {
+  return readEnv("SMTP_FROM") ?? readEnv("EMAIL_FROM") ?? "USParts <noreply@usparts.local>";
+}
+
+function isResendConfigured(): boolean {
+  return Boolean(readEnv("RESEND_API_KEY"));
+}
+
+function isSmtpConfigured(): boolean {
+  return Boolean(
+    readEnv("SMTP_HOST") &&
+      getFromAddress() &&
+      readEnv("SMTP_USER") &&
+      readEnv("SMTP_PASS"),
+  );
+}
+
+export function getEmailProvider(): EmailProvider {
+  if (isResendConfigured()) {
+    return "resend";
+  }
+
+  if (isSmtpConfigured()) {
+    return "smtp";
+  }
+
+  return "dev";
+}
+
 function getTransport() {
   const host = readEnv("SMTP_HOST");
   const port = Number(readEnv("SMTP_PORT") ?? 587);
   const user = readEnv("SMTP_USER");
   const pass = readEnv("SMTP_PASS");
   const secure =
-    readEnv("SMTP_SECURE") === "true" || (port === 465 && readEnv("SMTP_SECURE") !== "false");
+    readEnv("SMTP_SECURE") === "true" ||
+    (port === 465 && readEnv("SMTP_SECURE") !== "false");
 
   if (!host) {
     throw new Error("SMTP_HOST is not configured");
@@ -72,29 +96,87 @@ function getTransport() {
   return nodemailer.createTransport(options);
 }
 
-export async function sendEmail(input: SendEmailInput): Promise<void> {
-  const from = readEnv("SMTP_FROM") ?? "USParts <noreply@usparts.local>";
+async function sendViaResend(input: SendEmailInput): Promise<void> {
+  const apiKey = readEnv("RESEND_API_KEY");
+  if (!apiKey) {
+    throw new Error("RESEND_API_KEY is not configured");
+  }
 
-  if (!isEmailConfigured()) {
+  const resend = new Resend(apiKey);
+  const { error } = await resend.emails.send({
+    from: getFromAddress(),
+    to: input.to,
+    subject: input.subject,
+    text: input.text,
+    html: input.html ?? input.text.replace(/\n/g, "<br>"),
+    ...(input.replyTo ? { replyTo: input.replyTo } : {}),
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+}
+
+async function sendViaSmtp(input: SendEmailInput): Promise<void> {
+  const transport = getTransport();
+  await transport.sendMail({
+    from: getFromAddress(),
+    to: input.to,
+    subject: input.subject,
+    text: input.text,
+    html: input.html ?? input.text.replace(/\n/g, "<br>"),
+    ...(input.replyTo ? { replyTo: input.replyTo } : {}),
+  });
+}
+
+export function formatEmailError(error: unknown): string {
+  const message =
+    error instanceof Error
+      ? error.message
+      : typeof error === "string"
+        ? error
+        : "Unknown email error";
+
+  if (/ETIMEDOUT|timeout|timed out/i.test(message)) {
+    return "Email server connection timed out";
+  }
+
+  if (/ECONNREFUSED|ENOTFOUND|ECONNRESET|connect/i.test(message)) {
+    return "Could not connect to email server";
+  }
+
+  if (/auth|credentials|535|534/i.test(message)) {
+    return "Email server rejected login credentials";
+  }
+
+  return message;
+}
+
+export async function sendEmail(input: SendEmailInput): Promise<void> {
+  const provider = getEmailProvider();
+
+  if (provider === "dev") {
     console.warn(
-      "[email:dev] SMTP not fully configured (need SMTP_HOST, SMTP_USER, SMTP_PASS, SMTP_FROM). Logging instead of sending:",
+      "[email:dev] No email provider configured (set RESEND_API_KEY or SMTP_*). Logging instead of sending:",
       { to: input.to, subject: input.subject },
     );
     return;
   }
 
-  const transport = getTransport();
   try {
-    await transport.sendMail({
-      from,
+    if (provider === "resend") {
+      await sendViaResend(input);
+      return;
+    }
+
+    await sendViaSmtp(input);
+  } catch (error) {
+    console.error("[email] Failed to send:", {
+      provider,
       to: input.to,
       subject: input.subject,
-      text: input.text,
-      html: input.html ?? input.text.replace(/\n/g, "<br>"),
-      ...(input.replyTo ? { replyTo: input.replyTo } : {}),
+      error: formatEmailError(error),
     });
-  } catch (error) {
-    console.error("[email] Failed to send:", { to: input.to, subject: input.subject, error });
     throw error;
   }
 }
