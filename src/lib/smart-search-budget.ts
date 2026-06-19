@@ -13,6 +13,9 @@ const MODEL_PRICING_PER_MILLION: Record<string, { input: number; output: number 
 export const SMART_SEARCH_PUBLIC_UNAVAILABLE_MESSAGE =
   "Describe-a-part search is temporarily unavailable. Try part number search, or try again later.";
 
+export const SMART_SEARCH_PROVIDER_UNAVAILABLE_MESSAGE =
+  "Describe-a-part search is temporarily unavailable. Try part number search instead.";
+
 export class SmartSearchBudgetExceededError extends Error {
   budgetUsd: number;
   spentUsd: number;

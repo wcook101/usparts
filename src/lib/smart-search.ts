@@ -7,6 +7,8 @@ import {
   assertSmartSearchWithinBudget,
   recordSmartSearchApiUsage,
   recordSmartSearchCacheHit,
+  SMART_SEARCH_PROVIDER_UNAVAILABLE_MESSAGE,
+  SMART_SEARCH_PUBLIC_UNAVAILABLE_MESSAGE,
 } from "@/lib/smart-search-budget";
 
 export const MAX_SMART_SEARCH_SUGGESTIONS = 20;
@@ -35,6 +37,33 @@ function normalizeQueryKey(query: string): string {
 type ExpansionResponse = {
   mpns?: unknown;
 };
+
+function throwOpenAiProviderError(status: number, errorBody: string): never {
+  const normalized = errorBody.toLowerCase();
+
+  if (
+    status === 429 &&
+    (normalized.includes("quota") ||
+      normalized.includes("billing") ||
+      normalized.includes("insufficient"))
+  ) {
+    console.error("OpenAI quota or billing error:", errorBody.slice(0, 500));
+    throw new Error(SMART_SEARCH_PROVIDER_UNAVAILABLE_MESSAGE);
+  }
+
+  if (status === 401 || status === 403) {
+    console.error("OpenAI auth error:", errorBody.slice(0, 500));
+    throw new Error(SMART_SEARCH_PROVIDER_UNAVAILABLE_MESSAGE);
+  }
+
+  if (status === 429 || status >= 500) {
+    console.error(`OpenAI error ${status}:`, errorBody.slice(0, 500));
+    throw new Error(SMART_SEARCH_PUBLIC_UNAVAILABLE_MESSAGE);
+  }
+
+  console.error(`OpenAI error ${status}:`, errorBody.slice(0, 500));
+  throw new Error(SMART_SEARCH_PUBLIC_UNAVAILABLE_MESSAGE);
+}
 
 type LlmExpansionResult = {
   mpns: string[];
@@ -86,9 +115,7 @@ async function expandQueryWithLlm(query: string): Promise<LlmExpansionResult> {
 
   if (!response.ok) {
     const errorBody = await response.text().catch(() => "");
-    throw new Error(
-      `AI expansion failed (${response.status})${errorBody ? `: ${errorBody.slice(0, 200)}` : ""}`,
-    );
+    throwOpenAiProviderError(response.status, errorBody);
   }
 
   const payload = (await response.json()) as {
