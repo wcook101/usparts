@@ -32,18 +32,45 @@ export function bulkQueryMatchesListing(
     return true;
   }
 
-  const minEmbeddedLength = 5;
-  if (
-    queryNormalized.length >= minEmbeddedLength &&
-    listingNormalized.includes(queryNormalized)
-  ) {
+  return false;
+}
+
+/** Whether an inventory listing matches a curated family pattern (stricter than substring). */
+export function listingMatchesInventoryPattern(
+  listingNormalized: string,
+  pattern: string,
+): boolean {
+  const listing = listingNormalized.toUpperCase();
+  const fragment = pattern.toUpperCase();
+
+  if (!listing || !fragment) {
+    return false;
+  }
+
+  if (listing.startsWith(fragment)) {
+    return true;
+  }
+
+  if (/^\d+$/.test(fragment)) {
+    return new RegExp(`^[A-Z]{1,4}${fragment}(?:[A-Z0-9]|$)`).test(listing);
+  }
+
+  const index = listing.indexOf(fragment);
+  if (index === -1) {
+    return false;
+  }
+
+  if (index === 0) {
+    return true;
+  }
+
+  // Allow a short non-numeric vendor prefix (e.g. R80286 for pattern 80286).
+  if (index <= 3 && !/[0-9]/.test(listing.slice(0, index))) {
     return true;
   }
 
   return false;
 }
-
-/** Prefixes of a query used to find shorter catalog MPNs (e.g. query ends with TR). */
 export function buildQueryPrefixSet(normalizedQueries: string[], minLength = 3): string[] {
   const prefixes = new Set<string>();
 

@@ -4,7 +4,7 @@ import {
   type ListingWithCompany,
 } from "@/lib/listings";
 import { db } from "@/lib/db";
-import { normalizeMpn } from "@/lib/mpn-normalize";
+import { listingMatchesInventoryPattern } from "@/lib/mpn-normalize";
 
 export const SMART_SEARCH_FALLBACK_LIMIT = 250;
 
@@ -58,6 +58,25 @@ const CATEGORY_MPN_PATTERNS: CategoryPattern[] = [
     ],
   },
   {
+    pattern:
+      /\b(connector|connectors|header|headers|wire\s*to\s*board|wiring\s*connector)\b/i,
+    mpnContains: [
+      "0878",
+      "2201",
+      "2202",
+      "2203",
+      "5057",
+      "5304",
+      "43025",
+      "47035",
+      "MTA100",
+      "MTA156",
+      "MTA203",
+      "5015",
+      "50-57",
+    ],
+  },
+  {
     pattern: /\b(fpga|cpld|programmable logic)\b/i,
     mpnContains: ["XC2", "XC3", "XC4", "XC5", "EPM", "EPF", "MAX7000", "MAX3000"],
   },
@@ -107,12 +126,25 @@ export async function searchListingsByMpnPatterns(
   const category = input.category?.trim();
   const manufacturer = input.manufacturer?.trim();
 
-  return db.partListing.findMany({
+  const candidates = await db.partListing.findMany({
     where: {
       isActive: true,
-      OR: validPatterns.map((pattern) => ({
-        mpnNormalized: { contains: pattern },
-      })),
+      OR: validPatterns.flatMap((pattern) => {
+        if (/^\d+$/.test(pattern)) {
+          return [
+            { mpnNormalized: { startsWith: pattern } },
+            { mpnNormalized: { startsWith: `R${pattern}` } },
+            { mpnNormalized: { startsWith: `D${pattern}` } },
+            { mpnNormalized: { startsWith: `P${pattern}` } },
+            { mpnNormalized: { startsWith: `SAB${pattern}` } },
+          ];
+        }
+
+        return [
+          { mpnNormalized: { startsWith: pattern } },
+          { mpnNormalized: { contains: pattern } },
+        ];
+      }),
       ...(category ? { category: category as never } : {}),
       ...(manufacturer
         ? { manufacturer: { contains: manufacturer, mode: "insensitive" } }
@@ -120,8 +152,16 @@ export async function searchListingsByMpnPatterns(
     },
     include: { company: true, inventoryLocation: true },
     orderBy: [{ quantity: "desc" }, { mpnNormalized: "asc" }, { updatedAt: "desc" }],
-    take: SMART_SEARCH_FALLBACK_LIMIT,
+    take: SMART_SEARCH_FALLBACK_LIMIT * 3,
   });
+
+  return candidates
+    .filter((listing) =>
+      validPatterns.some((pattern) =>
+        listingMatchesInventoryPattern(listing.mpnNormalized, pattern),
+      ),
+    )
+    .slice(0, SMART_SEARCH_FALLBACK_LIMIT);
 }
 
 function buildBulkSearchFromListings(
@@ -184,47 +224,71 @@ export async function applyInventoryFallback(
   };
 }
 
-function extractConservativeNumericCores(mpns: string): string[] {
-  const cores = new Set<string>();
-  const legacyCorePattern =
-    /^(8086|8088|8080|8085|80186|80286|80386|80486|68000|68010|68020|68030|68040|6502|Z80)$/i;
+/** Drop smart-search rows whose listings do not plausibly match the AI suggestion. */
+export function filterSmartSearchBulkResult(
+  search: BulkSearchResult,
+  suggestedMpns: string[],
+): BulkSearchResult {
+  const suggestions = suggestedMpns
+    .map((mpn) => mpn.trim().toUpperCase().replace(/[^A-Z0-9]/g, ""))
+    .filter(Boolean);
 
-  for (const chunk of mpns.split(/[\r\n,;\t]+/)) {
-    const normalized = normalizeMpn(chunk);
-    if (!normalized) {
-      continue;
-    }
-
-    const matches = normalized.match(/\d{4,}/g);
-    if (!matches) {
-      continue;
-    }
-
-    for (const match of matches) {
-      if (match.length >= 5 || legacyCorePattern.test(match)) {
-        cores.add(match);
-      }
-    }
-  }
-
-  return [...cores];
-}
-
-/** Search inventory for classic numeric cores embedded in AI suggestions (e.g. 8086 in D8086). */
-export async function searchByEmbeddedNumericCores(
-  input: BulkSearchInput,
-): Promise<BulkSearchResult | null> {
-  const cores = extractConservativeNumericCores(input.mpns);
-  if (cores.length === 0) {
-    return null;
+  if (suggestions.length === 0) {
+    return search;
   }
 
   const startedAt = Date.now();
-  const listings = await searchListingsByMpnPatterns(cores, input);
+  const rows = search.rows
+    .map((row) => {
+      const listings = row.listings.filter((listing) =>
+        suggestions.some((suggestion) =>
+          listingMatchesSuggestion(suggestion, listing.mpnNormalized),
+        ),
+      );
 
-  if (listings.length === 0) {
-    return null;
+      return {
+        ...row,
+        found: listings.length > 0,
+        listings,
+      };
+    })
+    .filter((row) => row.found);
+
+  const totalListingCount = rows.reduce((sum, row) => sum + row.listings.length, 0);
+
+  return {
+    rows,
+    queriedCount: search.queriedCount,
+    foundPartCount: rows.length,
+    notFoundPartCount: search.queriedCount - rows.length,
+    totalListingCount,
+    durationMs: Date.now() - startedAt,
+  };
+}
+
+function listingMatchesSuggestion(
+  suggestion: string,
+  listingNormalized: string,
+): boolean {
+  if (!suggestion || !listingNormalized) {
+    return false;
   }
 
-  return buildBulkSearchFromListings(listings, startedAt);
+  if (listingNormalized === suggestion) {
+    return true;
+  }
+
+  if (
+    suggestion.length >= 3 &&
+    (listingNormalized.startsWith(suggestion) || suggestion.startsWith(listingNormalized))
+  ) {
+    return true;
+  }
+
+  // Numeric tails from Molex-style numbers (e.g. 0878321006 for suggestion 0878321006).
+  if (/^\d{5,}$/.test(suggestion) && listingNormalized.includes(suggestion)) {
+    return listingNormalized.startsWith(suggestion);
+  }
+
+  return false;
 }

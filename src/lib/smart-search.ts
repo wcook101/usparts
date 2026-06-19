@@ -1,7 +1,7 @@
 import { readEnv } from "@/lib/email";
 import {
   applyInventoryFallback,
-  searchByEmbeddedNumericCores,
+  filterSmartSearchBulkResult,
 } from "@/lib/smart-search-fallback";
 import { bulkSearchListings, type BulkSearchResult } from "@/lib/listings";
 import { normalizeMpn } from "@/lib/mpn-normalize";
@@ -113,6 +113,8 @@ async function expandQueryWithLlm(query: string): Promise<LlmExpansionResult> {
             "Given a part description or equivalence request, return JSON: {\"mpns\":[\"LM358\",\"LM358N\"]}",
             `Return ${MAX_SMART_SEARCH_SUGGESTIONS} or fewer real manufacturer part numbers.`,
             "Use orderable manufacturer part numbers only — not board or module names (no Arduino, Raspberry Pi, etc.).",
+            "Never invent sequential part numbers (e.g. do not extrapolate MTA10010 from MTA100). Only suggest real catalog numbers.",
+            "For connectors, suggest real Molex/TE/Amphenol numbers (e.g. 0878321006, 22-01-3037, MTA-100, 5057 series).",
             "Prefer common industry base numbers and widely stocked variants, including legacy CPUs and mature parts often found in surplus.",
             'For broad categories like "microprocessor" or "MCU", include classic x86 (8086, 80286, 80386), 68000-family, Z80, and common MCUs.',
             "When constraints are provided (voltage, package, channels, manufacturer), prefer MPNs that match them.",
@@ -277,19 +279,13 @@ export async function smartSearchListings(
   };
 
   let search = await bulkSearchListings(bulkInput);
+  search = filterSmartSearchBulkResult(search, suggestedMpns);
   let usedInventoryFallback = false;
 
   if (search.totalListingCount === 0) {
     const fallback = await applyInventoryFallback(query, search, bulkInput);
     search = fallback.search;
     usedInventoryFallback = fallback.usedInventoryFallback;
-
-    if (search.totalListingCount === 0) {
-      const embedded = await searchByEmbeddedNumericCores(bulkInput);
-      if (embedded) {
-        search = embedded;
-      }
-    }
   }
 
   return {
