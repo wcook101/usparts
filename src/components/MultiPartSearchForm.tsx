@@ -3,28 +3,20 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { ListingResultsList } from "@/components/ListingResultsList";
 import { BulkRfqPanel } from "@/components/BulkRfqPanel";
-import { GuestSearchLimitBanner } from "@/components/GuestSearchLimitBanner";
 import { MultiPartSearchLimits } from "@/components/MultiPartSearchLimits";
 import type { BulkSearchResult } from "@/lib/listings";
 import type { BuyerDefaults } from "@/components/BuyerContactFields";
-import type { GuestSearchAccess } from "@/lib/guest-search-limit";
 
 type MultiPartSearchFormProps = {
   initialMpns?: string;
   autoSearch?: boolean;
   buyerDefaults?: BuyerDefaults | null;
-  guestSearch: GuestSearchAccess;
-};
-
-type BulkSearchApiResponse = BulkSearchResult & {
-  guestSearch?: GuestSearchAccess;
 };
 
 export function MultiPartSearchForm({
   initialMpns = "",
   autoSearch = false,
   buyerDefaults = null,
-  guestSearch,
 }: MultiPartSearchFormProps) {
   const resultsId = useId();
   const hasAutoSearched = useRef(false);
@@ -32,7 +24,6 @@ export function MultiPartSearchForm({
   const [isSearching, setIsSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [results, setResults] = useState<BulkSearchResult | null>(null);
-  const [guestAccess, setGuestAccess] = useState(guestSearch);
 
   async function runSearch(partList: string) {
     setError(null);
@@ -45,24 +36,12 @@ export function MultiPartSearchForm({
         body: JSON.stringify({ mpns: partList }),
       });
 
-      const data = (await response.json()) as BulkSearchApiResponse & {
-        error?: string;
-        signupUrl?: string;
-      };
-
+      const data = await response.json();
       if (!response.ok) {
-        if (response.status === 403 && data.guestSearch) {
-          setGuestAccess(data.guestSearch);
-        }
         throw new Error(data.error ?? "Bulk search failed");
       }
 
-      if (data.guestSearch) {
-        setGuestAccess(data.guestSearch);
-      }
-
-      const { guestSearch: _guestSearch, ...searchResults } = data;
-      setResults(searchResults);
+      setResults(data as BulkSearchResult);
 
       requestAnimationFrame(() => {
         document.getElementById(resultsId)?.scrollIntoView({
@@ -101,7 +80,6 @@ export function MultiPartSearchForm({
 
   return (
     <div className="space-y-6">
-      <GuestSearchLimitBanner access={guestAccess} />
       <MultiPartSearchLimits compact />
 
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -113,9 +91,8 @@ export function MultiPartSearchForm({
             value={mpns}
             onChange={(event) => setMpns(event.target.value)}
             rows={10}
-            disabled={!guestAccess.allowed}
             placeholder={"LM358N 1N4148\nor one part per line"}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 font-mono text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-50"
+            className="w-full rounded-lg border border-slate-300 px-3 py-2 font-mono text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             required
           />
           <span className="block text-xs text-slate-500">
@@ -126,7 +103,7 @@ export function MultiPartSearchForm({
 
         <button
           type="submit"
-          disabled={isSearching || !mpns.trim() || !guestAccess.allowed}
+          disabled={isSearching || !mpns.trim()}
           className="rounded-lg bg-blue-600 px-5 py-3 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
         >
           {isSearching ? "Searching inventory..." : "Search all parts"}

@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { GuestSearchLimitBanner } from "@/components/GuestSearchLimitBanner";
 import { ListingResultsList } from "@/components/ListingResultsList";
 import { MultiPartSearchForm } from "@/components/MultiPartSearchForm";
 import { MultiPartSearchLimits } from "@/components/MultiPartSearchLimits";
@@ -9,11 +8,6 @@ import { SearchBar } from "@/components/SearchBar";
 import { getBuyerDefaults, getSessionUser } from "@/lib/auth";
 import { CATEGORY_LABELS } from "@/lib/format";
 import {
-  consumeGuestSearch,
-  getGuestSearchAccess,
-} from "@/lib/guest-search-access";
-import {
-  hasSearchCriteria,
   RECENT_COMPANIES_LIMIT,
   RECENT_LISTINGS_PER_COMPANY,
   searchListings,
@@ -58,18 +52,6 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   }
 
   const user = await getSessionUser();
-  let guestSearch = await getGuestSearchAccess(user);
-  const isNewSingleSearch =
-    !isBulkMode && hasSearchCriteria(parsed) && parsed.page === 1;
-  let searchBlocked = false;
-
-  if (isNewSingleSearch) {
-    if (!guestSearch.allowed) {
-      searchBlocked = true;
-    } else {
-      guestSearch = await consumeGuestSearch(user);
-    }
-  }
 
   const searchResults = isBulkMode
     ? {
@@ -81,17 +63,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
         totalPages: 1,
         recentOnly: false,
       }
-    : searchBlocked
-      ? {
-          listings: [],
-          companyGroups: undefined,
-          total: 0,
-          totalCount: 0,
-          page: 1,
-          totalPages: 1,
-          recentOnly: false,
-        }
-      : await searchListings(parsed);
+    : await searchListings(parsed);
 
   const {
     listings,
@@ -137,9 +109,6 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
         <p className="mt-2 text-slate-600">
           Find available electronic parts across registered suppliers.
         </p>
-        <div className="mt-4">
-          {!isBulkMode ? <GuestSearchLimitBanner access={guestSearch} /> : null}
-        </div>
       </div>
 
       <div className="mb-8 flex flex-wrap gap-2">
@@ -185,9 +154,8 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
           <MultiPartSearchForm
             initialMpns={bulkMpns}
-            autoSearch={Boolean(bulkMpns.trim()) && guestSearch.allowed}
+            autoSearch={Boolean(bulkMpns.trim())}
             buyerDefaults={buyerDefaults}
-            guestSearch={guestSearch}
           />
         </div>
       ) : (
@@ -236,8 +204,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
               <button
                 type="submit"
-                disabled={guestSearch.isGuest && !guestSearch.allowed}
-                className="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+                className="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700"
               >
                 Apply filters
               </button>
@@ -246,10 +213,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
           <div>
             <div className="mb-6">
-              <SearchBar
-                defaultQuery={parsed.q ?? ""}
-                disabled={guestSearch.isGuest && !guestSearch.allowed}
-              />
+              <SearchBar defaultQuery={parsed.q ?? ""} />
             </div>
 
             <div className="mb-6 flex items-center justify-between gap-4">
@@ -298,16 +262,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
               </div>
             </div>
 
-            {searchBlocked ? (
-              <div className="rounded-xl border border-dashed border-slate-300 bg-white/90 p-10 text-center backdrop-blur-sm">
-                <p className="text-lg font-medium text-slate-900">
-                  Guest search limit reached
-                </p>
-                <p className="mt-2 text-sm text-slate-600">
-                  Create a free account to run this search and keep browsing inventory.
-                </p>
-              </div>
-            ) : recentOnly && companyGroups && companyGroups.length > 0 ? (
+            {recentOnly && companyGroups && companyGroups.length > 0 ? (
               <RecentUploadsList groups={companyGroups} />
             ) : listings.length > 0 ? (
               <ListingResultsList listings={listings} />

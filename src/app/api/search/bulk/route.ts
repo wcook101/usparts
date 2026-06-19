@@ -1,10 +1,4 @@
 import { NextResponse } from "next/server";
-import { getSessionUser } from "@/lib/auth";
-import {
-  consumeGuestSearch,
-  getGuestSearchAccess,
-} from "@/lib/guest-search-access";
-import { guestSearchLimitResponse } from "@/lib/guest-search-limit";
 import { bulkSearchListings } from "@/lib/listings";
 import { bulkSearchSchema } from "@/lib/validations";
 
@@ -19,18 +13,6 @@ export async function POST(request: Request) {
     );
   }
 
-  const user = await getSessionUser();
-  const guestSearch = await getGuestSearchAccess(user);
-
-  if (!guestSearch.allowed) {
-    return NextResponse.json(
-      { ...guestSearchLimitResponse(), guestSearch },
-      { status: 403 },
-    );
-  }
-
-  const updatedGuestSearch = await consumeGuestSearch(user);
-
   const results = await bulkSearchListings(parsed.data);
-  return NextResponse.json({ ...results, guestSearch: updatedGuestSearch });
+  return NextResponse.json(results);
 }

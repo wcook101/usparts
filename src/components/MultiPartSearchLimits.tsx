@@ -3,7 +3,6 @@ import {
   MAX_BULK_RFQ_LISTINGS,
   MAX_BULK_SEARCH_PARTS,
 } from "@/lib/validations";
-import { GUEST_SEARCH_LIMIT } from "@/lib/guest-search-limit";
 
 type MultiPartSearchLimitsProps = {
   compact?: boolean;
@@ -11,10 +10,6 @@ type MultiPartSearchLimitsProps = {
 
 export function MultiPartSearchLimits({ compact = false }: MultiPartSearchLimitsProps) {
   const items = [
-    {
-      label: "Free guest searches",
-      value: `${GUEST_SEARCH_LIMIT} before signup`,
-    },
     {
       label: "Parts per search",
       value: `Up to ${MAX_BULK_SEARCH_PARTS.toLocaleString()}`,
@@ -32,8 +27,7 @@ export function MultiPartSearchLimits({ compact = false }: MultiPartSearchLimits
   if (compact) {
     return (
       <p className="text-xs leading-5 text-slate-500">
-        Limits: {GUEST_SEARCH_LIMIT} free guest searches ·{" "}
-        {MAX_BULK_SEARCH_PARTS.toLocaleString()} parts per search ·{" "}
+        Limits: {MAX_BULK_SEARCH_PARTS.toLocaleString()} parts per search ·{" "}
         {MAX_BULK_RFQ_LISTINGS.toLocaleString()} quotes per batch · new bulk RFQ
         every {BULK_RFQ_COOLDOWN_MINUTES} min
       </p>
@@ -54,9 +48,8 @@ export function MultiPartSearchLimits({ compact = false }: MultiPartSearchLimits
         ))}
       </dl>
       <p className="mt-3 text-xs leading-5 text-slate-500">
-        Guests get {GUEST_SEARCH_LIMIT} free searches, then a free account is
-        required. Signed-in users search without that cap. Bulk RFQ limits apply
-        separately.
+        Search is free for everyone. Bulk RFQ limits apply separately to reduce
+        spam.
       </p>
     </div>
   );
