@@ -3,6 +3,7 @@ import type { Company, InventoryLocation, PartListing } from "@/generated/prisma
 import type { BulkSearchInput, SearchQuery } from "@/lib/validations";
 import { MAX_BULK_SEARCH_PARTS } from "@/lib/validations";
 import { db } from "@/lib/db";
+import { aliasMatchesListing, lookupAliasTargets } from "@/lib/part-aliases";
 import { normalizeMpn, parseMpnList, bulkQueryMatchesListing, buildQueryPrefixSet } from "@/lib/mpn-normalize";
 
 export const RECENT_COMPANIES_LIMIT = 10;
@@ -60,10 +61,15 @@ function buildSearchFilters(
   };
 }
 
+export type BulkSearchMatchType = "EXACT" | "ALTERNATE";
+
 export type BulkSearchRow = {
   input: string;
   normalizedMpn: string;
   found: boolean;
+  matchType?: BulkSearchMatchType;
+  alternateFor?: string;
+  matchedViaMpn?: string;
   listings: ListingWithCompany[];
 };
 
@@ -121,7 +127,7 @@ export async function bulkSearchListings(
   let foundPartCount = 0;
   let totalListingCount = 0;
 
-  const rows = entries.map((entry) => {
+  const rows: BulkSearchRow[] = entries.map((entry) => {
     const matched = listings.filter((listing) =>
       bulkQueryMatchesListing(entry.normalized, listing.mpnNormalized),
     );
@@ -134,9 +140,68 @@ export async function bulkSearchListings(
       input: entry.input,
       normalizedMpn: entry.normalized,
       found: matched.length > 0,
+      matchType: matched.length > 0 ? "EXACT" : undefined,
       listings: matched,
     };
   });
+
+  const missedRows = rows.filter((row) => !row.found);
+  if (missedRows.length > 0) {
+    const aliasTargets = await lookupAliasTargets(
+      missedRows.map((row) => row.normalizedMpn),
+    );
+
+    const inventoryMpns = [
+      ...new Set(
+        [...aliasTargets.values()].flatMap((targets) =>
+          targets.map((target) => target.inventoryMpn),
+        ),
+      ),
+    ];
+
+    if (inventoryMpns.length > 0) {
+      const aliasListings = await db.partListing.findMany({
+        where: {
+          isActive: true,
+          mpnNormalized: { in: inventoryMpns },
+          ...(category ? { category: category as Prisma.EnumPartCategoryFilter["equals"] } : {}),
+          ...(manufacturer
+            ? { manufacturer: { contains: manufacturer, mode: "insensitive" } }
+            : {}),
+        },
+        include: { company: true, inventoryLocation: true },
+        orderBy: [{ mpnNormalized: "asc" }, { quantity: "desc" }, { updatedAt: "desc" }],
+      });
+
+      for (const row of missedRows) {
+        const targets = aliasTargets.get(row.normalizedMpn) ?? [];
+        if (targets.length === 0) {
+          continue;
+        }
+
+        const matched = aliasListings.filter((listing) =>
+          targets.some((target) => aliasMatchesListing(listing, target)),
+        );
+
+        if (matched.length === 0) {
+          continue;
+        }
+
+        const bestTarget =
+          targets.find((target) =>
+            matched.some((listing) => aliasMatchesListing(listing, target)),
+          ) ?? targets[0];
+
+        row.found = true;
+        row.matchType = "ALTERNATE";
+        row.alternateFor = row.input;
+        row.matchedViaMpn = bestTarget.inventoryMpn;
+        row.listings = matched;
+        foundPartCount += 1;
+        totalListingCount += matched.length;
+      }
+    }
+  }
 
   return {
     rows,

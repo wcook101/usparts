@@ -277,3 +277,17 @@ model BulkRfqJob {
   @@index([status])
   @@index([createdAt])
 }
+
+model PartAlias {
+  id           String   @id @default(cuid())
+  fromMpn      String
+  toMpn        String
+  manufacturer String?
+  source       String   @default("manual_admin")
+  confidence   Float    @default(1.0)
+  createdAt    DateTime @default(now())
+
+  @@unique([fromMpn, toMpn])
+  @@index([fromMpn])
+  @@index([toMpn])
+}

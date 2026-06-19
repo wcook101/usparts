@@ -4,7 +4,8 @@ import { useEffect, useId, useRef, useState } from "react";
 import { ListingResultsList } from "@/components/ListingResultsList";
 import { BulkRfqPanel } from "@/components/BulkRfqPanel";
 import { MultiPartSearchLimits } from "@/components/MultiPartSearchLimits";
-import type { BulkSearchResult } from "@/lib/listings";
+import type { BulkSearchResult, ListingWithCompany } from "@/lib/listings";
+import { BulkSearchMatchBadge } from "@/components/BulkSearchMatchBadge";
 import type { BuyerDefaults } from "@/components/BuyerContactFields";
 
 type MultiPartSearchFormProps = {
@@ -152,10 +153,15 @@ export function MultiPartSearchForm({
             <div className="space-y-6">
               {foundRows.map((row) => (
                 <section key={row.normalizedMpn} className="space-y-3">
-                  <div className="flex flex-wrap items-baseline gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <h3 className="font-mono text-base font-semibold text-slate-900">
                       {row.input}
                     </h3>
+                    <BulkSearchMatchBadge
+                      matchType={row.matchType}
+                      alternateFor={row.alternateFor}
+                      matchedViaMpn={row.matchedViaMpn}
+                    />
                     <span className="text-sm text-emerald-700">
                       {row.listings.length} listing
                       {row.listings.length === 1 ? "" : "s"}

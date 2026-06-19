@@ -8,7 +8,8 @@ import {
   type BuyerDefaults,
 } from "@/components/BuyerContactFields";
 import { isTurnstileEnabled, TurnstileField } from "@/components/TurnstileField";
-import type { BulkSearchResult, ListingWithCompany } from "@/lib/listings";
+import type { BulkSearchMatchType, BulkSearchResult, ListingWithCompany } from "@/lib/listings";
+import { BulkSearchMatchBadge } from "@/components/BulkSearchMatchBadge";
 import { BULK_RFQ_COOLDOWN_MINUTES, MAX_BULK_RFQ_LISTINGS } from "@/lib/validations";
 
 type BulkRfqPanelProps = {
@@ -25,9 +26,19 @@ type JobStatus = {
   errorMessage: string | null;
 };
 
-function collectListings(results: BulkSearchResult): ListingWithCompany[] {
+function collectListings(results: BulkSearchResult): {
+  listings: ListingWithCompany[];
+  matchByListingId: Map<
+    string,
+    { matchType: BulkSearchMatchType; alternateFor?: string; matchedViaMpn?: string }
+  >;
+} {
   const seen = new Set<string>();
   const listings: ListingWithCompany[] = [];
+  const matchByListingId = new Map<
+    string,
+    { matchType: BulkSearchMatchType; alternateFor?: string; matchedViaMpn?: string }
+  >();
 
   for (const row of results.rows) {
     if (!row.found) {
@@ -41,10 +52,18 @@ function collectListings(results: BulkSearchResult): ListingWithCompany[] {
 
       seen.add(listing.id);
       listings.push(listing);
+      matchByListingId.set(listing.id, {
+        matchType: row.matchType ?? "EXACT",
+        alternateFor: row.alternateFor,
+        matchedViaMpn: row.matchedViaMpn,
+      });
     }
   }
 
-  return listings.slice(0, MAX_BULK_RFQ_LISTINGS);
+  return {
+    listings: listings.slice(0, MAX_BULK_RFQ_LISTINGS),
+    matchByListingId,
+  };
 }
 
 function defaultQuantity(listing: ListingWithCompany): number {
@@ -52,7 +71,7 @@ function defaultQuantity(listing: ListingWithCompany): number {
 }
 
 export function BulkRfqPanel({ results, buyerDefaults = null }: BulkRfqPanelProps) {
-  const listings = useMemo(() => collectListings(results), [results]);
+  const { listings, matchByListingId } = useMemo(() => collectListings(results), [results]);
   const listingKey = useMemo(() => listings.map((listing) => listing.id).join(","), [listings]);
 
   const [expanded, setExpanded] = useState(false);
@@ -266,6 +285,7 @@ export function BulkRfqPanel({ results, buyerDefaults = null }: BulkRfqPanelProp
               <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
                 <tr>
                   <th className="px-3 py-3">Include</th>
+                  <th className="px-3 py-3">Match</th>
                   <th className="px-3 py-3">Part number</th>
                   <th className="px-3 py-3">Manufacturer</th>
                   <th className="px-3 py-3">Supplier</th>
@@ -276,6 +296,7 @@ export function BulkRfqPanel({ results, buyerDefaults = null }: BulkRfqPanelProp
               <tbody className="divide-y divide-slate-100">
                 {listings.map((listing) => {
                   const included = !excludedIds.has(listing.id);
+                  const match = matchByListingId.get(listing.id);
                   return (
                     <tr
                       key={listing.id}
@@ -290,6 +311,13 @@ export function BulkRfqPanel({ results, buyerDefaults = null }: BulkRfqPanelProp
                           }
                           aria-label={`Include ${listing.mpn}`}
                           className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                        />
+                      </td>
+                      <td className="px-3 py-3 align-top">
+                        <BulkSearchMatchBadge
+                          matchType={match?.matchType}
+                          alternateFor={match?.alternateFor}
+                          matchedViaMpn={match?.matchedViaMpn}
                         />
                       </td>
                       <td className="px-3 py-3 font-mono text-slate-900">{listing.mpn}</td>

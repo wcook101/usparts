@@ -164,6 +164,15 @@ export const createBulkRfqSchema = z.object({
 
 export type CreateBulkRfqInput = z.infer<typeof createBulkRfqSchema>;
 
+export const createPartAliasSchema = z.object({
+  fromMpn: z.string().trim().min(1).max(120),
+  toMpn: z.string().trim().min(1).max(120),
+  manufacturer: z.string().trim().max(120).optional().or(z.literal("")),
+  confidence: z.coerce.number().min(0).max(1).optional(),
+});
+
+export type CreatePartAliasInput = z.infer<typeof createPartAliasSchema>;
+
 export const updateProfileSchema = z.object({
   name: z.string().trim().min(2).max(120),
 });
