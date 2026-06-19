@@ -10,15 +10,16 @@ const MODEL_PRICING_PER_MILLION: Record<string, { input: number; output: number 
   "gpt-4.1": { input: 2.0, output: 8.0 },
 };
 
+export const SMART_SEARCH_PUBLIC_UNAVAILABLE_MESSAGE =
+  "Describe-a-part search is temporarily unavailable. Try part number search, or try again later.";
+
 export class SmartSearchBudgetExceededError extends Error {
   budgetUsd: number;
   spentUsd: number;
   monthKey: string;
 
   constructor(budgetUsd: number, spentUsd: number, monthKey: string) {
-    super(
-      `AI search monthly budget reached ($${spentUsd.toFixed(2)} of $${budgetUsd.toFixed(2)} for ${monthKey}). Try again next month or raise SMART_SEARCH_MONTHLY_BUDGET_USD.`,
-    );
+    super(SMART_SEARCH_PUBLIC_UNAVAILABLE_MESSAGE);
     this.name = "SmartSearchBudgetExceededError";
     this.budgetUsd = budgetUsd;
     this.spentUsd = spentUsd;

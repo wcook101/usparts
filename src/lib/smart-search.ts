@@ -5,10 +5,8 @@ import { db } from "@/lib/db";
 import type { SmartSearchInput } from "@/lib/validations";
 import {
   assertSmartSearchWithinBudget,
-  getSmartSearchBudgetStatus,
   recordSmartSearchApiUsage,
   recordSmartSearchCacheHit,
-  type SmartSearchBudgetStatus,
 } from "@/lib/smart-search-budget";
 
 export const MAX_SMART_SEARCH_SUGGESTIONS = 20;
@@ -20,7 +18,6 @@ export type SmartSearchResult = {
   cached: boolean;
   expansionMs: number;
   search: BulkSearchResult;
-  budget: SmartSearchBudgetStatus;
 };
 
 export function isSmartSearchEnabled(): boolean {
@@ -234,16 +231,11 @@ export async function smartSearchListings(
     category: input.category,
   });
 
-  const budget = await getSmartSearchBudgetStatus();
-
   return {
     query,
     suggestedMpns,
     cached,
     expansionMs,
     search,
-    budget,
   };
 }
-
-export { getSmartSearchBudgetStatus };

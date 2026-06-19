@@ -1,19 +1,10 @@
 import { NextResponse } from "next/server";
-import {
-  getSmartSearchBudgetStatus,
-  isSmartSearchEnabled,
-  smartSearchListings,
-} from "@/lib/smart-search";
+import { isSmartSearchEnabled, smartSearchListings } from "@/lib/smart-search";
 import { SmartSearchBudgetExceededError } from "@/lib/smart-search-budget";
 import { smartSearchSchema } from "@/lib/validations";
 
 export async function GET() {
-  const budget = await getSmartSearchBudgetStatus();
-
-  return NextResponse.json({
-    enabled: isSmartSearchEnabled(),
-    ...budget,
-  });
+  return NextResponse.json({ enabled: isSmartSearchEnabled() });
 }
 
 export async function POST(request: Request) {
@@ -42,15 +33,10 @@ export async function POST(request: Request) {
     return NextResponse.json(results);
   } catch (error) {
     if (error instanceof SmartSearchBudgetExceededError) {
-      return NextResponse.json(
-        {
-          error: error.message,
-          budgetUsd: error.budgetUsd,
-          spentUsd: error.spentUsd,
-          monthKey: error.monthKey,
-        },
-        { status: 429 },
+      console.warn(
+        `Smart search budget exceeded for ${error.monthKey}: $${error.spentUsd.toFixed(2)} / $${error.budgetUsd.toFixed(2)}`,
       );
+      return NextResponse.json({ error: error.message }, { status: 429 });
     }
 
     const message =

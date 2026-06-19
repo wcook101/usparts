@@ -14,7 +14,7 @@ import {
   searchListings,
 } from "@/lib/listings";
 import { looksLikeMultiPartQuery } from "@/lib/mpn-normalize";
-import { isSmartSearchEnabled, getSmartSearchBudgetStatus } from "@/lib/smart-search";
+import { isSmartSearchEnabled } from "@/lib/smart-search";
 import { searchQuerySchema } from "@/lib/validations";
 
 type SearchPageProps = {
@@ -66,9 +66,6 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
   const user = await getSessionUser();
   const smartSearchEnabled = isSmartSearchEnabled();
-  const smartSearchBudget = smartSearchEnabled
-    ? await getSmartSearchBudgetStatus()
-    : null;
 
   const searchResults =
     isBulkMode || isSmartMode
@@ -187,8 +184,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
               <li>equivalent to 74HC00</li>
             </ul>
             <p className="mt-4 text-xs text-slate-500">
-              Suggestions are cached to keep costs low. You only see parts
-              actually in stock.
+              You only see parts actually in stock from registered suppliers.
             </p>
           </aside>
 
@@ -197,7 +193,6 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
             autoSearch={Boolean(smartQuery.trim())}
             buyerDefaults={buyerDefaults}
             enabled={smartSearchEnabled}
-            initialBudget={smartSearchBudget}
           />
         </div>
       ) : isBulkMode ? (
