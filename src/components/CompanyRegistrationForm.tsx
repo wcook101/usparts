@@ -22,6 +22,7 @@ export function CompanyRegistrationForm() {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [accountEmail, setAccountEmail] = useState<string | null>(null);
+  const [businessEmail, setBusinessEmail] = useState("");
   const [inventoryLocations, setInventoryLocations] = useState([
     emptyLocation(),
   ]);
@@ -33,6 +34,7 @@ export function CompanyRegistrationForm() {
         if (!response.ok) return;
         const data = (await response.json()) as { user: { email: string } };
         setAccountEmail(data.user.email);
+        setBusinessEmail(data.user.email);
       } catch {
         // ignore
       }
@@ -73,6 +75,7 @@ export function CompanyRegistrationForm() {
     const formData = new FormData(event.currentTarget);
     const payload = {
       name: formData.get("name"),
+      email: formData.get("email"),
       description: formData.get("description"),
       website: formData.get("website"),
       phone: formData.get("phone"),
@@ -119,15 +122,32 @@ export function CompanyRegistrationForm() {
       ) : null}
 
       <div className="rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-900">
-        This company will be linked to your account
+        Your login account
         {accountEmail ? (
           <>
             {" "}
             (<strong>{accountEmail}</strong>)
           </>
-        ) : null}
-        . Only you can import inventory and manage listings for this company.
+        ) : null}{" "}
+        controls who can manage this company. Set a separate business email below
+        if buyers should contact a different address.
       </div>
+
+      <label className="block space-y-2">
+        <span className="text-sm font-medium text-slate-700">Business email</span>
+        <input
+          name="email"
+          type="email"
+          value={businessEmail}
+          onChange={(event) => setBusinessEmail(event.target.value)}
+          placeholder="sales@yourcompany.com"
+          className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+        />
+        <span className="text-xs text-slate-500">
+          Used for RFQs, orders, and team invites. Defaults to your login email
+          if you leave this as-is.
+        </span>
+      </label>
 
       <label className="block space-y-2">
         <span className="text-sm font-medium text-slate-700">Company Name</span>

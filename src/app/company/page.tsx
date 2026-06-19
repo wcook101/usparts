@@ -69,8 +69,8 @@ export default async function CompanyPage() {
               </h2>
               <p className="mt-2 text-sm text-slate-600">
                 Signed in as {user.email}. Complete your supplier profile to start
-                listing inventory. If a company already exists under this email, it
-                will be linked to your account automatically.
+                listing inventory. Use a business email if buyers should reach you
+                at a different address than your login.
               </p>
               <div className="mt-6">
                 <CompanyRegistrationForm />
@@ -82,8 +82,9 @@ export default async function CompanyPage() {
                 Get started as a supplier
               </h2>
               <p className="mt-2 text-sm text-slate-600">
-                Create an account, then register your company. Your account email
-                becomes the owner of that company and its inventory.
+                Create an account, then register your company. Your login controls
+                who can manage the company; you can set a separate business email
+                for buyer contact.
               </p>
               <div className="mt-6 flex flex-col gap-3">
                 <Link

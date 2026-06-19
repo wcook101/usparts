@@ -1,4 +1,7 @@
 import { db } from "@/lib/db";
+import { getEmailDomain } from "@/lib/email-domain";
+import { normalizeEmail } from "@/lib/auth/ownership";
+import { ensureCompanyEmailDomain } from "@/lib/auth/membership";
 import type { UpdateCompanyInput } from "@/lib/validations";
 
 export async function getCompanyById(companyId: string) {
@@ -18,6 +21,7 @@ export async function updateCompanyProfile(
 ) {
   const data: {
     name?: string;
+    email?: string;
     description?: string | null;
     website?: string | null;
     phone?: string | null;
@@ -28,6 +32,21 @@ export async function updateCompanyProfile(
 
   if (input.name !== undefined) {
     data.name = input.name;
+  }
+  if (input.email !== undefined) {
+    const companyEmail = normalizeEmail(input.email);
+    const emailTaken = await db.company.findFirst({
+      where: {
+        email: { equals: companyEmail, mode: "insensitive" },
+        NOT: { id: companyId },
+      },
+    });
+
+    if (emailTaken) {
+      throw new Error("Another company already uses this business email");
+    }
+
+    data.email = companyEmail;
   }
   if (input.description !== undefined) {
     data.description = input.description || null;
@@ -48,7 +67,7 @@ export async function updateCompanyProfile(
     data.country = input.country;
   }
 
-  return db.company.update({
+  const updated = await db.company.update({
     where: { id: companyId },
     data,
     include: {
@@ -57,4 +76,18 @@ export async function updateCompanyProfile(
       },
     },
   });
+
+  if (input.email !== undefined) {
+    await ensureCompanyEmailDomain(updated.id, updated.email);
+    return db.company.findUniqueOrThrow({
+      where: { id: companyId },
+      include: {
+        inventoryLocations: {
+          orderBy: { createdAt: "asc" },
+        },
+      },
+    });
+  }
+
+  return updated;
 }

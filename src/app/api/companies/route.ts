@@ -9,6 +9,7 @@ import {
   linkUnownedCompanyByEmail,
   requireAuth,
 } from "@/lib/auth";
+import { normalizeEmail } from "@/lib/auth/ownership";
 import { createCompanySchema } from "@/lib/validations";
 
 export async function GET() {
@@ -58,6 +59,27 @@ export async function POST(request: Request) {
     }
 
     const data = parsed.data;
+    const companyEmail = normalizeEmail(data.email ?? user.email);
+    const emailDomain = getEmailDomain(companyEmail);
+
+    if (!emailDomain) {
+      return NextResponse.json(
+        { error: "Enter a valid business email address" },
+        { status: 400 },
+      );
+    }
+
+    const emailTaken = await db.company.findFirst({
+      where: { email: { equals: companyEmail, mode: "insensitive" } },
+    });
+
+    if (emailTaken) {
+      return NextResponse.json(
+        { error: "A company with this business email is already registered" },
+        { status: 409 },
+      );
+    }
+
     const baseSlug = slugify(data.name);
     let slug = baseSlug;
     let suffix = 1;
@@ -74,8 +96,8 @@ export async function POST(request: Request) {
         ownerId: user.id,
         name: data.name,
         slug,
-        email: user.email,
-        emailDomain: getEmailDomain(user.email),
+        email: companyEmail,
+        emailDomain,
         description: data.description || null,
         website: data.website || null,
         phone: data.phone || null,

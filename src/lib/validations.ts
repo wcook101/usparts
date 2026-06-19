@@ -80,7 +80,11 @@ const inventoryLocationSchema = z.object({
 
 export const createCompanySchema = z.object({
   name: z.string().trim().min(2).max(120),
-  email: z.string().trim().email().optional(),
+  email: z
+    .string()
+    .trim()
+    .transform((value) => (value === "" ? undefined : value))
+    .pipe(z.string().email().optional()),
   description: z.string().trim().max(2000).optional(),
   website: optionalWebsiteField,
   phone: z.string().trim().max(40).optional(),
@@ -256,6 +260,7 @@ export type UpdateListingInput = z.infer<typeof updateListingSchema>;
 
 export const updateCompanySchema = z.object({
   name: z.string().trim().min(2).max(120).optional(),
+  email: z.string().trim().email().optional(),
   description: z.string().trim().max(2000).optional().or(z.literal("")),
   website: optionalWebsiteField.optional(),
   phone: z.string().trim().max(40).optional().or(z.literal("")),

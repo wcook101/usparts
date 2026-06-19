@@ -34,6 +34,7 @@ export function CompanyProfileForm({ company }: CompanyProfileFormProps) {
     const formData = new FormData(event.currentTarget);
     const payload = {
       name: formData.get("name"),
+      email: formData.get("email"),
       description: formData.get("description"),
       website: formData.get("website"),
       phone: formData.get("phone"),
@@ -81,10 +82,25 @@ export function CompanyProfileForm({ company }: CompanyProfileFormProps) {
       ) : null}
 
       <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
-        Business email: <strong>{company.email}</strong> (from your account)
+        Team invites must use your company email domain (
+        <strong>@{company.email.split("@")[1] ?? "company domain"}</strong>).
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
+        <label className="block space-y-2 sm:col-span-2">
+          <span className="text-sm font-medium text-slate-700">Business email</span>
+          <input
+            name="email"
+            type="email"
+            required
+            defaultValue={company.email}
+            className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+          />
+          <span className="text-xs text-slate-500">
+            Where buyers reach you for RFQs and orders.
+          </span>
+        </label>
+
         <label className="block space-y-2 sm:col-span-2">
           <span className="text-sm font-medium text-slate-700">Company name</span>
           <input
