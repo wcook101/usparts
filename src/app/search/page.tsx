@@ -1,19 +1,25 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { GuestSearchLimitBanner } from "@/components/GuestSearchLimitBanner";
 import { ListingResultsList } from "@/components/ListingResultsList";
 import { MultiPartSearchForm } from "@/components/MultiPartSearchForm";
 import { MultiPartSearchLimits } from "@/components/MultiPartSearchLimits";
 import { RecentUploadsList } from "@/components/RecentUploadsList";
 import { SearchBar } from "@/components/SearchBar";
+import { getBuyerDefaults, getSessionUser } from "@/lib/auth";
 import { CATEGORY_LABELS } from "@/lib/format";
 import {
+  consumeGuestSearch,
+  getGuestSearchAccess,
+} from "@/lib/guest-search-limit";
+import {
+  hasSearchCriteria,
   RECENT_COMPANIES_LIMIT,
   RECENT_LISTINGS_PER_COMPANY,
   searchListings,
 } from "@/lib/listings";
 import { looksLikeMultiPartQuery } from "@/lib/mpn-normalize";
 import { searchQuerySchema } from "@/lib/validations";
-import { getBuyerDefaults, getSessionUser } from "@/lib/auth";
 
 type SearchPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -49,8 +55,31 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
     redirect(`/search?mode=bulk&mpns=${encodeURIComponent(parsed.q)}`);
   }
 
-  const { listings, companyGroups, total, totalCount, page, totalPages, recentOnly } =
-    isBulkMode
+  const user = await getSessionUser();
+  let guestSearch = await getGuestSearchAccess(user);
+  const isNewSingleSearch =
+    !isBulkMode && hasSearchCriteria(parsed) && parsed.page === 1;
+  let searchBlocked = false;
+
+  if (isNewSingleSearch) {
+    if (!guestSearch.allowed) {
+      searchBlocked = true;
+    } else {
+      guestSearch = await consumeGuestSearch(user);
+    }
+  }
+
+  const searchResults = isBulkMode
+    ? {
+        listings: [],
+        companyGroups: undefined,
+        total: 0,
+        totalCount: 0,
+        page: 1,
+        totalPages: 1,
+        recentOnly: false,
+      }
+    : searchBlocked
       ? {
           listings: [],
           companyGroups: undefined,
@@ -62,9 +91,17 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
         }
       : await searchListings(parsed);
 
-  const buyerDefaults = isBulkMode
-    ? getBuyerDefaults(await getSessionUser())
-    : null;
+  const {
+    listings,
+    companyGroups,
+    total,
+    totalCount,
+    page,
+    totalPages,
+    recentOnly,
+  } = searchResults;
+
+  const buyerDefaults = isBulkMode ? getBuyerDefaults(user) : null;
 
   function buildSearchHref(nextMode: "single" | "bulk") {
     if (nextMode === "bulk") {
@@ -98,6 +135,9 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
         <p className="mt-2 text-slate-600">
           Find available electronic parts across registered suppliers.
         </p>
+        <div className="mt-4">
+          {!isBulkMode ? <GuestSearchLimitBanner access={guestSearch} /> : null}
+        </div>
       </div>
 
       <div className="mb-8 flex flex-wrap gap-2">
@@ -143,8 +183,9 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
           <MultiPartSearchForm
             initialMpns={bulkMpns}
-            autoSearch={Boolean(bulkMpns.trim())}
+            autoSearch={Boolean(bulkMpns.trim()) && guestSearch.allowed}
             buyerDefaults={buyerDefaults}
+            guestSearch={guestSearch}
           />
         </div>
       ) : (
@@ -193,7 +234,8 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
               <button
                 type="submit"
-                className="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700"
+                disabled={guestSearch.isGuest && !guestSearch.allowed}
+                className="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
               >
                 Apply filters
               </button>
@@ -202,7 +244,10 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
           <div>
             <div className="mb-6">
-              <SearchBar defaultQuery={parsed.q ?? ""} />
+              <SearchBar
+                defaultQuery={parsed.q ?? ""}
+                disabled={guestSearch.isGuest && !guestSearch.allowed}
+              />
             </div>
 
             <div className="mb-6 flex items-center justify-between gap-4">
@@ -251,7 +296,16 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
               </div>
             </div>
 
-            {recentOnly && companyGroups && companyGroups.length > 0 ? (
+            {searchBlocked ? (
+              <div className="rounded-xl border border-dashed border-slate-300 bg-white/90 p-10 text-center backdrop-blur-sm">
+                <p className="text-lg font-medium text-slate-900">
+                  Guest search limit reached
+                </p>
+                <p className="mt-2 text-sm text-slate-600">
+                  Create a free account to run this search and keep browsing inventory.
+                </p>
+              </div>
+            ) : recentOnly && companyGroups && companyGroups.length > 0 ? (
               <RecentUploadsList groups={companyGroups} />
             ) : listings.length > 0 ? (
               <ListingResultsList listings={listings} />
