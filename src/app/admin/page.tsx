@@ -95,6 +95,12 @@ export default async function AdminPage() {
             Part aliases
           </Link>
           <Link
+            href="/admin/import"
+            className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          >
+            Import inventory
+          </Link>
+          <Link
             href="/search"
             className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
           >
@@ -156,7 +162,11 @@ export default async function AdminPage() {
           Suppliers can email spreadsheets to{" "}
           <span className="font-mono font-medium">{UPLOAD_EMAIL}</span>. Check
           that mailbox in SiteGround webmail, download the attachment, and import
-          it through the supplier&apos;s account or your internal process.
+          it on{" "}
+          <Link href="/admin/import" className="font-medium text-blue-700 hover:text-blue-800">
+            Import inventory for a supplier
+          </Link>
+          .
         </p>
         <p className="mt-3 text-sm text-slate-600">
           Make sure the <strong>{UPLOAD_EMAIL}</strong> mailbox exists in

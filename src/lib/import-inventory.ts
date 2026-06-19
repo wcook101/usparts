@@ -125,6 +125,7 @@ export type ImportInventoryInput = {
   fileBytes: Uint8Array;
   columnMap?: ColumnMap;
   excludedColumns?: string[];
+  skipImportCooldown?: boolean;
 };
 
 export type ImportInventoryResult = {
@@ -192,7 +193,9 @@ export async function importInventory(
     throw new Error("Select a valid default inventory location for this company");
   }
 
-  assertImportAllowed(company.lastImportAt);
+  if (!input.skipImportCooldown) {
+    assertImportAllowed(company.lastImportAt);
+  }
 
   const { rows, format } = parseImportContent(input.fileName, input.fileBytes);
 

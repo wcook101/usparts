@@ -56,6 +56,11 @@ type ImportResult = {
 
 type InventoryImportFormProps = {
   companies: CompanyOption[];
+  previewApiPath?: string;
+  importApiPath?: string;
+  bypassImportCooldown?: boolean;
+  requireCompanySelection?: boolean;
+  companySelectLabel?: string;
 };
 
 type ImportFileState = {
@@ -66,7 +71,14 @@ type ImportFileState = {
 
 type WizardStep = "setup" | "mapping" | "done";
 
-export function InventoryImportForm({ companies }: InventoryImportFormProps) {
+export function InventoryImportForm({
+  companies,
+  previewApiPath = "/api/listings/import/preview",
+  importApiPath = "/api/listings/import",
+  bypassImportCooldown = false,
+  requireCompanySelection = false,
+  companySelectLabel = "Company",
+}: InventoryImportFormProps) {
   const router = useRouter();
   const [step, setStep] = useState<WizardStep>("setup");
   const [selectedCompanyId, setSelectedCompanyId] = useState("");
@@ -163,7 +175,8 @@ export function InventoryImportForm({ companies }: InventoryImportFormProps) {
   );
 
   const cooldownMessage = formatImportCooldownMessage(importCooldown);
-  const importBlocked = !importCooldown.allowed;
+  const importBlocked = !bypassImportCooldown && !importCooldown.allowed;
+  const showCompanySelect = requireCompanySelection || companies.length > 1;
 
   async function handlePrepareMapping(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -177,6 +190,11 @@ export function InventoryImportForm({ companies }: InventoryImportFormProps) {
 
     if (!isSupportedImportFileName(file.name)) {
       setError(`Only ${supportedImportFormatsLabel()} files are supported`);
+      return;
+    }
+
+    if (!selectedCompanyId) {
+      setError(`Select a ${companySelectLabel.toLowerCase()} before importing`);
       return;
     }
 
@@ -200,11 +218,12 @@ export function InventoryImportForm({ companies }: InventoryImportFormProps) {
         throw new Error("The import file did not contain any data rows");
       }
 
-      const response = await fetch("/api/listings/import/preview", {
+      const response = await fetch(previewApiPath, {
         method: "POST",
         body: (() => {
           const formData = new FormData();
           formData.append("file", createImportUploadFile(fileState.name, fileState.bytes, fileState.type));
+          formData.append("companyId", selectedCompanyId);
           return formData;
         })(),
       });
@@ -243,6 +262,11 @@ export function InventoryImportForm({ companies }: InventoryImportFormProps) {
       return;
     }
 
+    if (!selectedCompanyId) {
+      setError(`Select a ${companySelectLabel.toLowerCase()} before importing`);
+      return;
+    }
+
     if (importBlocked) {
       setError(cooldownMessage);
       return;
@@ -262,8 +286,9 @@ export function InventoryImportForm({ companies }: InventoryImportFormProps) {
       formData.append("mode", mode);
       formData.append("columnMap", JSON.stringify(columnMap));
       formData.append("excludedColumns", JSON.stringify(excludedColumns));
+      formData.append("companyId", selectedCompanyId);
 
-      const response = await fetch("/api/listings/import", {
+      const response = await fetch(importApiPath, {
         method: "POST",
         body: formData,
       });
@@ -437,9 +462,11 @@ export function InventoryImportForm({ companies }: InventoryImportFormProps) {
         ) : null}
 
         <div className="grid gap-4 sm:grid-cols-2">
-          {companies.length > 1 ? (
+          {showCompanySelect ? (
             <label className="block space-y-2 sm:col-span-2">
-              <span className="text-sm font-medium text-slate-700">Company</span>
+              <span className="text-sm font-medium text-slate-700">
+                {companySelectLabel}
+              </span>
               <select
                 required
                 value={selectedCompanyId}
@@ -449,7 +476,11 @@ export function InventoryImportForm({ companies }: InventoryImportFormProps) {
                 }}
                 className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               >
-                <option value="">Select your company</option>
+                <option value="">
+                  {requireCompanySelection
+                    ? `Select a ${companySelectLabel.toLowerCase()}`
+                    : "Select your company"}
+                </option>
                 {companies.map((company) => (
                   <option key={company.id} value={company.id}>
                     {company.name}
