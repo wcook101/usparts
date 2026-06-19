@@ -4,8 +4,9 @@ import {
   type ListingWithCompany,
 } from "@/lib/listings";
 import { db } from "@/lib/db";
-import { MAX_SEARCH_RESULTS } from "@/lib/listings";
 import { normalizeMpn } from "@/lib/mpn-normalize";
+
+export const SMART_SEARCH_FALLBACK_LIMIT = 250;
 
 type CategoryPattern = {
   pattern: RegExp;
@@ -118,8 +119,8 @@ export async function searchListingsByMpnPatterns(
         : {}),
     },
     include: { company: true, inventoryLocation: true },
-    orderBy: [{ mpnNormalized: "asc" }, { quantity: "desc" }, { updatedAt: "desc" }],
-    take: MAX_SEARCH_RESULTS,
+    orderBy: [{ quantity: "desc" }, { mpnNormalized: "asc" }, { updatedAt: "desc" }],
+    take: SMART_SEARCH_FALLBACK_LIMIT,
   });
 }
 
