@@ -23,14 +23,8 @@ export function USPartsLogo({
   priority = false,
   className = "",
 }: USPartsLogoProps) {
-  const isHero = size === "hero";
-
   return (
-    <span
-      className={`inline-flex items-center rounded-xl bg-black shadow-md shadow-slate-900/20 ring-1 ring-slate-900/10 ${
-        isHero ? "rounded-2xl px-5 py-3 sm:px-6 sm:py-4" : "px-2.5 py-1.5 sm:px-3 sm:py-2"
-      } ${className}`}
-    >
+    <span className={`inline-flex items-center ${className}`}>
       <Image
         src={LOGO_PATH}
         alt="USParts.us"
