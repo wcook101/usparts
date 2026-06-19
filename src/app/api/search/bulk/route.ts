@@ -3,8 +3,8 @@ import { getSessionUser } from "@/lib/auth";
 import {
   consumeGuestSearch,
   getGuestSearchAccess,
-  guestSearchLimitResponse,
-} from "@/lib/guest-search-limit";
+} from "@/lib/guest-search-access";
+import { guestSearchLimitResponse } from "@/lib/guest-search-limit";
 import { bulkSearchListings } from "@/lib/listings";
 import { bulkSearchSchema } from "@/lib/validations";
 

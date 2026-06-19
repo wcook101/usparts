@@ -11,7 +11,7 @@ import { CATEGORY_LABELS } from "@/lib/format";
 import {
   consumeGuestSearch,
   getGuestSearchAccess,
-} from "@/lib/guest-search-limit";
+} from "@/lib/guest-search-access";
 import {
   hasSearchCriteria,
   RECENT_COMPANIES_LIMIT,
