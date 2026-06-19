@@ -12,6 +12,13 @@ type SmartSearchFormProps = {
   autoSearch?: boolean;
   buyerDefaults?: BuyerDefaults | null;
   enabled?: boolean;
+  initialBudget?: {
+    budgetUsd: number;
+    spentUsd: number;
+    remainingUsd: number;
+    monthKey: string;
+    budgetExceeded: boolean;
+  } | null;
 };
 
 export function SmartSearchForm({
@@ -19,6 +26,7 @@ export function SmartSearchForm({
   autoSearch = false,
   buyerDefaults = null,
   enabled = true,
+  initialBudget = null,
 }: SmartSearchFormProps) {
   const resultsId = useId();
   const hasAutoSearched = useRef(false);
@@ -26,6 +34,7 @@ export function SmartSearchForm({
   const [isSearching, setIsSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [results, setResults] = useState<SmartSearchResult | null>(null);
+  const [budget, setBudget] = useState(initialBudget);
 
   async function runSearch(description: string) {
     setError(null);
@@ -44,6 +53,9 @@ export function SmartSearchForm({
       }
 
       setResults(data as SmartSearchResult);
+      if (data.budget) {
+        setBudget(data.budget);
+      }
 
       requestAnimationFrame(() => {
         document.getElementById(resultsId)?.scrollIntoView({
@@ -88,6 +100,29 @@ export function SmartSearchForm({
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
           Describe-a-part search is not configured on this server yet. Use part
           number search or multi-part search instead.
+        </div>
+      ) : budget ? (
+        <div
+          className={`rounded-lg border px-4 py-3 text-sm ${
+            budget.budgetExceeded
+              ? "border-red-200 bg-red-50 text-red-800"
+              : "border-slate-200 bg-slate-50 text-slate-700"
+          }`}
+        >
+          AI budget this month ({budget.monthKey}):{" "}
+          <span className="font-medium">
+            ${budget.spentUsd.toFixed(2)} / ${budget.budgetUsd.toFixed(2)}
+          </span>
+          {budget.budgetExceeded ? (
+            <span className="mt-1 block">
+              Monthly AI limit reached. Cached descriptions still work; new AI
+              lookups resume next month unless the limit is raised.
+            </span>
+          ) : (
+            <span className="ml-1 text-slate-500">
+              (${budget.remainingUsd.toFixed(2)} remaining)
+            </span>
+          )}
         </div>
       ) : null}
 

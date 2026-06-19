@@ -127,7 +127,27 @@ export default async function AdminPage() {
           <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">
             App URL: {overview.health.appUrl}
           </span>
+          {overview.health.smartSearchBudget ? (
+            <span
+              className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                overview.health.smartSearchBudget.budgetExceeded
+                  ? "bg-red-100 text-red-800"
+                  : "bg-violet-100 text-violet-800"
+              }`}
+            >
+              AI search {overview.health.smartSearchBudget.monthKey}: $
+              {overview.health.smartSearchBudget.spentUsd.toFixed(2)} / $
+              {overview.health.smartSearchBudget.budgetUsd.toFixed(2)}
+            </span>
+          ) : null}
         </div>
+        {overview.health.smartSearchBudget ? (
+          <p className="mt-3 text-sm text-slate-600">
+            Describe-a-part AI spend resets monthly (UTC). Raise the cap with{" "}
+            <span className="font-mono text-xs">SMART_SEARCH_MONTHLY_BUDGET_USD</span>{" "}
+            on Railway. Cached queries do not add cost.
+          </p>
+        ) : null}
       </section>
 
       <section className="mt-8 rounded-2xl border border-amber-200 bg-amber-50 p-6">

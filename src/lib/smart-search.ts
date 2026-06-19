@@ -3,6 +3,13 @@ import { bulkSearchListings, type BulkSearchResult } from "@/lib/listings";
 import { normalizeMpn } from "@/lib/mpn-normalize";
 import { db } from "@/lib/db";
 import type { SmartSearchInput } from "@/lib/validations";
+import {
+  assertSmartSearchWithinBudget,
+  getSmartSearchBudgetStatus,
+  recordSmartSearchApiUsage,
+  recordSmartSearchCacheHit,
+  type SmartSearchBudgetStatus,
+} from "@/lib/smart-search-budget";
 
 export const MAX_SMART_SEARCH_SUGGESTIONS = 20;
 const CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
@@ -13,6 +20,7 @@ export type SmartSearchResult = {
   cached: boolean;
   expansionMs: number;
   search: BulkSearchResult;
+  budget: SmartSearchBudgetStatus;
 };
 
 export function isSmartSearchEnabled(): boolean {
@@ -31,7 +39,16 @@ type ExpansionResponse = {
   mpns?: unknown;
 };
 
-async function expandQueryWithLlm(query: string): Promise<string[]> {
+type LlmExpansionResult = {
+  mpns: string[];
+  model: string;
+  promptTokens: number;
+  completionTokens: number;
+};
+
+async function expandQueryWithLlm(query: string): Promise<LlmExpansionResult> {
+  await assertSmartSearchWithinBudget();
+
   const apiKey = readEnv("OPENAI_API_KEY");
   if (!apiKey) {
     throw new Error("Smart search is not configured");
@@ -79,6 +96,10 @@ async function expandQueryWithLlm(query: string): Promise<string[]> {
 
   const payload = (await response.json()) as {
     choices?: Array<{ message?: { content?: string } }>;
+    usage?: {
+      prompt_tokens?: number;
+      completion_tokens?: number;
+    };
   };
 
   const content = payload.choices?.[0]?.message?.content;
@@ -122,11 +143,25 @@ async function expandQueryWithLlm(query: string): Promise<string[]> {
     throw new Error("AI could not suggest any part numbers for that description");
   }
 
+  const promptTokens = payload.usage?.prompt_tokens ?? 0;
+  const completionTokens = payload.usage?.completion_tokens ?? 0;
+
+  await recordSmartSearchApiUsage({
+    model,
+    promptTokens,
+    completionTokens,
+  });
+
   console.info(
     `Smart search expansion for "${query}" returned ${mpns.length} MPNs in ${Date.now() - startedAt}ms`,
   );
 
-  return mpns;
+  return {
+    mpns,
+    model,
+    promptTokens,
+    completionTokens,
+  };
 }
 
 async function getCachedExpansion(queryKey: string): Promise<string[] | null> {
@@ -185,8 +220,11 @@ export async function smartSearchListings(
 
   if (!suggestedMpns) {
     cached = false;
-    suggestedMpns = await expandQueryWithLlm(query);
+    const expansion = await expandQueryWithLlm(query);
+    suggestedMpns = expansion.mpns;
     await cacheExpansion(queryKey, query, suggestedMpns);
+  } else {
+    await recordSmartSearchCacheHit();
   }
 
   const expansionMs = Date.now() - expansionStartedAt;
@@ -196,11 +234,16 @@ export async function smartSearchListings(
     category: input.category,
   });
 
+  const budget = await getSmartSearchBudgetStatus();
+
   return {
     query,
     suggestedMpns,
     cached,
     expansionMs,
     search,
+    budget,
   };
 }
+
+export { getSmartSearchBudgetStatus };

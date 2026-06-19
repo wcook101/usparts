@@ -302,3 +302,14 @@ model SearchExpansionCache {
 
   @@index([expiresAt])
 }
+
+model SmartSearchUsageMonth {
+  id               String   @id @default(cuid())
+  monthKey         String   @unique
+  apiRequestCount  Int      @default(0)
+  cachedHitCount   Int      @default(0)
+  promptTokens     Int      @default(0)
+  completionTokens Int      @default(0)
+  estimatedCostUsd Decimal  @default(0) @db.Decimal(10, 6)
+  updatedAt        DateTime @updatedAt
+}

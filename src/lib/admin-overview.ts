@@ -1,6 +1,8 @@
 import { db } from "@/lib/db";
 import { getEmailProvider } from "@/lib/email";
 import { formatInventoryLocation } from "@/lib/format";
+import { getSmartSearchBudgetStatus } from "@/lib/smart-search-budget";
+import { isSmartSearchEnabled } from "@/lib/smart-search";
 
 export async function getAdminOverview() {
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
@@ -18,6 +20,7 @@ export async function getAdminOverview() {
     ordersLast7Days,
     quotesLast7Days,
     databaseHealthy,
+    smartSearchBudget,
   ] = await Promise.all([
     db.company.count(),
     db.user.count(),
@@ -73,6 +76,9 @@ export async function getAdminOverview() {
     db.$queryRaw`SELECT 1`
       .then(() => true)
       .catch(() => false),
+    isSmartSearchEnabled()
+      ? getSmartSearchBudgetStatus().catch(() => null)
+      : Promise.resolve(null),
   ]);
 
   return {
@@ -80,6 +86,8 @@ export async function getAdminOverview() {
       database: databaseHealthy,
       emailProvider: getEmailProvider(),
       appUrl: process.env.NEXT_PUBLIC_APP_URL ?? "not set",
+      smartSearchEnabled: isSmartSearchEnabled(),
+      smartSearchBudget,
     },
     stats: {
       companies: companyCount,

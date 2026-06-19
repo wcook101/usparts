@@ -14,7 +14,7 @@ import {
   searchListings,
 } from "@/lib/listings";
 import { looksLikeMultiPartQuery } from "@/lib/mpn-normalize";
-import { isSmartSearchEnabled } from "@/lib/smart-search";
+import { isSmartSearchEnabled, getSmartSearchBudgetStatus } from "@/lib/smart-search";
 import { searchQuerySchema } from "@/lib/validations";
 
 type SearchPageProps = {
@@ -66,6 +66,9 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
   const user = await getSessionUser();
   const smartSearchEnabled = isSmartSearchEnabled();
+  const smartSearchBudget = smartSearchEnabled
+    ? await getSmartSearchBudgetStatus()
+    : null;
 
   const searchResults =
     isBulkMode || isSmartMode
@@ -194,6 +197,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
             autoSearch={Boolean(smartQuery.trim())}
             buyerDefaults={buyerDefaults}
             enabled={smartSearchEnabled}
+            initialBudget={smartSearchBudget}
           />
         </div>
       ) : isBulkMode ? (
