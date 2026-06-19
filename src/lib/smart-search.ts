@@ -4,6 +4,12 @@ import { normalizeMpn } from "@/lib/mpn-normalize";
 import { db } from "@/lib/db";
 import type { SmartSearchInput } from "@/lib/validations";
 import {
+  buildSmartSearchCacheKey,
+  buildSmartSearchExpansionPrompt,
+  getSmartSearchRefinements,
+  type SmartSearchRefinements,
+} from "@/lib/smart-search-query";
+import {
   assertSmartSearchWithinBudget,
   recordSmartSearchApiUsage,
   recordSmartSearchCacheHit,
@@ -16,6 +22,7 @@ const CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
 export type SmartSearchResult = {
   query: string;
+  refinements?: SmartSearchRefinements;
   suggestedMpns: string[];
   cached: boolean;
   expansionMs: number;
@@ -101,6 +108,8 @@ async function expandQueryWithLlm(query: string): Promise<LlmExpansionResult> {
             "Given a part description or equivalence request, return JSON: {\"mpns\":[\"LM358\",\"LM358N\"]}",
             `Return ${MAX_SMART_SEARCH_SUGGESTIONS} or fewer real manufacturer part numbers.`,
             "Prefer common industry base numbers and widely stocked variants.",
+            "When constraints are provided (voltage, package, channels, manufacturer), prefer MPNs that match them.",
+            "Do not suggest parts that clearly violate stated electrical or package constraints.",
             'For requests like "equivalent to 74HC00", include direct substitutes and common alternates.',
             "Return only JSON with an mpns string array. No prose.",
           ].join(" "),
@@ -236,7 +245,9 @@ export async function smartSearchListings(
   }
 
   const query = input.query.trim();
-  const queryKey = normalizeQueryKey(query);
+  const expansionPrompt = buildSmartSearchExpansionPrompt(input);
+  const queryKey = buildSmartSearchCacheKey(input);
+  const refinements = getSmartSearchRefinements(input);
   const expansionStartedAt = Date.now();
 
   let suggestedMpns = await getCachedExpansion(queryKey);
@@ -244,9 +255,9 @@ export async function smartSearchListings(
 
   if (!suggestedMpns) {
     cached = false;
-    const expansion = await expandQueryWithLlm(query);
+    const expansion = await expandQueryWithLlm(expansionPrompt);
     suggestedMpns = expansion.mpns;
-    await cacheExpansion(queryKey, query, suggestedMpns);
+    await cacheExpansion(queryKey, expansionPrompt, suggestedMpns);
   } else {
     await recordSmartSearchCacheHit();
   }
@@ -254,12 +265,13 @@ export async function smartSearchListings(
   const expansionMs = Date.now() - expansionStartedAt;
   const search = await bulkSearchListings({
     mpns: suggestedMpns.join("\n"),
-    manufacturer: input.manufacturer,
+    manufacturer: refinements?.manufacturer ?? input.manufacturer,
     category: input.category,
   });
 
   return {
     query,
+    refinements,
     suggestedMpns,
     cached,
     expansionMs,

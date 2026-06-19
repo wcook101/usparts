@@ -5,13 +5,23 @@ import { ListingResultsList } from "@/components/ListingResultsList";
 import { BulkRfqPanel } from "@/components/BulkRfqPanel";
 import { BulkSearchMatchBadge } from "@/components/BulkSearchMatchBadge";
 import type { BuyerDefaults } from "@/components/BuyerContactFields";
+import { formatSmartSearchRefinements } from "@/lib/smart-search-query";
 import type { SmartSearchResult } from "@/lib/smart-search";
+import type { SmartSearchInput } from "@/lib/validations";
 
 type SmartSearchFormProps = {
   initialQuery?: string;
   autoSearch?: boolean;
   buyerDefaults?: BuyerDefaults | null;
   enabled?: boolean;
+};
+
+const emptyRefinements = {
+  supplyVoltage: "",
+  channels: "",
+  packageType: "",
+  manufacturer: "",
+  notes: "",
 };
 
 export function SmartSearchForm({
@@ -23,9 +33,33 @@ export function SmartSearchForm({
   const resultsId = useId();
   const hasAutoSearched = useRef(false);
   const [query, setQuery] = useState(initialQuery);
+  const [refinements, setRefinements] = useState(emptyRefinements);
+  const [showRefinements, setShowRefinements] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [results, setResults] = useState<SmartSearchResult | null>(null);
+
+  function buildPayload(description: string): SmartSearchInput {
+    const payload: SmartSearchInput = { query: description };
+
+    if (refinements.supplyVoltage.trim()) {
+      payload.supplyVoltage = refinements.supplyVoltage.trim();
+    }
+    if (refinements.channels.trim()) {
+      payload.channels = refinements.channels.trim();
+    }
+    if (refinements.packageType.trim()) {
+      payload.packageType = refinements.packageType.trim();
+    }
+    if (refinements.manufacturer.trim()) {
+      payload.manufacturer = refinements.manufacturer.trim();
+    }
+    if (refinements.notes.trim()) {
+      payload.notes = refinements.notes.trim();
+    }
+
+    return payload;
+  }
 
   async function runSearch(description: string) {
     setError(null);
@@ -35,7 +69,7 @@ export function SmartSearchForm({
       const response = await fetch("/api/search/smart", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: description }),
+        body: JSON.stringify(buildPayload(description)),
       });
 
       const data = await response.json();
@@ -81,6 +115,7 @@ export function SmartSearchForm({
   const foundRows = search?.rows.filter((row) => row.found) ?? [];
   const missingMpns =
     search?.rows.filter((row) => !row.found).map((row) => row.input) ?? [];
+  const refinementSummary = formatSmartSearchRefinements(results?.refinements);
 
   return (
     <div className="space-y-6">
@@ -111,6 +146,113 @@ export function SmartSearchForm({
           </span>
         </label>
 
+        <div className="rounded-xl border border-slate-200 bg-slate-50/80">
+          <button
+            type="button"
+            onClick={() => setShowRefinements((current) => !current)}
+            className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium text-slate-800"
+          >
+            Narrow it down (optional)
+            <span className="text-xs font-normal text-slate-500">
+              {showRefinements ? "Hide" : "Show"} voltage, package, channels
+            </span>
+          </button>
+
+          {showRefinements ? (
+            <div className="grid gap-4 border-t border-slate-200 px-4 py-4 sm:grid-cols-2">
+              <label className="block space-y-2">
+                <span className="text-sm font-medium text-slate-700">
+                  Supply voltage
+                </span>
+                <input
+                  value={refinements.supplyVoltage}
+                  onChange={(event) =>
+                    setRefinements((current) => ({
+                      ...current,
+                      supplyVoltage: event.target.value,
+                    }))
+                  }
+                  placeholder="5V single supply, ±15V"
+                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  disabled={!enabled}
+                />
+              </label>
+
+              <label className="block space-y-2">
+                <span className="text-sm font-medium text-slate-700">Channels</span>
+                <select
+                  value={refinements.channels}
+                  onChange={(event) =>
+                    setRefinements((current) => ({
+                      ...current,
+                      channels: event.target.value,
+                    }))
+                  }
+                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  disabled={!enabled}
+                >
+                  <option value="">Any</option>
+                  <option value="single">Single</option>
+                  <option value="dual">Dual</option>
+                  <option value="quad">Quad</option>
+                </select>
+              </label>
+
+              <label className="block space-y-2">
+                <span className="text-sm font-medium text-slate-700">Package</span>
+                <input
+                  value={refinements.packageType}
+                  onChange={(event) =>
+                    setRefinements((current) => ({
+                      ...current,
+                      packageType: event.target.value,
+                    }))
+                  }
+                  placeholder="DIP-8, SOIC-8, SOT-23"
+                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  disabled={!enabled}
+                />
+              </label>
+
+              <label className="block space-y-2">
+                <span className="text-sm font-medium text-slate-700">
+                  Preferred manufacturer
+                </span>
+                <input
+                  value={refinements.manufacturer}
+                  onChange={(event) =>
+                    setRefinements((current) => ({
+                      ...current,
+                      manufacturer: event.target.value,
+                    }))
+                  }
+                  placeholder="Texas Instruments, Analog Devices"
+                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  disabled={!enabled}
+                />
+              </label>
+
+              <label className="block space-y-2 sm:col-span-2">
+                <span className="text-sm font-medium text-slate-700">
+                  Other requirements
+                </span>
+                <input
+                  value={refinements.notes}
+                  onChange={(event) =>
+                    setRefinements((current) => ({
+                      ...current,
+                      notes: event.target.value,
+                    }))
+                  }
+                  placeholder="rail-to-rail, low offset, industrial temp"
+                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  disabled={!enabled}
+                />
+              </label>
+            </div>
+          ) : null}
+        </div>
+
         <button
           type="submit"
           disabled={isSearching || !query.trim() || !enabled}
@@ -133,6 +275,12 @@ export function SmartSearchForm({
               <span className="font-semibold">You described:</span>{" "}
               &ldquo;{results.query}&rdquo;
             </p>
+            {refinementSummary ? (
+              <p className="mt-2">
+                <span className="font-semibold">Refinements:</span>{" "}
+                {refinementSummary}
+              </p>
+            ) : null}
             <p className="mt-2">
               <span className="font-semibold">AI suggested:</span>{" "}
               <span className="font-mono text-violet-900">
@@ -205,7 +353,7 @@ export function SmartSearchForm({
               </p>
               <p className="mt-2 text-sm text-slate-600">
                 AI suggested common parts, but none are in current inventory.
-                Try a different description or use part number search.
+                Try different refinements or use part number search.
               </p>
             </div>
           )}

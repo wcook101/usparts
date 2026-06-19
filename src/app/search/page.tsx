@@ -182,6 +182,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
               <li>dual op amp</li>
               <li>quad comparator</li>
               <li>equivalent to 74HC00</li>
+              <li>Add voltage or package under &ldquo;Narrow it down&rdquo;</li>
             </ul>
             <p className="mt-4 text-xs text-slate-500">
               You only see parts actually in stock from registered suppliers.

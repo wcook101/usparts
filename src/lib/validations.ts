@@ -31,7 +31,11 @@ export const bulkSearchSchema = z.object({
 
 export const smartSearchSchema = z.object({
   query: z.string().trim().min(2).max(500),
-  manufacturer: z.string().trim().optional(),
+  supplyVoltage: z.string().trim().max(80).optional(),
+  channels: z.string().trim().max(40).optional(),
+  packageType: z.string().trim().max(80).optional(),
+  manufacturer: z.string().trim().max(120).optional(),
+  notes: z.string().trim().max(300).optional(),
   category: z.string().trim().optional(),
 });
 
