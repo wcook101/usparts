@@ -32,6 +32,14 @@ export function bulkQueryMatchesListing(
     return true;
   }
 
+  const minEmbeddedLength = 5;
+  if (
+    queryNormalized.length >= minEmbeddedLength &&
+    listingNormalized.includes(queryNormalized)
+  ) {
+    return true;
+  }
+
   return false;
 }
 

@@ -1,5 +1,9 @@
 import { readEnv } from "@/lib/email";
-import { bulkSearchListings, type BulkSearchResult } from "@/lib/listings";
+import {
+  applyInventoryFallback,
+  bulkSearchWithEmbeddedCores,
+} from "@/lib/smart-search-fallback";
+import type { BulkSearchResult } from "@/lib/listings";
 import { normalizeMpn } from "@/lib/mpn-normalize";
 import { db } from "@/lib/db";
 import type { SmartSearchInput } from "@/lib/validations";
@@ -26,6 +30,7 @@ export type SmartSearchResult = {
   suggestedMpns: string[];
   cached: boolean;
   expansionMs: number;
+  usedInventoryFallback?: boolean;
   search: BulkSearchResult;
 };
 
@@ -107,7 +112,9 @@ async function expandQueryWithLlm(query: string): Promise<LlmExpansionResult> {
             "You are an electronic components expert helping buyers find surplus inventory.",
             "Given a part description or equivalence request, return JSON: {\"mpns\":[\"LM358\",\"LM358N\"]}",
             `Return ${MAX_SMART_SEARCH_SUGGESTIONS} or fewer real manufacturer part numbers.`,
-            "Prefer common industry base numbers and widely stocked variants.",
+            "Use orderable manufacturer part numbers only — not board or module names (no Arduino, Raspberry Pi, etc.).",
+            "Prefer common industry base numbers and widely stocked variants, including legacy CPUs and mature parts often found in surplus.",
+            'For broad categories like "microprocessor" or "MCU", include classic x86 (8086, 80286, 80386), 68000-family, Z80, and common MCUs.',
             "When constraints are provided (voltage, package, channels, manufacturer), prefer MPNs that match them.",
             "Do not suggest parts that clearly violate stated electrical or package constraints.",
             'For requests like "equivalent to 74HC00", include direct substitutes and common alternates.',
@@ -263,11 +270,17 @@ export async function smartSearchListings(
   }
 
   const expansionMs = Date.now() - expansionStartedAt;
-  const search = await bulkSearchListings({
+  let search = await bulkSearchWithEmbeddedCores({
     mpns: suggestedMpns.join("\n"),
     manufacturer: refinements?.manufacturer ?? input.manufacturer,
     category: input.category,
   });
+
+  const fallback = await applyInventoryFallback(query, search, {
+    manufacturer: refinements?.manufacturer ?? input.manufacturer,
+    category: input.category,
+  });
+  search = fallback.search;
 
   return {
     query,
@@ -275,6 +288,7 @@ export async function smartSearchListings(
     suggestedMpns,
     cached,
     expansionMs,
+    usedInventoryFallback: fallback.usedInventoryFallback,
     search,
   };
 }

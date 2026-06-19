@@ -289,6 +289,13 @@ export function SmartSearchForm({
             </p>
             <p className="mt-2 text-xs text-violet-800">
               Only parts currently in supplier inventory are shown below.
+              {results.usedInventoryFallback ? (
+                <>
+                  {" "}
+                  AI suggestions missed your stock, so we also searched inventory
+                  for classic parts in this category.
+                </>
+              ) : null}
             </p>
           </div>
 
@@ -352,8 +359,9 @@ export function SmartSearchForm({
                 No supplier stock for these suggestions
               </p>
               <p className="mt-2 text-sm text-slate-600">
-                AI suggested common parts, but none are in current inventory.
-                Try different refinements or use part number search.
+                {results.usedInventoryFallback
+                  ? "We searched common part families in inventory but found no matches. Try different refinements or use part number search."
+                  : "AI suggested common parts, but none are in current inventory. Try different refinements or use part number search."}
               </p>
             </div>
           )}
