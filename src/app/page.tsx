@@ -67,6 +67,23 @@ export default async function HomePage() {
           <div className="mx-auto mt-10 max-w-3xl space-y-4">
             <SearchBar large />
             <QuickSearchLinks />
+            <div className="flex flex-col items-center justify-center gap-3 pt-2 sm:flex-row sm:gap-4">
+              <Link
+                href="/company/upload"
+                className="inline-flex w-full items-center justify-center rounded-xl bg-slate-900 px-6 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 sm:w-auto"
+              >
+                Upload inventory
+              </Link>
+              <Link
+                href="/company"
+                className="inline-flex w-full items-center justify-center rounded-xl border border-slate-300 bg-white/90 px-6 py-3.5 text-sm font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 sm:w-auto"
+              >
+                Register as a supplier
+              </Link>
+            </div>
+            <p className="text-center text-xs text-slate-500">
+              Email a spreadsheet to upload@usparts.us or import CSV/Excel online.
+            </p>
           </div>
 
           <div className="mx-auto mt-12 grid max-w-4xl gap-4 sm:grid-cols-3">
@@ -113,6 +130,12 @@ export default async function HomePage() {
             </div>
             <div className="flex flex-wrap gap-4">
               <Link
+                href="/company/upload"
+                className="text-sm font-medium text-slate-900 hover:text-blue-700"
+              >
+                Upload inventory
+              </Link>
+              <Link
                 href="/search"
                 className="text-sm font-medium text-blue-600 hover:text-blue-700"
               >
@@ -135,12 +158,20 @@ export default async function HomePage() {
               <p className="mt-2 text-sm text-slate-600">
                 Be the first supplier to publish available components.
               </p>
-              <Link
-                href="/company"
-                className="mt-5 inline-flex rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-              >
-                Register your company
-              </Link>
+              <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
+                <Link
+                  href="/company/upload"
+                  className="inline-flex rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+                >
+                  Upload inventory
+                </Link>
+                <Link
+                  href="/company"
+                  className="inline-flex rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                >
+                  Register your company
+                </Link>
+              </div>
             </div>
           )}
         </div>

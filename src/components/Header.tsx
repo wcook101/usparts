@@ -3,6 +3,7 @@ import { HeaderAuthNav } from "@/components/HeaderAuthNav";
 
 const navItems = [
   { href: "/search", label: "Search Parts" },
+  { href: "/company/upload", label: "Upload inventory" },
   { href: "/company", label: "For Suppliers" },
   { href: "/help", label: "Help" },
 ];
