@@ -3,6 +3,10 @@ export const UPLOAD_EMAIL = "upload@usparts.us";
 
 export const SUPPORT_MAILTO = `mailto:${SUPPORT_EMAIL}`;
 
+export function getSiteUrl(): string {
+  return process.env.NEXT_PUBLIC_APP_URL?.trim() || "https://www.usparts.us";
+}
+
 type UploadMailtoOptions = {
   companyName?: string | null;
   contactEmail?: string | null;

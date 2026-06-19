@@ -1,30 +1,70 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { PartsBackground } from "@/components/PartsBackground";
 import { RecentUploadsList } from "@/components/RecentUploadsList";
 import { QuickSearchLinks, SearchBar } from "@/components/SearchBar";
+import { USPartsLogo } from "@/components/USPartsLogo";
 import { getRecentListings } from "@/lib/listings";
+import { getSiteUrl } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "Free Part Find System for Electronic Components",
+  description:
+    "The most technically advanced part find system for electronic components is here — free to use. Search MPNs, paste part lists, and compare US supplier inventory on USParts.",
+  alternates: {
+    canonical: "/",
+  },
+};
 
 export default async function HomePage() {
   const recentUploads = await getRecentListings();
   const hasUploads = recentUploads.length > 0;
+  const siteUrl = getSiteUrl();
+
+  const websiteJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: "USParts",
+    url: siteUrl,
+    description:
+      "Free part find system for electronic components. Search manufacturer part numbers and compare US supplier inventory.",
+    potentialAction: {
+      "@type": "SearchAction",
+      target: {
+        "@type": "EntryPoint",
+        urlTemplate: `${siteUrl}/search?q={search_term_string}`,
+      },
+      "query-input": "required name=search_term_string",
+    },
+  };
 
   return (
     <div>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
+      />
+
       <section className="relative overflow-hidden border-b border-slate-200">
         <PartsBackground variant="hero" idPrefix="hero" />
         <div className="relative mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
           <div className="mx-auto max-w-3xl text-center">
+            <div className="mb-8 flex justify-center">
+              <USPartsLogo size="hero" />
+            </div>
             <p className="mb-4 text-sm font-semibold uppercase tracking-[0.2em] text-blue-600">
-              We prioritize parts located in the US
+              Free part find system · US inventory prioritized
             </p>
             <h1 className="text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
               Find the parts you need. List the inventory you have.
             </h1>
             <p className="mt-5 text-lg leading-8 text-slate-600">
-              USParts connects buyers searching for electronic components with
-              companies ready to fulfill production and repair orders.
+              The most technically advanced part find system for electronic
+              components is here — and it&apos;s free to use. Search single
+              part numbers, paste a BOM, compare supplier stock, and request
+              quotes without paying to search.
             </p>
           </div>
 
@@ -36,16 +76,16 @@ export default async function HomePage() {
           <div className="mx-auto mt-12 grid max-w-4xl gap-4 sm:grid-cols-3">
             {[
               {
-                title: "Search by MPN",
-                body: "Look up manufacturer part numbers, descriptions, and categories in one place.",
+                title: "Advanced part find system",
+                body: "Search by MPN, manufacturer, or keyword. Multi-part lookup matches variants and base part numbers in one indexed query.",
               },
               {
                 title: "Compare suppliers",
-                body: "See pricing, stock levels, lead times, and condition from multiple companies.",
+                body: "See pricing, stock levels, lead times, and condition from multiple companies in one place.",
               },
               {
-                title: "Publish inventory",
-                body: "Suppliers can register and list available stock for buyers to discover.",
+                title: "Free for buyers and suppliers",
+                body: "No fee to search parts. Suppliers can register and list available stock for buyers to discover.",
               },
             ].map((item) => (
               <div

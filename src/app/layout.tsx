@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { PartsBackground } from "@/components/PartsBackground";
+import { getSiteUrl } from "@/lib/site";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -16,12 +17,28 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(getSiteUrl()),
   title: {
-    default: "USParts | Electronic Component Marketplace",
+    default: "USParts | Free Part Find System for Electronic Components",
     template: "%s | USParts",
   },
   description:
-    "Search electronic components from verified US suppliers. We prioritize parts located in the US—list inventory or find stock for production and repair orders.",
+    "USParts is a free part find system for electronic components. Search MPNs, compare US supplier inventory, paste BOMs for multi-part lookup, and request quotes.",
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    siteName: "USParts",
+    title: "USParts | Free Part Find System for Electronic Components",
+    description:
+      "The most technically advanced part find system for electronic components — free to search and free to list. Find parts from US suppliers.",
+    images: [{ url: "/brand/usparts-logo.png", alt: "USParts.us logo" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "USParts | Free Part Find System",
+    description:
+      "Search electronic components, compare supplier inventory, and run multi-part BOM lookups — free.",
+  },
 };
 
 export default function RootLayout({

@@ -28,7 +28,9 @@ type SearchPageProps = {
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Search Parts",
+  title: "Search Parts | Part Find System",
+  description:
+    "Use the USParts part find system to search manufacturer part numbers, manufacturers, and categories across US supplier inventory.",
 };
 
 export default async function SearchPage({ searchParams }: SearchPageProps) {
