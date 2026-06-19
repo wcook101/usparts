@@ -264,6 +264,7 @@ model BulkRfqJob {
   buyerCompany  String?
   notes         String?
   listingIds    String[]
+  listingItems  Json?
   status        BulkRfqJobStatus @default(PENDING)
   totalListings Int
   totalVendors  Int

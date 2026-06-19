@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   BuyerContactFields,
   resolveBuyerPayload,
@@ -47,26 +47,67 @@ function collectListings(results: BulkSearchResult): ListingWithCompany[] {
   return listings.slice(0, MAX_BULK_RFQ_LISTINGS);
 }
 
+function defaultQuantity(listing: ListingWithCompany): number {
+  return Math.max(1, listing.quantity);
+}
+
 export function BulkRfqPanel({ results, buyerDefaults = null }: BulkRfqPanelProps) {
   const listings = useMemo(() => collectListings(results), [results]);
-  const vendorCount = useMemo(
-    () => new Set(listings.map((listing) => listing.companyId)).size,
-    [listings],
-  );
+  const listingKey = useMemo(() => listings.map((listing) => listing.id).join(","), [listings]);
 
   const [expanded, setExpanded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [jobStatus, setJobStatus] = useState<JobStatus | null>(null);
   const [turnstileToken, setTurnstileToken] = useState("");
+  const [excludedIds, setExcludedIds] = useState<Set<string>>(() => new Set());
+  const [quantities, setQuantities] = useState<Record<string, number>>({});
+
   const turnstileRequired = isTurnstileEnabled();
 
   const { hasAccountProfile, contact, persistGuestContact } = useBuyerContact({
     buyerDefaults,
   });
 
+  useEffect(() => {
+    setExcludedIds(new Set());
+    setQuantities(
+      Object.fromEntries(listings.map((listing) => [listing.id, defaultQuantity(listing)])),
+    );
+  }, [listingKey, listings]);
+
+  const selectedListings = useMemo(
+    () => listings.filter((listing) => !excludedIds.has(listing.id)),
+    [listings, excludedIds],
+  );
+
+  const vendorCount = useMemo(
+    () => new Set(selectedListings.map((listing) => listing.companyId)).size,
+    [selectedListings],
+  );
+
   if (listings.length === 0) {
     return null;
+  }
+
+  function toggleIncluded(listingId: string, included: boolean) {
+    setExcludedIds((current) => {
+      const next = new Set(current);
+      if (included) {
+        next.delete(listingId);
+      } else {
+        next.add(listingId);
+      }
+      return next;
+    });
+  }
+
+  function updateQuantity(listingId: string, value: string) {
+    const parsed = Number.parseInt(value, 10);
+    setQuantities((current) => ({
+      ...current,
+      [listingId]: Number.isFinite(parsed) && parsed >= 1 ? parsed : 1,
+    }));
   }
 
   async function pollJob(jobId: string) {
@@ -93,6 +134,11 @@ export function BulkRfqPanel({ results, buyerDefaults = null }: BulkRfqPanelProp
     setError(null);
     setJobStatus(null);
 
+    if (selectedListings.length === 0) {
+      setError("Select at least one part to include in the RFQ.");
+      return;
+    }
+
     if (turnstileRequired && !turnstileToken) {
       setError("Please complete the security check.");
       return;
@@ -109,7 +155,10 @@ export function BulkRfqPanel({ results, buyerDefaults = null }: BulkRfqPanelProp
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          listingIds: listings.map((listing) => listing.id),
+          items: selectedListings.map((listing) => ({
+            listingId: listing.id,
+            quantity: quantities[listing.id] ?? defaultQuantity(listing),
+          })),
           ...buyer,
           notes: formData.get("notes"),
           turnstileToken: turnstileToken || undefined,
@@ -176,15 +225,15 @@ export function BulkRfqPanel({ results, buyerDefaults = null }: BulkRfqPanelProp
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h3 className="text-base font-semibold text-slate-900">
-            Request quotes for all matches
+            Request quotes for matched parts
           </h3>
           <p className="mt-1 text-sm leading-6 text-slate-600">
-            Send RFQs for {listings.length} listing
-            {listings.length === 1 ? "" : "s"} across {vendorCount} supplier
-            {vendorCount === 1 ? "" : "s"}. Each supplier gets one bundled email
-            — not dozens of separate messages. You can send another bulk RFQ every{" "}
-            {BULK_RFQ_COOLDOWN_MINUTES} minutes (up to{" "}
-            {MAX_BULK_RFQ_LISTINGS.toLocaleString()} listings per batch).
+            {listings.length} listing{listings.length === 1 ? "" : "s"} found across{" "}
+            {new Set(listings.map((listing) => listing.companyId)).size} supplier
+            {new Set(listings.map((listing) => listing.companyId)).size === 1 ? "" : "s"}.
+            Uncheck lines you want to skip and adjust requested quantities before sending.
+            Each supplier gets one bundled email. Another bulk RFQ can be sent every{" "}
+            {BULK_RFQ_COOLDOWN_MINUTES} minutes.
           </p>
         </div>
         {!expanded ? (
@@ -193,7 +242,7 @@ export function BulkRfqPanel({ results, buyerDefaults = null }: BulkRfqPanelProp
             onClick={() => setExpanded(true)}
             className="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700"
           >
-            Send bulk RFQ
+            Review &amp; send RFQ
           </button>
         ) : null}
       </div>
@@ -211,6 +260,68 @@ export function BulkRfqPanel({ results, buyerDefaults = null }: BulkRfqPanelProp
               Sending quote requests to suppliers…
             </div>
           ) : null}
+
+          <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
+            <table className="min-w-full text-sm">
+              <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <tr>
+                  <th className="px-3 py-3">Include</th>
+                  <th className="px-3 py-3">Part number</th>
+                  <th className="px-3 py-3">Manufacturer</th>
+                  <th className="px-3 py-3">Supplier</th>
+                  <th className="px-3 py-3 text-right">Listed qty</th>
+                  <th className="px-3 py-3 text-right">Request qty</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {listings.map((listing) => {
+                  const included = !excludedIds.has(listing.id);
+                  return (
+                    <tr
+                      key={listing.id}
+                      className={included ? "bg-white" : "bg-slate-50 text-slate-400"}
+                    >
+                      <td className="px-3 py-3">
+                        <input
+                          type="checkbox"
+                          checked={included}
+                          onChange={(event) =>
+                            toggleIncluded(listing.id, event.target.checked)
+                          }
+                          aria-label={`Include ${listing.mpn}`}
+                          className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                        />
+                      </td>
+                      <td className="px-3 py-3 font-mono text-slate-900">{listing.mpn}</td>
+                      <td className="px-3 py-3">{listing.manufacturer || "—"}</td>
+                      <td className="px-3 py-3">{listing.company.name}</td>
+                      <td className="px-3 py-3 text-right tabular-nums">
+                        {listing.quantity.toLocaleString()}
+                      </td>
+                      <td className="px-3 py-3 text-right">
+                        <input
+                          type="number"
+                          min={1}
+                          value={quantities[listing.id] ?? defaultQuantity(listing)}
+                          disabled={!included}
+                          onChange={(event) =>
+                            updateQuantity(listing.id, event.target.value)
+                          }
+                          className="w-24 rounded-md border border-slate-300 px-2 py-1.5 text-right text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100"
+                        />
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          <p className="text-sm text-slate-600">
+            Sending {selectedListings.length} part
+            {selectedListings.length === 1 ? "" : "s"} to {vendorCount} supplier
+            {vendorCount === 1 ? "" : "s"}.
+          </p>
 
           <BuyerContactFields buyerDefaults={buyerDefaults} />
 
@@ -239,12 +350,16 @@ export function BulkRfqPanel({ results, buyerDefaults = null }: BulkRfqPanelProp
 
           <button
             type="submit"
-            disabled={isSubmitting || (turnstileRequired && !turnstileToken)}
+            disabled={
+              isSubmitting ||
+              selectedListings.length === 0 ||
+              (turnstileRequired && !turnstileToken)
+            }
             className="rounded-lg bg-blue-600 px-5 py-3 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
           >
             {isSubmitting
               ? "Queueing quote requests..."
-              : `Send ${listings.length} quote request${listings.length === 1 ? "" : "s"}`}
+              : `Send ${selectedListings.length} quote request${selectedListings.length === 1 ? "" : "s"}`}
           </button>
         </form>
       ) : null}

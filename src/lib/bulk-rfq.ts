@@ -3,12 +3,36 @@ import {
   notifyBulkRfqBuyerConfirmation,
   notifyBulkRfqVendorBundle,
 } from "@/lib/notifications";
-import type { CreateBulkRfqInput } from "@/lib/validations";
+import type { BulkRfqItem, CreateBulkRfqInput } from "@/lib/validations";
 
 const VENDOR_EMAIL_DELAY_MS = 2_500;
 
+export type BulkRfqListingItem = BulkRfqItem;
+
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function parseListingItems(raw: unknown): BulkRfqListingItem[] {
+  if (!Array.isArray(raw)) {
+    return [];
+  }
+
+  return raw.flatMap((entry) => {
+    if (
+      entry &&
+      typeof entry === "object" &&
+      "listingId" in entry &&
+      "quantity" in entry &&
+      typeof entry.listingId === "string" &&
+      typeof entry.quantity === "number" &&
+      entry.quantity >= 1
+    ) {
+      return [{ listingId: entry.listingId, quantity: entry.quantity }];
+    }
+
+    return [];
+  });
 }
 
 export type BulkRfqJobSummary = {
@@ -25,11 +49,15 @@ export async function createBulkRfqJob(
   input: CreateBulkRfqInput,
   options?: { userId?: string },
 ): Promise<BulkRfqJobSummary> {
-  const uniqueListingIds = [...new Set(input.listingIds)];
+  const uniqueItems = new Map<string, number>();
+  for (const item of input.items) {
+    uniqueItems.set(item.listingId, item.quantity);
+  }
 
+  const listingIds = [...uniqueItems.keys()];
   const listings = await db.partListing.findMany({
     where: {
-      id: { in: uniqueListingIds },
+      id: { in: listingIds },
       isActive: true,
     },
     include: { company: true },
@@ -39,9 +67,14 @@ export async function createBulkRfqJob(
     throw new Error("No valid listings selected for quote requests");
   }
 
-  if (listings.length !== uniqueListingIds.length) {
+  if (listings.length !== listingIds.length) {
     throw new Error("One or more selected listings are no longer available");
   }
+
+  const listingItems = listings.map((listing) => ({
+    listingId: listing.id,
+    quantity: uniqueItems.get(listing.id) ?? 1,
+  }));
 
   const vendorIds = new Set(listings.map((listing) => listing.companyId));
 
@@ -52,8 +85,9 @@ export async function createBulkRfqJob(
       buyerEmail: input.buyerEmail.toLowerCase(),
       buyerCompany: input.buyerCompany || null,
       notes: input.notes || null,
-      listingIds: listings.map((listing) => listing.id),
-      totalListings: listings.length,
+      listingIds: listingItems.map((item) => item.listingId),
+      listingItems,
+      totalListings: listingItems.length,
       totalVendors: vendorIds.size,
     },
   });
@@ -98,6 +132,13 @@ export async function processBulkRfqJob(jobId: string): Promise<void> {
   }
 
   try {
+    const listingItems = parseListingItems(job.listingItems);
+    const quantityByListingId = new Map(
+      listingItems.length > 0
+        ? listingItems.map((item) => [item.listingId, item.quantity])
+        : job.listingIds.map((listingId) => [listingId, 1]),
+    );
+
     const listings = await db.partListing.findMany({
       where: {
         id: { in: job.listingIds },
@@ -115,6 +156,8 @@ export async function processBulkRfqJob(jobId: string): Promise<void> {
       const created = [];
 
       for (const listing of listings) {
+        const requestedQuantity = quantityByListingId.get(listing.id) ?? listing.quantity;
+
         created.push(
           await tx.quoteRequest.create({
             data: {
@@ -123,7 +166,7 @@ export async function processBulkRfqJob(jobId: string): Promise<void> {
               buyerName: job.buyerName,
               buyerEmail: job.buyerEmail,
               buyerCompany: job.buyerCompany,
-              quantity: Math.max(1, listing.quantity),
+              quantity: Math.max(1, requestedQuantity),
               notes: job.notes,
             },
             include: {
@@ -191,6 +234,7 @@ export async function processBulkRfqJob(jobId: string): Promise<void> {
         manufacturer: quote.listing.manufacturer,
         supplierName: quote.listing.company.name,
         quantity: quote.quantity,
+        listedQuantity: quote.listing.quantity,
       })),
       notes: job.notes,
     });

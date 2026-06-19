@@ -221,6 +221,42 @@ type BulkRfqVendorLine = {
   listedQuantity: number;
 };
 
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function buildBulkRfqVendorTableHtml(lines: BulkRfqVendorLine[]): string {
+  const rows = lines
+    .map((line) => {
+      const quoteUrl = appUrl(`/quotes/${line.quoteId}?token=${line.accessToken}`);
+      return `<tr>
+  <td style="padding:10px 12px;border:1px solid #e2e8f0;font-family:Consolas,Monaco,monospace;font-size:13px;color:#0f172a;">${escapeHtml(line.mpn)}</td>
+  <td style="padding:10px 12px;border:1px solid #e2e8f0;font-size:13px;color:#334155;">${escapeHtml(line.manufacturer || "—")}</td>
+  <td style="padding:10px 12px;border:1px solid #e2e8f0;font-size:13px;color:#0f172a;text-align:right;">${line.quantity.toLocaleString()}</td>
+  <td style="padding:10px 12px;border:1px solid #e2e8f0;font-size:13px;color:#64748b;text-align:right;">${line.listedQuantity.toLocaleString()}</td>
+  <td style="padding:10px 12px;border:1px solid #e2e8f0;font-size:13px;"><a href="${quoteUrl}" style="color:#2563eb;text-decoration:none;">View quote</a></td>
+</tr>`;
+    })
+    .join("");
+
+  return `<table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;margin:16px 0;background:#ffffff;">
+  <thead>
+    <tr style="background:#f8fafc;">
+      <th align="left" style="padding:10px 12px;border:1px solid #e2e8f0;font-size:11px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:#475569;">Part Number</th>
+      <th align="left" style="padding:10px 12px;border:1px solid #e2e8f0;font-size:11px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:#475569;">Manufacturer</th>
+      <th align="right" style="padding:10px 12px;border:1px solid #e2e8f0;font-size:11px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:#475569;">Requested Qty</th>
+      <th align="right" style="padding:10px 12px;border:1px solid #e2e8f0;font-size:11px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:#475569;">Your Stock</th>
+      <th align="left" style="padding:10px 12px;border:1px solid #e2e8f0;font-size:11px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:#475569;">Link</th>
+    </tr>
+  </thead>
+  <tbody>${rows}</tbody>
+</table>`;
+}
+
 export async function notifyBulkRfqVendorBundle(input: {
   buyerName: string;
   buyerEmail: string;
@@ -232,37 +268,58 @@ export async function notifyBulkRfqVendorBundle(input: {
   };
   lines: BulkRfqVendorLine[];
 }): Promise<void> {
-  const partRows = input.lines
+  const partRowsText = input.lines
     .map((line) => {
       const quoteUrl = appUrl(`/quotes/${line.quoteId}?token=${line.accessToken}`);
       return [
         `- ${line.mpn} (${line.manufacturer})`,
-        `  Qty requested: ${line.quantity}`,
-        `  Listed qty: ${line.listedQuantity}`,
+        `  Requested qty: ${line.quantity.toLocaleString()}`,
+        `  Your stock: ${line.listedQuantity.toLocaleString()}`,
         `  View: ${quoteUrl}`,
       ].join("\n");
     })
     .join("\n\n");
 
+  const buyerLines = [
+    `Buyer: ${input.buyerName}`,
+    `Email: ${input.buyerEmail}`,
+    input.buyerCompany ? `Company: ${input.buyerCompany}` : "",
+    input.notes ? `Notes: ${input.notes}` : "",
+  ].filter(Boolean);
+
+  const text = [
+    `You received a bulk quote request on USParts.`,
+    "",
+    ...buyerLines,
+    "",
+    "Parts requested:",
+    partRowsText,
+    "",
+    "Reply to the buyer directly to provide pricing and availability.",
+  ].join("\n");
+
+  const html = `<!DOCTYPE html>
+<html>
+  <body style="margin:0;padding:24px;background:#f8fafc;font-family:Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#0f172a;">
+    <div style="max-width:720px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:12px;padding:24px;">
+      <p style="margin:0 0 8px;font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#2563eb;">USParts bulk RFQ</p>
+      <h1 style="margin:0 0 16px;font-size:22px;line-height:1.3;">Quote request for ${input.lines.length} part${input.lines.length === 1 ? "" : "s"}</h1>
+      <p style="margin:0 0 16px;font-size:14px;line-height:1.6;color:#475569;">${escapeHtml(input.company.name)} received a bundled request from a buyer on USParts. All requested lines are listed below.</p>
+      <div style="margin:0 0 20px;padding:14px 16px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;line-height:1.7;">
+        ${buyerLines.map((line) => `<div>${escapeHtml(line)}</div>`).join("")}
+      </div>
+      ${buildBulkRfqVendorTableHtml(input.lines)}
+      <p style="margin:16px 0 0;font-size:13px;line-height:1.6;color:#64748b;">Reply directly to the buyer to provide pricing and availability.</p>
+    </div>
+  </body>
+</html>`;
+
   await sendEmail({
     to: input.company.email,
     replyTo: input.buyerEmail,
     subject: `Bulk RFQ: ${input.lines.length} part${input.lines.length === 1 ? "" : "s"} requested`,
-    text: [
-      `You received a bulk quote request on USParts.`,
-      "",
-      `Buyer: ${input.buyerName}`,
-      `Email: ${input.buyerEmail}`,
-      input.buyerCompany ? `Company: ${input.buyerCompany}` : "",
-      input.notes ? `Notes: ${input.notes}` : "",
-      "",
-      "Parts requested:",
-      partRows,
-      "",
-      "Reply to the buyer directly to provide pricing and availability.",
-    ]
-      .filter(Boolean)
-      .join("\n"),
+    text,
+    html,
   });
 }
 
@@ -279,12 +336,13 @@ export async function notifyBulkRfqBuyerConfirmation(input: {
     manufacturer: string;
     supplierName: string;
     quantity: number;
+    listedQuantity: number;
   }>;
 }): Promise<void> {
   const summary = input.lines
     .map((line) => {
       const quoteUrl = appUrl(`/quotes/${line.quoteId}?token=${line.accessToken}`);
-      return `- ${line.mpn} (${line.manufacturer}) → ${line.supplierName} · Qty ${line.quantity}\n  ${quoteUrl}`;
+      return `- ${line.mpn} (${line.manufacturer}) → ${line.supplierName} · Qty ${line.quantity.toLocaleString()} (listed ${line.listedQuantity.toLocaleString()})\n  ${quoteUrl}`;
     })
     .join("\n");
 

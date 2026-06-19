@@ -145,8 +145,15 @@ export const createQuoteSchema = z.object({
 
 export type CreateQuoteInput = z.infer<typeof createQuoteSchema>;
 
+export const bulkRfqItemSchema = z.object({
+  listingId: z.string().min(1),
+  quantity: z.coerce.number().int().min(1),
+});
+
+export type BulkRfqItem = z.infer<typeof bulkRfqItemSchema>;
+
 export const createBulkRfqSchema = z.object({
-  listingIds: z.array(z.string().min(1)).min(1).max(MAX_BULK_RFQ_LISTINGS),
+  items: z.array(bulkRfqItemSchema).min(1).max(MAX_BULK_RFQ_LISTINGS),
   buyerName: z.string().trim().min(2).max(120),
   buyerEmail: z.string().trim().email(),
   buyerCompany: z.string().trim().max(120).optional().or(z.literal("")),
