@@ -92,3 +92,43 @@ export function parseMpnList(input: string): ParsedMpnEntry[] {
 export function looksLikeMultiPartQuery(input: string): boolean {
   return parseMpnList(input).length > 1;
 }
+
+/** e.g. NE555H → { base: "NE555", suffix: "H" } — same die, different package suffix. */
+export function parseSingleLetterPackageVariant(
+  mpn: string,
+): { base: string; suffix: string } | null {
+  if (mpn.length < 4 || mpn.length > 10) {
+    return null;
+  }
+
+  const suffix = mpn.at(-1);
+  if (!suffix || !/[A-Z]/.test(suffix)) {
+    return null;
+  }
+
+  const base = mpn.slice(0, -1);
+  if (base.length < 3 || !/[0-9]/.test(base)) {
+    return null;
+  }
+
+  return { base, suffix };
+}
+
+/** Whether two MPNs differ only by a single-letter package suffix on the same base. */
+export function isSingleLetterPackageVariantSibling(
+  queryNormalized: string,
+  listingNormalized: string,
+): boolean {
+  if (!queryNormalized || !listingNormalized || queryNormalized === listingNormalized) {
+    return false;
+  }
+
+  const queryVariant = parseSingleLetterPackageVariant(queryNormalized);
+  const listingVariant = parseSingleLetterPackageVariant(listingNormalized);
+
+  if (!queryVariant || !listingVariant) {
+    return false;
+  }
+
+  return queryVariant.base === listingVariant.base;
+}

@@ -148,6 +148,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
               <li>One line with spaces works: lm358n 1N4148</li>
               <li>Or one part number per line</li>
               <li>Base numbers match variants (LM358 → LM358N)</li>
+              <li>Package suffixes match siblings (NE555H → NE555N, NE555P)</li>
             </ul>
             <MultiPartSearchLimits />
           </aside>

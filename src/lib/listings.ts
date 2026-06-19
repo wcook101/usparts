@@ -4,7 +4,7 @@ import type { BulkSearchInput, SearchQuery } from "@/lib/validations";
 import { MAX_BULK_SEARCH_PARTS } from "@/lib/validations";
 import { db } from "@/lib/db";
 import { aliasMatchesListing, lookupAliasTargets } from "@/lib/part-aliases";
-import { normalizeMpn, parseMpnList, bulkQueryMatchesListing, buildQueryPrefixSet } from "@/lib/mpn-normalize";
+import { normalizeMpn, parseMpnList, bulkQueryMatchesListing, buildQueryPrefixSet, parseSingleLetterPackageVariant, isSingleLetterPackageVariantSibling } from "@/lib/mpn-normalize";
 
 export const RECENT_COMPANIES_LIMIT = 10;
 export const RECENT_LISTINGS_PER_COMPANY = 10;
@@ -203,6 +203,52 @@ export async function bulkSearchListings(
     }
   }
 
+  const variantMissedRows = rows.filter((row) => !row.found);
+  if (variantMissedRows.length > 0) {
+    const familyBases = [
+      ...new Set(
+        variantMissedRows
+          .map((row) => parseSingleLetterPackageVariant(row.normalizedMpn)?.base)
+          .filter((base): base is string => Boolean(base)),
+      ),
+    ];
+
+    if (familyBases.length > 0) {
+      const variantListings = await db.partListing.findMany({
+        where: {
+          isActive: true,
+          OR: familyBases.map((base) => ({
+            mpnNormalized: { startsWith: base },
+          })),
+          ...(category ? { category: category as Prisma.EnumPartCategoryFilter["equals"] } : {}),
+          ...(manufacturer
+            ? { manufacturer: { contains: manufacturer, mode: "insensitive" } }
+            : {}),
+        },
+        include: { company: true, inventoryLocation: true },
+        orderBy: [{ mpnNormalized: "asc" }, { quantity: "desc" }, { updatedAt: "desc" }],
+      });
+
+      for (const row of variantMissedRows) {
+        const matched = variantListings.filter((listing) =>
+          isSingleLetterPackageVariantSibling(row.normalizedMpn, listing.mpnNormalized),
+        );
+
+        if (matched.length === 0) {
+          continue;
+        }
+
+        row.found = true;
+        row.matchType = "ALTERNATE";
+        row.alternateFor = row.input;
+        row.matchedViaMpn = matched[0]?.mpnNormalized;
+        row.listings = matched;
+        foundPartCount += 1;
+        totalListingCount += matched.length;
+      }
+    }
+  }
+
   return {
     rows,
     queriedCount: entries.length,
@@ -308,14 +354,46 @@ export async function searchListings(query: SearchQuery) {
     db.partListing.count({ where }),
   ]);
 
-  const total = Math.min(totalCount, MAX_SEARCH_RESULTS);
+  let resolvedListings = listings;
+  let resolvedTotal = totalCount;
+
+  const normalizedQuery = q?.trim() ? normalizeMpn(q.trim()) : "";
+  if (normalizedQuery && totalCount === 0) {
+    const family = parseSingleLetterPackageVariant(normalizedQuery);
+    if (family) {
+      const variantCandidates = await db.partListing.findMany({
+        where: {
+          isActive: true,
+          mpnNormalized: { startsWith: family.base },
+          ...(category ? { category: category as Prisma.EnumPartCategoryFilter["equals"] } : {}),
+          ...(manufacturer
+            ? { manufacturer: { contains: manufacturer, mode: "insensitive" } }
+            : {}),
+        },
+        include: { company: true, inventoryLocation: true },
+        orderBy: [{ quantity: "desc" }, { updatedAt: "desc" }],
+        take: limit,
+      });
+
+      const siblings = variantCandidates.filter((listing) =>
+        isSingleLetterPackageVariantSibling(normalizedQuery, listing.mpnNormalized),
+      );
+
+      if (siblings.length > 0) {
+        resolvedListings = siblings;
+        resolvedTotal = siblings.length;
+      }
+    }
+  }
+
+  const total = Math.min(resolvedTotal, MAX_SEARCH_RESULTS);
   const totalPages = Math.max(1, Math.ceil(total / limit));
 
   return {
-    listings,
+    listings: resolvedListings,
     companyGroups: undefined,
     total,
-    totalCount,
+    totalCount: resolvedTotal,
     page: effectivePage,
     limit,
     totalPages,
