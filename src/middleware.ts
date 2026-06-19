@@ -57,6 +57,12 @@ const rateLimitRules: RateLimitRule[] = [
   },
   {
     test: (pathname, method) =>
+      pathname === "/api/search/smart" && method === "POST",
+    intervalMs: 60 * 1000,
+    maxRequests: 15,
+  },
+  {
+    test: (pathname, method) =>
       pathname === "/api/quotes/bulk" && method === "POST",
     intervalMs: BULK_RFQ_COOLDOWN_MS,
     maxRequests: 1,
@@ -136,5 +142,6 @@ export const config = {
     "/api/quotes/bulk",
     "/api/support/contact",
     "/api/search/bulk",
+    "/api/search/smart",
   ],
 };

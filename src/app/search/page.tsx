@@ -5,6 +5,7 @@ import { MultiPartSearchForm } from "@/components/MultiPartSearchForm";
 import { MultiPartSearchLimits } from "@/components/MultiPartSearchLimits";
 import { RecentUploadsList } from "@/components/RecentUploadsList";
 import { SearchBar } from "@/components/SearchBar";
+import { SmartSearchForm } from "@/components/SmartSearchForm";
 import { getBuyerDefaults, getSessionUser } from "@/lib/auth";
 import { CATEGORY_LABELS } from "@/lib/format";
 import {
@@ -13,11 +14,14 @@ import {
   searchListings,
 } from "@/lib/listings";
 import { looksLikeMultiPartQuery } from "@/lib/mpn-normalize";
+import { isSmartSearchEnabled } from "@/lib/smart-search";
 import { searchQuerySchema } from "@/lib/validations";
 
 type SearchPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
+
+type SearchMode = "single" | "bulk" | "smart";
 
 export const dynamic = "force-dynamic";
 
@@ -29,12 +33,21 @@ export const metadata = {
 
 export default async function SearchPage({ searchParams }: SearchPageProps) {
   const params = await searchParams;
-  const mode = typeof params.mode === "string" ? params.mode : "single";
+  const modeParam = typeof params.mode === "string" ? params.mode : "single";
+  const mode: SearchMode =
+    modeParam === "bulk" ? "bulk" : modeParam === "smart" ? "smart" : "single";
   const isBulkMode = mode === "bulk";
+  const isSmartMode = mode === "smart";
   const bulkMpns =
     typeof params.mpns === "string"
       ? params.mpns
       : typeof params.q === "string" && isBulkMode
+        ? params.q
+        : "";
+  const smartQuery =
+    typeof params.describe === "string"
+      ? params.describe
+      : typeof params.q === "string" && isSmartMode
         ? params.q
         : "";
 
@@ -47,23 +60,25 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
     page: typeof params.page === "string" ? params.page : undefined,
   });
 
-  if (!isBulkMode && parsed.q && looksLikeMultiPartQuery(parsed.q)) {
+  if (!isBulkMode && !isSmartMode && parsed.q && looksLikeMultiPartQuery(parsed.q)) {
     redirect(`/search?mode=bulk&mpns=${encodeURIComponent(parsed.q)}`);
   }
 
   const user = await getSessionUser();
+  const smartSearchEnabled = isSmartSearchEnabled();
 
-  const searchResults = isBulkMode
-    ? {
-        listings: [],
-        companyGroups: undefined,
-        total: 0,
-        totalCount: 0,
-        page: 1,
-        totalPages: 1,
-        recentOnly: false,
-      }
-    : await searchListings(parsed);
+  const searchResults =
+    isBulkMode || isSmartMode
+      ? {
+          listings: [],
+          companyGroups: undefined,
+          total: 0,
+          totalCount: 0,
+          page: 1,
+          totalPages: 1,
+          recentOnly: false,
+        }
+      : await searchListings(parsed);
 
   const {
     listings,
@@ -75,13 +90,22 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
     recentOnly,
   } = searchResults;
 
-  const buyerDefaults = isBulkMode ? getBuyerDefaults(user) : null;
+  const buyerDefaults =
+    isBulkMode || isSmartMode ? getBuyerDefaults(user) : null;
 
-  function buildSearchHref(nextMode: "single" | "bulk") {
+  function buildSearchHref(nextMode: SearchMode) {
     if (nextMode === "bulk") {
       const query = new URLSearchParams({ mode: "bulk" });
       if (bulkMpns.trim()) {
         query.set("mpns", bulkMpns);
+      }
+      return `/search?${query.toString()}`;
+    }
+
+    if (nextMode === "smart") {
+      const query = new URLSearchParams({ mode: "smart" });
+      if (smartQuery.trim()) {
+        query.set("describe", smartQuery);
       }
       return `/search?${query.toString()}`;
     }
@@ -115,12 +139,12 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
         <Link
           href={buildSearchHref("single")}
           className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
-            isBulkMode
-              ? "border border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
-              : "bg-blue-600 text-white"
+            mode === "single"
+              ? "bg-blue-600 text-white"
+              : "border border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
           }`}
         >
-          Single search
+          Part number
         </Link>
         <Link
           href={buildSearchHref("bulk")}
@@ -130,11 +154,49 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
               : "border border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
           }`}
         >
-          Multi-part search
+          Multi-part / BOM
+        </Link>
+        <Link
+          href={buildSearchHref("smart")}
+          className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
+            isSmartMode
+              ? "bg-violet-600 text-white"
+              : "border border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+          }`}
+        >
+          Describe a part
         </Link>
       </div>
 
-      {isBulkMode ? (
+      {isSmartMode ? (
+        <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
+          <aside className="h-fit rounded-xl border border-slate-200/80 bg-white/90 p-5 shadow-sm backdrop-blur-sm">
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+              AI-assisted lookup
+            </h2>
+            <p className="mt-3 text-sm leading-6 text-slate-600">
+              Describe what you need in plain English. AI suggests common part
+              numbers, then we search live supplier inventory.
+            </p>
+            <ul className="mt-4 space-y-2 text-sm text-slate-600">
+              <li>dual op amp</li>
+              <li>quad comparator</li>
+              <li>equivalent to 74HC00</li>
+            </ul>
+            <p className="mt-4 text-xs text-slate-500">
+              Suggestions are cached to keep costs low. You only see parts
+              actually in stock.
+            </p>
+          </aside>
+
+          <SmartSearchForm
+            initialQuery={smartQuery}
+            autoSearch={Boolean(smartQuery.trim())}
+            buyerDefaults={buyerDefaults}
+            enabled={smartSearchEnabled}
+          />
+        </div>
+      ) : isBulkMode ? (
         <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
           <aside className="h-fit rounded-xl border border-slate-200/80 bg-white/90 p-5 shadow-sm backdrop-blur-sm">
             <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
@@ -210,6 +272,14 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                 Apply filters
               </button>
             </form>
+
+            <p className="mt-4 text-sm text-slate-600">
+              Not sure of the part number?{" "}
+              <Link href="/search?mode=smart" className="font-medium text-violet-700 hover:text-violet-800">
+                Try describe-a-part search
+              </Link>
+              .
+            </p>
           </aside>
 
           <div>
@@ -272,6 +342,14 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                 <p className="text-lg font-medium text-slate-900">No matches found</p>
                 <p className="mt-2 text-sm text-slate-600">
                   Try a different part number, manufacturer, or broader keyword.
+                </p>
+                <p className="mt-3 text-sm text-slate-600">
+                  <Link
+                    href="/search?mode=smart"
+                    className="font-medium text-violet-700 hover:text-violet-800"
+                  >
+                    Describe the part instead
+                  </Link>
                 </p>
               </div>
             )}

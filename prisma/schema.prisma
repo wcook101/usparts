@@ -291,3 +291,14 @@ model PartAlias {
   @@index([fromMpn])
   @@index([toMpn])
 }
+
+model SearchExpansionCache {
+  id            String   @id @default(cuid())
+  queryKey      String   @unique
+  queryText     String
+  suggestedMpns String[]
+  createdAt     DateTime @default(now())
+  expiresAt     DateTime
+
+  @@index([expiresAt])
+}

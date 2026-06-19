@@ -29,6 +29,14 @@ export const bulkSearchSchema = z.object({
   category: z.string().trim().optional(),
 });
 
+export const smartSearchSchema = z.object({
+  query: z.string().trim().min(2).max(500),
+  manufacturer: z.string().trim().optional(),
+  category: z.string().trim().optional(),
+});
+
+export type SmartSearchInput = z.infer<typeof smartSearchSchema>;
+
 export const createListingSchema = z.object({
   companyId: z.string().min(1).optional(),
   mpn: z.string().trim().min(1).max(120),
