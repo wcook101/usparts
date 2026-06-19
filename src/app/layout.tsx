@@ -31,7 +31,6 @@ export const metadata: Metadata = {
     title: "USParts | Free Part Find System for Electronic Components",
     description:
       "The most technically advanced part find system for electronic components — free to search and free to list. Find parts from US suppliers.",
-    images: [{ url: "/brand/usparts-logo-full.png", alt: "USParts.us logo" }],
   },
   twitter: {
     card: "summary_large_image",

@@ -3,7 +3,6 @@ import Link from "next/link";
 import { PartsBackground } from "@/components/PartsBackground";
 import { RecentUploadsList } from "@/components/RecentUploadsList";
 import { QuickSearchLinks, SearchBar } from "@/components/SearchBar";
-import { USPartsLogo } from "@/components/USPartsLogo";
 import { getRecentListings } from "@/lib/listings";
 import { getSiteUrl } from "@/lib/site";
 
@@ -51,9 +50,6 @@ export default async function HomePage() {
         <PartsBackground variant="hero" idPrefix="hero" />
         <div className="relative mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
           <div className="mx-auto max-w-3xl text-center">
-            <div className="mb-8 flex justify-center">
-              <USPartsLogo size="hero" />
-            </div>
             <p className="mb-4 text-sm font-semibold uppercase tracking-[0.2em] text-blue-600">
               Free part find system · US inventory prioritized
             </p>
