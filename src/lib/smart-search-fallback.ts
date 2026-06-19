@@ -1,6 +1,5 @@
 import type { BulkSearchInput } from "@/lib/validations";
 import {
-  bulkSearchListings,
   type BulkSearchResult,
   type ListingWithCompany,
 } from "@/lib/listings";
@@ -184,18 +183,12 @@ export async function applyInventoryFallback(
   };
 }
 
-/** Re-run bulk search including substring matches for embedded cores (e.g. 80286 in R8028612). */
-export async function bulkSearchWithEmbeddedCores(
-  input: BulkSearchInput,
-): Promise<BulkSearchResult> {
-  const base = await bulkSearchListings(input);
-
-  if (base.totalListingCount > 0) {
-    return base;
-  }
-
+function extractConservativeNumericCores(mpns: string): string[] {
   const cores = new Set<string>();
-  for (const chunk of input.mpns.split(/[\r\n,;\t]+/)) {
+  const legacyCorePattern =
+    /^(8086|8088|8080|8085|80186|80286|80386|80486|68000|68010|68020|68030|68040|6502|Z80)$/i;
+
+  for (const chunk of mpns.split(/[\r\n,;\t]+/)) {
     const normalized = normalizeMpn(chunk);
     if (!normalized) {
       continue;
@@ -207,21 +200,29 @@ export async function bulkSearchWithEmbeddedCores(
     }
 
     for (const match of matches) {
-      if (match.length >= 4) {
+      if (match.length >= 5 || legacyCorePattern.test(match)) {
         cores.add(match);
       }
     }
   }
 
-  if (cores.size === 0) {
-    return base;
+  return [...cores];
+}
+
+/** Search inventory for classic numeric cores embedded in AI suggestions (e.g. 8086 in D8086). */
+export async function searchByEmbeddedNumericCores(
+  input: BulkSearchInput,
+): Promise<BulkSearchResult | null> {
+  const cores = extractConservativeNumericCores(input.mpns);
+  if (cores.length === 0) {
+    return null;
   }
 
   const startedAt = Date.now();
-  const listings = await searchListingsByMpnPatterns([...cores], input);
+  const listings = await searchListingsByMpnPatterns(cores, input);
 
   if (listings.length === 0) {
-    return base;
+    return null;
   }
 
   return buildBulkSearchFromListings(listings, startedAt);

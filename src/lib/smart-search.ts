@@ -1,9 +1,9 @@
 import { readEnv } from "@/lib/email";
 import {
   applyInventoryFallback,
-  bulkSearchWithEmbeddedCores,
+  searchByEmbeddedNumericCores,
 } from "@/lib/smart-search-fallback";
-import type { BulkSearchResult } from "@/lib/listings";
+import { bulkSearchListings, type BulkSearchResult } from "@/lib/listings";
 import { normalizeMpn } from "@/lib/mpn-normalize";
 import { db } from "@/lib/db";
 import type { SmartSearchInput } from "@/lib/validations";
@@ -270,17 +270,27 @@ export async function smartSearchListings(
   }
 
   const expansionMs = Date.now() - expansionStartedAt;
-  let search = await bulkSearchWithEmbeddedCores({
+  const bulkInput = {
     mpns: suggestedMpns.join("\n"),
     manufacturer: refinements?.manufacturer ?? input.manufacturer,
     category: input.category,
-  });
+  };
 
-  const fallback = await applyInventoryFallback(query, search, {
-    manufacturer: refinements?.manufacturer ?? input.manufacturer,
-    category: input.category,
-  });
-  search = fallback.search;
+  let search = await bulkSearchListings(bulkInput);
+  let usedInventoryFallback = false;
+
+  if (search.totalListingCount === 0) {
+    const fallback = await applyInventoryFallback(query, search, bulkInput);
+    search = fallback.search;
+    usedInventoryFallback = fallback.usedInventoryFallback;
+
+    if (search.totalListingCount === 0) {
+      const embedded = await searchByEmbeddedNumericCores(bulkInput);
+      if (embedded) {
+        search = embedded;
+      }
+    }
+  }
 
   return {
     query,
@@ -288,7 +298,7 @@ export async function smartSearchListings(
     suggestedMpns,
     cached,
     expansionMs,
-    usedInventoryFallback: fallback.usedInventoryFallback,
+    usedInventoryFallback,
     search,
   };
 }
