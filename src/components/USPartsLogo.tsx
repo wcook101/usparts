@@ -1,6 +1,7 @@
 import Image from "next/image";
 
-export const LOGO_PATH = "/brand/usparts-logo.png";
+export const LOGO_SVG_PATH = "/brand/usparts-logo.svg";
+export const LOGO_PNG_PATH = "/brand/usparts-logo.png";
 export const LOGO_WIDTH = 697;
 export const LOGO_HEIGHT = 178;
 
@@ -23,16 +24,19 @@ export function USPartsLogo({
   priority = false,
   className = "",
 }: USPartsLogoProps) {
+  const sizeClass = `${sizeClasses[size]} max-w-none object-contain`;
+
   return (
-    <span className={`inline-flex shrink-0 items-center ${className}`}>
+    <picture className={`inline-flex shrink-0 items-center ${className}`}>
+      <source srcSet={LOGO_SVG_PATH} type="image/svg+xml" />
       <Image
-        src={LOGO_PATH}
+        src={LOGO_PNG_PATH}
         alt="USParts.us"
         width={LOGO_WIDTH}
         height={LOGO_HEIGHT}
         priority={priority}
-        className={`${sizeClasses[size]} max-w-none object-contain`}
+        className={sizeClass}
       />
-    </span>
+    </picture>
   );
 }
