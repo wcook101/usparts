@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { BrandLogo } from "@/components/BrandLogo";
 import { PartsBackground } from "@/components/PartsBackground";
 import { RecentUploadsList } from "@/components/RecentUploadsList";
 import { QuickSearchLinks, SearchBar } from "@/components/SearchBar";
@@ -50,23 +49,19 @@ export default async function HomePage() {
       <section className="relative overflow-hidden border-b border-slate-200">
         <PartsBackground variant="hero" idPrefix="hero" />
         <div className="relative mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
-          <div className="mx-auto flex max-w-4xl flex-col items-center gap-8 sm:flex-row sm:items-center sm:gap-10">
-            <BrandLogo size="lg" priority className="shadow-lg ring-4 ring-white/90" />
-
-            <div className="text-center sm:text-left">
-              <p className="mb-4 text-sm font-semibold uppercase tracking-[0.2em] text-blue-600">
-                Free part find system · US inventory prioritized
-              </p>
-              <h1 className="text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
-                Find the parts you need. List the inventory you have.
-              </h1>
-              <p className="mt-5 text-lg leading-8 text-slate-600">
-                The most technically advanced part find system for electronic
-                components is here — and it&apos;s free to use. Search single
-                part numbers, paste a BOM, compare supplier stock, and request
-                quotes without paying to search.
-              </p>
-            </div>
+          <div className="mx-auto max-w-3xl text-center">
+            <p className="mb-4 text-sm font-semibold uppercase tracking-[0.2em] text-blue-600">
+              Free part find system · US inventory prioritized
+            </p>
+            <h1 className="text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
+              Find the parts you need. List the inventory you have.
+            </h1>
+            <p className="mt-5 text-lg leading-8 text-slate-600">
+              The most technically advanced part find system for electronic
+              components is here — and it&apos;s free to use. Search single
+              part numbers, paste a BOM, compare supplier stock, and request
+              quotes without paying to search.
+            </p>
           </div>
 
           <div className="mx-auto mt-10 max-w-3xl space-y-4">
