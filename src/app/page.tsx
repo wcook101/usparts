@@ -55,10 +55,10 @@ export default async function HomePage() {
               <Image
                 src="/brand/usparts-logo-hero-transparent.png"
                 alt="USParts.US — Built to Perform"
-                width={320}
-                height={320}
+                width={384}
+                height={384}
                 priority
-                className="h-auto w-52 sm:w-60 lg:w-72"
+                className="h-auto w-[15.6rem] sm:w-[18rem] lg:w-[21.6rem]"
               />
             </div>
 
