@@ -1,9 +1,9 @@
 import Image from "next/image";
 
 const sizeClasses = {
-  sm: "size-9",
-  md: "size-36 sm:size-44 md:size-52",
-  lg: "size-44 sm:size-52 md:size-60",
+  sm: "size-10",
+  md: "size-40 sm:size-48 md:size-56",
+  lg: "size-52 sm:size-64 md:size-72",
 } as const;
 
 type BrandLogoProps = {
@@ -26,8 +26,8 @@ export function BrandLogo({
         alt="USParts.US — Built to Perform"
         fill
         priority={priority}
-        sizes={size === "sm" ? "36px" : size === "lg" ? "240px" : "208px"}
-        className="scale-[1.18] object-cover object-center"
+        sizes={size === "sm" ? "40px" : size === "lg" ? "288px" : "224px"}
+        className="object-cover object-center"
       />
     </div>
   );
