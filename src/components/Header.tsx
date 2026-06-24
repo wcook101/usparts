@@ -1,6 +1,6 @@
 import Link from "next/link";
+import { BrandLogo } from "@/components/BrandLogo";
 import { HeaderAuthNav } from "@/components/HeaderAuthNav";
-
 const navItems = [
   { href: "/search", label: "Search Parts" },
   { href: "/company/upload", label: "Upload inventory" },
@@ -12,12 +12,9 @@ export function Header() {
   return (
     <header className="border-b border-slate-200 bg-white/90 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
-        <Link href="/" className="flex shrink-0 items-center gap-2">
-          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-600 text-sm font-bold text-white">
-            US
-          </span>
-          <div>
-            <p className="text-lg font-semibold tracking-tight text-slate-900">
+        <Link href="/" className="flex shrink-0 items-center gap-3">
+          <BrandLogo size="sm" className="shadow-sm" />
+          <div>            <p className="text-lg font-semibold tracking-tight text-slate-900">
               USParts
             </p>
             <p className="hidden text-xs text-slate-500 sm:block">
