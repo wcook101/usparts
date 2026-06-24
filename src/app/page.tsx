@@ -53,7 +53,7 @@ export default async function HomePage() {
           <div className="mx-auto flex max-w-5xl flex-col items-center gap-8 lg:flex-row lg:items-center lg:gap-12">
             <div className="shrink-0">
               <Image
-                src="/brand/usparts-logo-hero.png"
+                src="/brand/usparts-logo-hero-transparent.png"
                 alt="USParts.US — Built to Perform"
                 width={320}
                 height={320}
