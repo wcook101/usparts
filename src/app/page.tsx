@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { PartsBackground } from "@/components/PartsBackground";
 import { RecentUploadsList } from "@/components/RecentUploadsList";
@@ -50,6 +51,16 @@ export default async function HomePage() {
         <PartsBackground variant="hero" idPrefix="hero" />
         <div className="relative mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-24">
           <div className="mx-auto max-w-3xl text-center">
+            <div className="mb-8 flex justify-center">
+              <Image
+                src="/brand/usparts-logo.png"
+                alt="USParts.US — Built to Perform"
+                width={320}
+                height={320}
+                priority
+                className="h-auto w-48 drop-shadow-lg sm:w-64 md:w-72"
+              />
+            </div>
             <p className="mb-4 text-sm font-semibold uppercase tracking-[0.2em] text-blue-600">
               Free part find system · US inventory prioritized
             </p>
