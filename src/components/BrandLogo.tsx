@@ -19,15 +19,15 @@ export function BrandLogo({
 }: BrandLogoProps) {
   return (
     <div
-      className={`relative shrink-0 overflow-hidden rounded-full bg-white shadow-md ring-2 ring-slate-200/80 ${sizeClasses[size]} ${className}`}
+      className={`relative shrink-0 overflow-hidden rounded-full shadow-md ring-2 ring-slate-200/80 ${sizeClasses[size]} ${className}`}
     >
       <Image
-        src="/brand/usparts-logo.png"
+        src="/brand/usparts-logo-circle.png"
         alt="USParts.US — Built to Perform"
         fill
         priority={priority}
         sizes={size === "sm" ? "40px" : size === "lg" ? "288px" : "224px"}
-        className="object-cover object-center"
+        className="object-contain object-center"
       />
     </div>
   );
