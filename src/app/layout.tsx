@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
+import { MicrosoftClarity } from "@/components/MicrosoftClarity";
 import { PartsBackground } from "@/components/PartsBackground";
 import { getSiteUrl } from "@/lib/site";
 import "./globals.css";
@@ -38,6 +39,9 @@ export const metadata: Metadata = {
     description:
       "Search electronic components, compare supplier inventory, and run multi-part BOM lookups — free.",
   },
+  verification: {
+    google: "7v20lSf51vU3qHgGO_QwMALrcWE-bzP9pihlTsJfnC8",
+  },
 };
 
 export default function RootLayout({
@@ -51,6 +55,7 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="relative min-h-full text-slate-900">
+        <MicrosoftClarity />
         <PartsBackground variant="site" idPrefix="site" fixed />
         <Header />
         <main className="relative flex-1">{children}</main>

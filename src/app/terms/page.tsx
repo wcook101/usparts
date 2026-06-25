@@ -1,5 +1,11 @@
 import Link from "next/link";
-import { SUPPORT_EMAIL, SUPPORT_MAILTO } from "@/lib/site";
+import {
+  getLegalEntityDescription,
+  LEGAL_ENTITY_NAME,
+  SUPPORT_EMAIL,
+  SUPPORT_MAILTO,
+  TRADE_NAME,
+} from "@/lib/site";
 
 export const metadata = {
   title: "Terms of Service",
@@ -14,29 +20,32 @@ export default function TermsPage() {
       <h1 className="mt-3 text-3xl font-bold tracking-tight text-slate-900">
         Terms of Service
       </h1>
-      <p className="mt-3 text-sm text-slate-500">Last updated: June 17, 2026</p>
+      <p className="mt-3 text-sm text-slate-500">Last updated: June 15, 2026</p>
 
       <div className="prose prose-slate mt-8 max-w-none space-y-6 text-sm leading-7 text-slate-700">
         <p>
           These Terms of Service (&quot;Terms&quot;) govern your access to and use of the
-          USParts website and related services (collectively, the
+          {TRADE_NAME} website and related services (collectively, the
           &quot;Service&quot;) at{" "}
           <a href="https://www.usparts.us" className="font-medium text-blue-600 hover:text-blue-700">
             www.usparts.us
           </a>
-          . By creating an account, placing an order, requesting a quote, listing
-          inventory, or otherwise using the Service, you agree to these Terms. If
-          you do not agree, do not use the Service.
+          . The Service is operated by {getLegalEntityDescription()} (&quot;
+          {TRADE_NAME},&quot; &quot;we,&quot; &quot;us,&quot; or &quot;our&quot;). By creating an account,
+          placing an order, requesting a quote, listing inventory, or otherwise
+          using the Service, you agree to these Terms. If you do not agree, do not
+          use the Service.
         </p>
 
         <section>
           <h2 className="text-lg font-semibold text-slate-900">1. About USParts</h2>
           <p className="mt-2">
-            USParts operates an online marketplace that helps buyers discover
-            electronic components and helps suppliers publish available inventory.
-            We prioritize listings for parts located in the United States, but
-            we do not guarantee the location, condition, authenticity, or
-            availability of any part listed on the Service.
+            {TRADE_NAME} is the trade name used by {LEGAL_ENTITY_NAME} to operate an
+            online marketplace that helps buyers discover electronic components and
+            helps suppliers publish available inventory. We prioritize listings for
+            parts located in the United States, but we do not guarantee the
+            location, condition, authenticity, or availability of any part listed on
+            the Service.
           </p>
         </section>
 
@@ -192,14 +201,15 @@ export default function TermsPage() {
           </h2>
           <p className="mt-2">
             The Service, including its design, software, branding, and content
-            provided by USParts, is owned by USParts or its licensors and is
-            protected by applicable intellectual property laws. You may not copy,
-            modify, distribute, or create derivative works from the Service except
-            as allowed by these Terms or with our prior written consent.
+            provided by {TRADE_NAME}, is owned by {LEGAL_ENTITY_NAME} or its
+            licensors and is protected by applicable intellectual property laws. You
+            may not copy, modify, distribute, or create derivative works from the
+            Service except as allowed by these Terms or with our prior written
+            consent.
           </p>
           <p className="mt-2">
-            You retain ownership of content you submit, but you grant USParts a
-            non-exclusive license to host, display, and use that content as needed
+            You retain ownership of content you submit, but you grant {LEGAL_ENTITY_NAME}{" "}
+            a non-exclusive license to host, display, and use that content as needed
             to operate the marketplace.
           </p>
         </section>
@@ -294,17 +304,18 @@ export default function TermsPage() {
         <section>
           <h2 className="text-lg font-semibold text-slate-900">17. Governing law</h2>
           <p className="mt-2">
-            These Terms are governed by the laws of the United States and the State
-            of Delaware, without regard to conflict-of-law principles, except where
-            mandatory consumer protection laws in your jurisdiction provide
-            otherwise.
+            These Terms are governed by the laws of the United States and the
+            Commonwealth of Pennsylvania, without regard to conflict-of-law
+            principles, except where mandatory consumer protection laws in your
+            jurisdiction provide otherwise.
           </p>
         </section>
 
         <section>
           <h2 className="text-lg font-semibold text-slate-900">18. Contact</h2>
           <p className="mt-2">
-            Questions about these Terms or help using the marketplace? Email{" "}
+            Questions about these Terms or help using the marketplace? Contact{" "}
+            {getLegalEntityDescription()} at{" "}
             <a href={SUPPORT_MAILTO} className="font-medium text-blue-600 hover:text-blue-700">
               {SUPPORT_EMAIL}
             </a>

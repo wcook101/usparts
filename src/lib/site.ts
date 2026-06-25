@@ -3,6 +3,17 @@ export const UPLOAD_EMAIL = "upload@usparts.us";
 
 export const SUPPORT_MAILTO = `mailto:${SUPPORT_EMAIL}`;
 
+/** Legal entity operating the USParts marketplace. */
+export const LEGAL_ENTITY_NAME = "William Ward LLC";
+export const TRADE_NAME = "USParts";
+export const LEGAL_ENTITY_STATE = "Pennsylvania";
+
+export const LEGAL_ENTITY_DBA_LINE = `${LEGAL_ENTITY_NAME} d/b/a ${TRADE_NAME}`;
+
+export function getLegalEntityDescription(): string {
+  return `${LEGAL_ENTITY_NAME}, a ${LEGAL_ENTITY_STATE} limited liability company, doing business as ${TRADE_NAME}`;
+}
+
 export function getSiteUrl(): string {
   return process.env.NEXT_PUBLIC_APP_URL?.trim() || "https://www.usparts.us";
 }

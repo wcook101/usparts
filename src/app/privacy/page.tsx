@@ -1,5 +1,11 @@
 import Link from "next/link";
-import { SUPPORT_EMAIL, SUPPORT_MAILTO } from "@/lib/site";
+import {
+  getLegalEntityDescription,
+  LEGAL_ENTITY_NAME,
+  SUPPORT_EMAIL,
+  SUPPORT_MAILTO,
+  TRADE_NAME,
+} from "@/lib/site";
 
 export const metadata = {
   title: "Privacy Policy",
@@ -14,14 +20,14 @@ export default function PrivacyPage() {
       <h1 className="mt-3 text-3xl font-bold tracking-tight text-slate-900">
         Privacy Policy
       </h1>
-      <p className="mt-3 text-sm text-slate-500">Last updated: June 17, 2026</p>
+      <p className="mt-3 text-sm text-slate-500">Last updated: June 15, 2026</p>
 
       <div className="prose prose-slate mt-8 max-w-none space-y-6 text-sm leading-7 text-slate-700">
         <p>
-          This Privacy Policy describes how USParts (&quot;USParts,&quot; &quot;we,&quot;
-          &quot;us,&quot; or &quot;our&quot;) collects, uses, and shares information when you
-          access or use the USParts website and related services (collectively,
-          the &quot;Service&quot;) at{" "}
+          This Privacy Policy describes how {getLegalEntityDescription()} (&quot;
+          {TRADE_NAME},&quot; &quot;we,&quot; &quot;us,&quot; or &quot;our&quot;) collects, uses, and shares
+          information when you access or use the {TRADE_NAME} website and related
+          services (collectively, the &quot;Service&quot;) at{" "}
           <a
             href="https://www.usparts.us"
             className="font-medium text-blue-600 hover:text-blue-700"
@@ -182,8 +188,14 @@ export default function PrivacyPage() {
             cookies may prevent you from logging in or using certain features.
           </p>
           <p className="mt-2">
-            We do not currently use third-party advertising cookies on the
-            Service.
+            We use Microsoft Clarity to understand how visitors use the Service
+            (for example, pages viewed and general interaction patterns). Clarity
+            may set its own cookies and collect usage data as described in
+            Microsoft&apos;s privacy documentation. We use this information to
+            improve the Service, not to sell advertising profiles.
+          </p>
+          <p className="mt-2">
+            We do not use third-party advertising cookies on the Service.
           </p>
         </section>
 
@@ -269,11 +281,11 @@ export default function PrivacyPage() {
             9. International users
           </h2>
           <p className="mt-2">
-            USParts is operated from the United States. If you access the Service
-            from outside the United States, you understand that your information
-            may be processed and stored in the United States and other countries
-            where our service providers operate, which may have different data
-            protection laws than your jurisdiction.
+            {TRADE_NAME} is operated from the United States by {LEGAL_ENTITY_NAME}.
+            If you access the Service from outside the United States, you understand
+            that your information may be processed and stored in the United States
+            and other countries where our service providers operate, which may have
+            different data protection laws than your jurisdiction.
           </p>
         </section>
 
@@ -309,9 +321,9 @@ export default function PrivacyPage() {
           </h2>
           <p className="mt-2">
             This Privacy Policy is governed by the laws of the United States and
-            the State of Delaware, without regard to conflict-of-law principles,
-            except where mandatory privacy laws in your jurisdiction provide
-            otherwise.
+            the Commonwealth of Pennsylvania, without regard to conflict-of-law
+            principles, except where mandatory privacy laws in your jurisdiction
+            provide otherwise.
           </p>
         </section>
 
@@ -319,7 +331,7 @@ export default function PrivacyPage() {
           <h2 className="text-lg font-semibold text-slate-900">13. Contact</h2>
           <p className="mt-2">
             Questions about this Privacy Policy or how we handle your information?
-            Email{" "}
+            Contact {getLegalEntityDescription()} at{" "}
             <a href={SUPPORT_MAILTO} className="font-medium text-blue-600 hover:text-blue-700">
               {SUPPORT_EMAIL}
             </a>
