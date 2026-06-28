@@ -53,6 +53,15 @@ enum BulkRfqJobStatus {
   FAILED
 }
 
+enum SupplierOutreachStatus {
+  CONTACTED
+  FOLLOW_UP
+  REGISTERED
+  INVENTORY_LIVE
+  DECLINED
+  ARCHIVED
+}
+
 model User {
   id           String          @id @default(cuid())
   email        String          @unique
@@ -68,6 +77,7 @@ model User {
   quoteRequests       QuoteRequest[]
   passwordResetTokens PasswordResetToken[]
   bulkRfqJobs         BulkRfqJob[]
+  supplierOutreachAdded SupplierOutreach[] @relation("SupplierOutreachAddedBy")
 
   @@index([email])
 }
@@ -119,6 +129,7 @@ model Company {
   inventoryLocations InventoryLocation[]
   members            CompanyMember[]
   invites            CompanyInvite[]
+  supplierOutreach   SupplierOutreach?
 
   @@index([name])
   @@index([emailDomain])
@@ -312,4 +323,27 @@ model SmartSearchUsageMonth {
   completionTokens Int      @default(0)
   estimatedCostUsd Decimal  @default(0) @db.Decimal(10, 6)
   updatedAt        DateTime @updatedAt
+}
+
+model SupplierOutreach {
+  id             String                 @id @default(cuid())
+  companyName    String
+  contactName    String?
+  contactEmail   String?
+  website        String?
+  status         SupplierOutreachStatus @default(CONTACTED)
+  contactedAt    DateTime               @default(now())
+  lastFollowUpAt DateTime?
+  notes          String?
+  companyId      String?                @unique
+  company        Company?               @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  addedById      String
+  addedBy        User                   @relation("SupplierOutreachAddedBy", fields: [addedById], references: [id], onDelete: Cascade)
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
+
+  @@index([status])
+  @@index([contactedAt])
+  @@index([contactEmail])
+  @@index([addedById])
 }

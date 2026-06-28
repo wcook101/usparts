@@ -189,6 +189,40 @@ export const createPartAliasSchema = z.object({
 
 export type CreatePartAliasInput = z.infer<typeof createPartAliasSchema>;
 
+export const supplierOutreachStatusSchema = z.enum([
+  "CONTACTED",
+  "FOLLOW_UP",
+  "REGISTERED",
+  "INVENTORY_LIVE",
+  "DECLINED",
+  "ARCHIVED",
+]);
+
+export const createSupplierOutreachSchema = z.object({
+  companyName: z.string().trim().min(1).max(120),
+  contactName: z.string().trim().max(120).optional().or(z.literal("")),
+  contactEmail: z.string().trim().email().optional().or(z.literal("")),
+  website: optionalWebsiteField.optional(),
+  status: supplierOutreachStatusSchema.optional(),
+  contactedAt: z.string().datetime().optional(),
+  notes: z.string().trim().max(2000).optional().or(z.literal("")),
+});
+
+export const updateSupplierOutreachSchema = z.object({
+  companyName: z.string().trim().min(1).max(120).optional(),
+  contactName: z.string().trim().max(120).optional().or(z.literal("")),
+  contactEmail: z.string().trim().email().optional().or(z.literal("")),
+  website: optionalWebsiteField.optional(),
+  status: supplierOutreachStatusSchema.optional(),
+  contactedAt: z.string().datetime().optional(),
+  lastFollowUpAt: z.string().datetime().nullable().optional(),
+  notes: z.string().trim().max(2000).optional().or(z.literal("")),
+  companyId: z.string().trim().min(1).nullable().optional(),
+});
+
+export type CreateSupplierOutreachInput = z.infer<typeof createSupplierOutreachSchema>;
+export type UpdateSupplierOutreachInput = z.infer<typeof updateSupplierOutreachSchema>;
+
 export const updateProfileSchema = z.object({
   name: z.string().trim().min(2).max(120),
 });
