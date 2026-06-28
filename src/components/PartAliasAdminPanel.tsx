@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type PartAliasRecord = {
   id: string;
@@ -17,6 +17,7 @@ export function PartAliasAdminPanel() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const createFormRef = useRef<HTMLFormElement>(null);
 
   async function loadAliases() {
     setIsLoading(true);
@@ -42,11 +43,15 @@ export function PartAliasAdminPanel() {
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    const form = createFormRef.current;
+    if (!form) {
+      return;
+    }
+
+    const formData = new FormData(form);
     setError(null);
     setIsSubmitting(true);
-
-    const form = event.currentTarget;
-    const formData = new FormData(form);
 
     try {
       const response = await fetch("/api/admin/part-aliases", {
@@ -65,7 +70,7 @@ export function PartAliasAdminPanel() {
         throw new Error(data.error ?? "Failed to create alias");
       }
 
-      form.reset();
+      createFormRef.current?.reset();
       await loadAliases();
     } catch (submitError) {
       setError(
@@ -110,7 +115,11 @@ export function PartAliasAdminPanel() {
           if you want bidirectional matching.
         </p>
 
-        <form onSubmit={handleSubmit} className="mt-5 grid gap-4 sm:grid-cols-2">
+        <form
+          ref={createFormRef}
+          onSubmit={handleSubmit}
+          className="mt-5 grid gap-4 sm:grid-cols-2"
+        >
           <label className="block space-y-2">
             <span className="text-sm font-medium text-slate-700">From MPN (searched)</span>
             <input

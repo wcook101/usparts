@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type {
   SupplierOutreachRecord,
   SupplierOutreachSummary,
@@ -106,6 +106,7 @@ export function SupplierOutreachAdminPanel() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [actionId, setActionId] = useState<string | null>(null);
+  const createFormRef = useRef<HTMLFormElement>(null);
 
   async function loadRecords() {
     setIsLoading(true);
@@ -142,11 +143,15 @@ export function SupplierOutreachAdminPanel() {
 
   async function handleCreate(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    const form = createFormRef.current;
+    if (!form) {
+      return;
+    }
+
+    const formData = new FormData(form);
     setError(null);
     setIsSubmitting(true);
-
-    const form = event.currentTarget;
-    const formData = new FormData(form);
 
     try {
       const response = await fetch("/api/admin/supplier-outreach", {
@@ -169,7 +174,7 @@ export function SupplierOutreachAdminPanel() {
         throw new Error(data.error ?? "Failed to add outreach record");
       }
 
-      form.reset();
+      createFormRef.current?.reset();
       await loadRecords();
     } catch (submitError) {
       setError(
@@ -273,7 +278,11 @@ export function SupplierOutreachAdminPanel() {
           automatically and status updates when they import stock.
         </p>
 
-        <form onSubmit={handleCreate} className="mt-5 grid gap-4 sm:grid-cols-2">
+        <form
+          ref={createFormRef}
+          onSubmit={handleCreate}
+          className="mt-5 grid gap-4 sm:grid-cols-2"
+        >
           <label className="block space-y-2 sm:col-span-2">
             <span className="text-sm font-medium text-slate-700">Company name</span>
             <input
