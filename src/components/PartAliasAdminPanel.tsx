@@ -45,7 +45,8 @@ export function PartAliasAdminPanel() {
     setError(null);
     setIsSubmitting(true);
 
-    const formData = new FormData(event.currentTarget);
+    const form = event.currentTarget;
+    const formData = new FormData(form);
 
     try {
       const response = await fetch("/api/admin/part-aliases", {
@@ -64,7 +65,7 @@ export function PartAliasAdminPanel() {
         throw new Error(data.error ?? "Failed to create alias");
       }
 
-      event.currentTarget.reset();
+      form.reset();
       await loadAliases();
     } catch (submitError) {
       setError(

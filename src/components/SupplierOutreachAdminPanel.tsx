@@ -145,7 +145,8 @@ export function SupplierOutreachAdminPanel() {
     setError(null);
     setIsSubmitting(true);
 
-    const formData = new FormData(event.currentTarget);
+    const form = event.currentTarget;
+    const formData = new FormData(form);
 
     try {
       const response = await fetch("/api/admin/supplier-outreach", {
@@ -168,7 +169,7 @@ export function SupplierOutreachAdminPanel() {
         throw new Error(data.error ?? "Failed to add outreach record");
       }
 
-      event.currentTarget.reset();
+      form.reset();
       await loadRecords();
     } catch (submitError) {
       setError(
