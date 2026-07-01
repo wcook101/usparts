@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { LogoutButton } from "@/components/LogoutButton";
 import { getSessionUser } from "@/lib/auth";
 import { canInviteMembers, canManageInventory } from "@/lib/auth/membership";
+import { MAX_IMPORT_ROWS } from "@/lib/import-limits";
 
 export const dynamic = "force-dynamic";
 
@@ -115,7 +116,7 @@ export default async function CompanyDashboardPage() {
             >
               <h2 className="text-lg font-semibold text-slate-900">Bulk import online</h2>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                Upload CSV or Excel files with up to 100,000 parts at once.
+                Upload CSV or Excel files with up to {MAX_IMPORT_ROWS.toLocaleString()} parts at once.
               </p>
             </Link>
             <Link

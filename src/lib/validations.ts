@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { isValidWebsiteUrl, normalizeWebsiteUrl } from "@/lib/format";
+import { MAX_IMPORT_ROWS } from "@/lib/import-limits";
 
 const optionalWebsiteField = z
   .string()
@@ -122,7 +123,7 @@ export const importInventoryRequestSchema = z.object({
   mode: importModeSchema.default("append"),
   columnMap: z.record(z.string(), z.string()).optional(),
   excludedColumns: z.array(z.string()).optional(),
-  parts: z.array(z.record(z.string(), z.unknown())).min(1).max(100_000),
+  parts: z.array(z.record(z.string(), z.unknown())).min(1).max(MAX_IMPORT_ROWS),
 });
 
 export type ImportInventoryRequest = z.infer<typeof importInventoryRequestSchema>;

@@ -5,6 +5,7 @@ import { InventoryImportForm } from "@/components/InventoryImportForm";
 import { getSessionUser, userCanManageInventory } from "@/lib/auth";
 import { getSessionCompany } from "@/lib/auth/resource-access";
 import { db } from "@/lib/db";
+import { MAX_IMPORT_ROWS } from "@/lib/import-limits";
 
 export const dynamic = "force-dynamic";
 
@@ -87,7 +88,7 @@ export default async function ImportInventoryPage() {
             Upload online
           </h2>
           <p className="mt-2 text-sm text-slate-600">
-            Upload up to 100,000 parts from CSV, Excel (.xlsx/.xls), or JSON.
+            Upload up to {MAX_IMPORT_ROWS.toLocaleString()} parts from CSV, Excel (.xlsx/.xls), or JSON.
           </p>
         </div>
 
@@ -130,7 +131,7 @@ export default async function ImportInventoryPage() {
                 Import limits
               </h2>
               <ul className="mt-3 space-y-2 text-sm text-slate-600">
-                <li>Up to 100,000 rows per upload</li>
+                <li>Up to {MAX_IMPORT_ROWS.toLocaleString()} rows per upload</li>
                 <li>One fully successful import every 24 hours (zero row errors)</li>
               </ul>
             </section>

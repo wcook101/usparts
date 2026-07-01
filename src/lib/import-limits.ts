@@ -1,4 +1,4 @@
-export const MAX_IMPORT_ROWS = 100_000;
+export const MAX_IMPORT_ROWS = 300_000;
 export const IMPORT_COOLDOWN_MS = 24 * 60 * 60 * 1000;
 
 export type ImportCooldownStatus = {
