@@ -2,12 +2,14 @@ type ImportProgressOverlayProps = {
   title: string;
   message: string;
   progress?: number | null;
+  processing?: boolean;
 };
 
 export function ImportProgressOverlay({
   title,
   message,
   progress = null,
+  processing = false,
 }: ImportProgressOverlayProps) {
   const showPercent = typeof progress === "number";
 
@@ -34,7 +36,11 @@ export function ImportProgressOverlay({
         <div className="mt-5 h-2.5 overflow-hidden rounded-full bg-slate-200">
           {showPercent ? (
             <div
-              className="h-full rounded-full bg-blue-600 transition-[width] duration-300 ease-out"
+              className={`h-full rounded-full bg-blue-600 transition-[width] duration-300 ease-out ${
+                processing
+                  ? "motion-safe:animate-[import-progress-indeterminate_1.4s_ease-in-out_infinite]"
+                  : ""
+              }`}
               style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
             />
           ) : (

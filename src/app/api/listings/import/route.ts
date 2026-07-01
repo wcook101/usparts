@@ -20,6 +20,7 @@ import {
 } from "@/lib/validations";
 
 export const runtime = "nodejs";
+export const maxDuration = 900;
 
 export async function POST(request: Request) {
   try {

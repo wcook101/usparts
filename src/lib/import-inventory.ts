@@ -1,3 +1,4 @@
+import type { Prisma } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
 import { formatInventoryLocation } from "@/lib/format";
 import type { ImportFileFormat } from "@/lib/import-file";
@@ -19,14 +20,77 @@ import {
 } from "@/lib/inventory-import";
 import type { ImportMode } from "@/lib/validations";
 
-const BATCH_SIZE = 100;
-const BATCH_TRANSACTION_TIMEOUT_MS = 60_000;
+const BATCH_SIZE = 1_000;
+const BATCH_TRANSACTION_TIMEOUT_MS = 180_000;
+const UPDATE_CONCURRENCY = 25;
 
 type ListingWriteResult = {
   created: number;
   updated: number;
   errors: ImportRowError[];
 };
+
+function listingKey(mpn: string, manufacturer: string | null | undefined): string {
+  return `${mpn.toLowerCase()}::${(manufacturer ?? "").toLowerCase()}`;
+}
+
+function rowToCreateData(
+  row: NormalizedImportRow,
+  inventoryLocationId: string,
+  companyId: string,
+): Prisma.PartListingCreateManyInput {
+  return {
+    companyId,
+    inventoryLocationId,
+    mpn: row.mpn,
+    mpnNormalized: normalizeMpn(row.mpn),
+    manufacturer: row.manufacturer ?? "",
+    description: row.description ?? null,
+    category: row.category,
+    quantity: row.quantity,
+    price: row.price ?? null,
+    condition: row.condition,
+    dateCode: row.dateCode ?? null,
+    leadTimeDays: row.leadTimeDays ?? null,
+    datasheetUrl: row.datasheetUrl ?? null,
+    isActive: true,
+  };
+}
+
+async function refreshExistingMap(
+  tx: Prisma.TransactionClient,
+  companyId: string,
+  createdRows: Prisma.PartListingCreateManyInput[],
+  existingMap: Map<string, string>,
+): Promise<void> {
+  if (createdRows.length === 0) {
+    return;
+  }
+
+  const createdKeys = new Set(
+    createdRows.map((row) => listingKey(row.mpn, row.manufacturer)),
+  );
+  const mpns = [...new Set(createdRows.map((row) => row.mpn))];
+  const listings = await tx.partListing.findMany({
+    where: {
+      companyId,
+      isActive: true,
+      mpn: { in: mpns },
+    },
+    select: {
+      id: true,
+      mpn: true,
+      manufacturer: true,
+    },
+  });
+
+  for (const listing of listings) {
+    const key = listingKey(listing.mpn, listing.manufacturer);
+    if (createdKeys.has(key)) {
+      existingMap.set(key, listing.id);
+    }
+  }
+}
 
 async function writeListingBatch(
   rows: NormalizedImportRow[],
@@ -40,9 +104,13 @@ async function writeListingBatch(
 ): Promise<ListingWriteResult> {
   return db.$transaction(
     async (tx) => {
-      let created = 0;
-      let updated = 0;
       const errors: ImportRowError[] = [];
+      const pendingCreates = new Map<
+        string,
+        { row: NormalizedImportRow; inventoryLocationId: string }
+      >();
+      const toUpdate: { id: string; row: NormalizedImportRow; inventoryLocationId: string }[] =
+        [];
 
       for (const row of rows) {
         const inventoryLocationId = resolveLocationId(
@@ -59,59 +127,64 @@ async function writeListingBatch(
           continue;
         }
 
-        const key = `${row.mpn.toLowerCase()}::${(row.manufacturer ?? "").toLowerCase()}`;
+        const key = listingKey(row.mpn, row.manufacturer);
         const existingId =
           options.mode === "append" ? options.existingMap.get(key) : undefined;
 
         if (existingId) {
-          await tx.partListing.update({
-            where: { id: existingId },
-            data: {
-              inventoryLocationId,
-              description: row.description ?? null,
-              category: row.category,
-              quantity: row.quantity,
-              price: row.price ?? null,
-              condition: row.condition,
-              dateCode: row.dateCode ?? null,
-              leadTimeDays: row.leadTimeDays ?? null,
-              datasheetUrl: row.datasheetUrl ?? null,
-              isActive: true,
-            },
-          });
-          updated += 1;
+          toUpdate.push({ id: existingId, row, inventoryLocationId });
           continue;
         }
 
-        const createdListing = await tx.partListing.create({
-          data: {
-            companyId: options.companyId,
-            inventoryLocationId,
-            mpn: row.mpn,
-            mpnNormalized: normalizeMpn(row.mpn),
-            manufacturer: row.manufacturer ?? "",
-            description: row.description ?? null,
-            category: row.category,
-            quantity: row.quantity,
-            price: row.price ?? null,
-            condition: row.condition,
-            dateCode: row.dateCode ?? null,
-            leadTimeDays: row.leadTimeDays ?? null,
-            datasheetUrl: row.datasheetUrl ?? null,
-            isActive: true,
-          },
+        pendingCreates.set(key, { row, inventoryLocationId });
+      }
+
+      const toCreate = [...pendingCreates.values()].map(({ row, inventoryLocationId }) =>
+        rowToCreateData(row, inventoryLocationId, options.companyId),
+      );
+
+      let created = 0;
+      let updated = 0;
+
+      if (toCreate.length > 0) {
+        const createResult = await tx.partListing.createMany({
+          data: toCreate,
         });
+        created = createResult.count;
 
         if (options.mode === "append") {
-          options.existingMap.set(key, createdListing.id);
+          await refreshExistingMap(tx, options.companyId, toCreate, options.existingMap);
         }
-        created += 1;
+      }
+
+      for (let index = 0; index < toUpdate.length; index += UPDATE_CONCURRENCY) {
+        const chunk = toUpdate.slice(index, index + UPDATE_CONCURRENCY);
+        await Promise.all(
+          chunk.map(async ({ id, row, inventoryLocationId }) => {
+            await tx.partListing.update({
+              where: { id },
+              data: {
+                inventoryLocationId,
+                description: row.description ?? null,
+                category: row.category,
+                quantity: row.quantity,
+                price: row.price ?? null,
+                condition: row.condition,
+                dateCode: row.dateCode ?? null,
+                leadTimeDays: row.leadTimeDays ?? null,
+                datasheetUrl: row.datasheetUrl ?? null,
+                isActive: true,
+              },
+            });
+          }),
+        );
+        updated += chunk.length;
       }
 
       return { created, updated, errors };
     },
     {
-      maxWait: 10_000,
+      maxWait: 30_000,
       timeout: BATCH_TRANSACTION_TIMEOUT_MS,
     },
   );
@@ -261,31 +334,29 @@ export async function importInventory(
   let created = 0;
   let updated = 0;
 
-  if (input.mode === "replace") {
-    await db.partListing.updateMany({
-      where: { companyId: company.id, isActive: true },
-      data: { isActive: false },
-    });
-  }
+  const importStartedAt = new Date();
 
-  const existingListings = await db.partListing.findMany({
-    where: {
-      companyId: company.id,
-      isActive: true,
-    },
-    select: {
-      id: true,
-      mpn: true,
-      manufacturer: true,
-    },
-  });
-
-  const existingMap = new Map(
-    existingListings.map((listing) => [
-      `${listing.mpn.toLowerCase()}::${(listing.manufacturer ?? "").toLowerCase()}`,
-      listing.id,
-    ]),
-  );
+  const existingMap =
+    input.mode === "append"
+      ? new Map(
+          (
+            await db.partListing.findMany({
+              where: {
+                companyId: company.id,
+                isActive: true,
+              },
+              select: {
+                id: true,
+                mpn: true,
+                manufacturer: true,
+              },
+            })
+          ).map((listing) => [
+            listingKey(listing.mpn, listing.manufacturer),
+            listing.id,
+          ]),
+        )
+      : new Map<string, string>();
 
   for (let index = 0; index < normalizedRows.length; index += BATCH_SIZE) {
     const batch = normalizedRows.slice(index, index + BATCH_SIZE);
@@ -300,6 +371,17 @@ export async function importInventory(
     created += batchResult.created;
     updated += batchResult.updated;
     errors.push(...batchResult.errors);
+  }
+
+  if (input.mode === "replace") {
+    await db.partListing.updateMany({
+      where: {
+        companyId: company.id,
+        isActive: true,
+        createdAt: { lt: importStartedAt },
+      },
+      data: { isActive: false },
+    });
   }
 
   const result = {

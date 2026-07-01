@@ -123,8 +123,12 @@ export function InventoryImportForm({
     setImportProgress(6);
     const interval = window.setInterval(() => {
       setImportProgress((current) => {
-        if (current >= 92) {
+        if (current >= 99) {
           return current;
+        }
+
+        if (current >= 92) {
+          return current + 0.08;
         }
 
         const remaining = 92 - current;
@@ -390,8 +394,13 @@ export function InventoryImportForm({
         {isSubmitting ? (
           <ImportProgressOverlay
             title="Importing inventory"
-            message="We are matching your columns and loading parts into USParts. Large files can take several minutes."
+            message={
+              importProgress >= 92
+                ? "Your file is processing on the server. Large imports (100k+ rows) can take 10–20 minutes — please keep this tab open and do not refresh."
+                : "We are uploading your file and preparing rows for import."
+            }
             progress={importProgress}
+            processing={importProgress >= 92}
           />
         ) : null}
 

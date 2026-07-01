@@ -12,6 +12,7 @@ import { importModeSchema } from "@/lib/validations";
 import { db } from "@/lib/db";
 
 export const runtime = "nodejs";
+export const maxDuration = 900;
 
 export async function POST(request: Request) {
   try {
