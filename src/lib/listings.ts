@@ -25,6 +25,28 @@ export function hasSearchCriteria(query: Pick<SearchQuery, "q" | "manufacturer" 
   return Boolean(query.q?.trim() || query.manufacturer?.trim() || query.category?.trim());
 }
 
+function looksLikePartNumberQuery(query: string): boolean {
+  const trimmed = query.trim();
+  if (trimmed.length < 2) {
+    return false;
+  }
+
+  return /^[A-Za-z0-9][A-Za-z0-9./+#_-]*$/.test(trimmed);
+}
+
+async function countListingsCapped(
+  where: Prisma.PartListingWhereInput,
+  cap = MAX_SEARCH_RESULTS,
+): Promise<number> {
+  const rows = await db.partListing.findMany({
+    where,
+    select: { id: true },
+    take: cap + 1,
+  });
+
+  return rows.length > cap ? cap : rows.length;
+}
+
 function buildSearchFilters(
   query: Pick<SearchQuery, "q" | "manufacturer" | "category">,
 ): Prisma.PartListingWhereInput {
@@ -40,7 +62,14 @@ function buildSearchFilters(
       ? { manufacturer: { contains: manufacturer, mode: "insensitive" } }
       : {}),
     ...(trimmedQuery
-      ? normalizedQuery.length >= 2
+      ? normalizedQuery.length >= 2 && looksLikePartNumberQuery(trimmedQuery)
+        ? {
+            OR: [
+              { mpnNormalized: { startsWith: normalizedQuery } },
+              { mpnNormalized: normalizedQuery },
+            ],
+          }
+        : normalizedQuery.length >= 2
         ? {
             OR: [
               { mpnNormalized: { startsWith: normalizedQuery } },
@@ -263,59 +292,44 @@ export async function getRecentListingsByCompany(
   companyLimit = RECENT_COMPANIES_LIMIT,
   perCompanyLimit = RECENT_LISTINGS_PER_COMPANY,
 ): Promise<CompanyRecentListings[]> {
-  const recentCompanies = await db.partListing.groupBy({
-    by: ["companyId"],
-    where: { isActive: true },
-    _max: { updatedAt: true },
-    orderBy: { _max: { updatedAt: "desc" } },
+  const companies = await db.company.findMany({
+    where: {
+      listings: { some: { isActive: true } },
+    },
+    orderBy: [{ lastImportAt: "desc" }, { updatedAt: "desc" }],
     take: companyLimit,
   });
 
-  if (recentCompanies.length === 0) {
+  if (companies.length === 0) {
     return [];
   }
 
-  const companyIds = recentCompanies.map((row) => row.companyId);
-  const companies = await db.company.findMany({
-    where: { id: { in: companyIds } },
-  });
-  const companyMap = new Map(companies.map((company) => [company.id, company]));
+  const groups = await Promise.all(
+    companies.map(async (company) => {
+      const listings = await db.partListing.findMany({
+        where: {
+          companyId: company.id,
+          isActive: true,
+        },
+        include: { company: true, inventoryLocation: true },
+        orderBy: { updatedAt: "desc" },
+        take: perCompanyLimit,
+      });
 
-  const listings = await db.partListing.findMany({
-    where: {
-      isActive: true,
-      companyId: { in: companyIds },
-    },
-    include: { company: true, inventoryLocation: true },
-    orderBy: { updatedAt: "desc" },
-  });
+      if (listings.length === 0) {
+        return null;
+      }
 
-  const listingsByCompany = new Map<string, ListingWithCompany[]>();
-  for (const listing of listings) {
-    const bucket = listingsByCompany.get(listing.companyId) ?? [];
-    if (bucket.length < perCompanyLimit) {
-      bucket.push(listing);
-      listingsByCompany.set(listing.companyId, bucket);
-    }
-  }
-
-  return recentCompanies.flatMap((row) => {
-    const company = companyMap.get(row.companyId);
-    const companyListings = listingsByCompany.get(row.companyId) ?? [];
-    const lastUploadedAt = row._max.updatedAt;
-
-    if (!company || !lastUploadedAt || companyListings.length === 0) {
-      return [];
-    }
-
-    return [
-      {
+      return {
         company,
-        listings: companyListings,
-        lastUploadedAt,
-      },
-    ];
-  });
+        listings,
+        lastUploadedAt:
+          listings[0]?.updatedAt ?? company.lastImportAt ?? company.updatedAt,
+      };
+    }),
+  );
+
+  return groups.filter((group): group is CompanyRecentListings => group !== null);
 }
 
 export async function searchListings(query: SearchQuery) {
@@ -351,7 +365,7 @@ export async function searchListings(query: SearchQuery) {
       skip,
       take: limit,
     }),
-    db.partListing.count({ where }),
+    countListingsCapped(where),
   ]);
 
   let resolvedListings = listings;

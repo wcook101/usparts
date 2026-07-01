@@ -215,6 +215,7 @@ model PartListing {
   @@index([category])
   @@index([isActive])
   @@index([isActive, mpnNormalized])
+  @@index([companyId, isActive, updatedAt])
   @@index([mpn, manufacturer])
   @@index([inventoryLocationId])
 }
