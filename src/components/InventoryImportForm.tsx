@@ -50,6 +50,7 @@ type ImportResult = {
   updated: number;
   skipped: number;
   ignoredRows?: number;
+  mergedDuplicates?: number;
   errors: { rowNumber: number; message: string }[];
   lastImportAt: string | null;
 };
@@ -349,6 +350,14 @@ export function InventoryImportForm({
           <p className="mt-3 text-sm text-slate-600">
             {result.ignoredRows.toLocaleString()} blank or header rows were skipped
             automatically.
+          </p>
+        ) : null}
+
+        {result.mergedDuplicates ? (
+          <p className="mt-3 text-sm text-slate-600">
+            {result.mergedDuplicates.toLocaleString()} rows shared the same part
+            number, manufacturer, and date code — only the last of each group was
+            kept.
           </p>
         ) : null}
 

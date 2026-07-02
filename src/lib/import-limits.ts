@@ -61,14 +61,16 @@ export function isCleanImportResult(result: {
   updated: number;
   skipped: number;
   ignoredRows?: number;
+  mergedDuplicates?: number;
 }): boolean {
   const ignored = result.ignoredRows ?? 0;
+  const merged = result.mergedDuplicates ?? 0;
   const importedRows = result.totalRows - ignored;
 
   return (
     importedRows > 0 &&
     result.skipped === 0 &&
-    result.created + result.updated === importedRows
+    result.created + result.updated + merged === importedRows
   );
 }
 

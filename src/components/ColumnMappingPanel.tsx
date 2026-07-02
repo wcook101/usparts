@@ -135,6 +135,18 @@ export function ColumnMappingPanel({
         </div>
       </div>
 
+      {!activeMapping.dateCode ? (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
+          <p className="font-medium">Date code column not matched</p>
+          <p className="mt-2 leading-6">
+            If your file has a date code, lot, or D/C column, match it to{" "}
+            <strong>Date Code</strong>. Without it, rows with the same part number
+            and manufacturer are imported separately only when their date codes
+            differ — blank date codes will not be merged together.
+          </p>
+        </div>
+      ) : null}
+
       <div className="grid gap-6 lg:grid-cols-2">
         <section className="rounded-xl border border-slate-200 bg-white p-5">
           <h3 className="text-sm font-semibold text-slate-900">Your file columns</h3>

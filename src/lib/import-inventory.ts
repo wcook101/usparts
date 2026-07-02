@@ -27,6 +27,7 @@ const UPDATE_CONCURRENCY = 25;
 type ListingWriteResult = {
   created: number;
   updated: number;
+  mergedDuplicates: number;
   errors: ImportRowError[];
 };
 
@@ -44,6 +45,15 @@ function listingKey(
 
 function rowListingKey(row: Pick<NormalizedImportRow, "mpn" | "manufacturer" | "dateCode">): string {
   return listingKey(row.mpn, row.manufacturer, row.dateCode);
+}
+
+/** Rows without a date code are never collapsed together during import. */
+function importCreateKey(row: NormalizedImportRow): string {
+  if (!normalizeDateCodeKey(row.dateCode)) {
+    return `__row_${row.rowNumber}`;
+  }
+
+  return rowListingKey(row);
 }
 
 function rowToCreateData(
@@ -118,6 +128,7 @@ async function writeListingBatch(
   return db.$transaction(
     async (tx) => {
       const errors: ImportRowError[] = [];
+      let mergedDuplicates = 0;
       const pendingCreates = new Map<
         string,
         { row: NormalizedImportRow; inventoryLocationId: string }
@@ -140,16 +151,21 @@ async function writeListingBatch(
           continue;
         }
 
-        const key = rowListingKey(row);
+        const matchKey = rowListingKey(row);
         const existingId =
-          options.mode === "append" ? options.existingMap.get(key) : undefined;
+          options.mode === "append" ? options.existingMap.get(matchKey) : undefined;
 
         if (existingId) {
           toUpdate.push({ id: existingId, row, inventoryLocationId });
           continue;
         }
 
-        pendingCreates.set(key, { row, inventoryLocationId });
+        const createKey = importCreateKey(row);
+        if (pendingCreates.has(createKey)) {
+          mergedDuplicates += 1;
+        }
+
+        pendingCreates.set(createKey, { row, inventoryLocationId });
       }
 
       const toCreate = [...pendingCreates.values()].map(({ row, inventoryLocationId }) =>
@@ -194,7 +210,7 @@ async function writeListingBatch(
         updated += chunk.length;
       }
 
-      return { created, updated, errors };
+      return { created, updated, mergedDuplicates, errors };
     },
     {
       maxWait: 30_000,
@@ -222,6 +238,7 @@ export type ImportInventoryResult = {
   updated: number;
   skipped: number;
   ignoredRows: number;
+  mergedDuplicates: number;
   errors: ImportRowError[];
   lastImportAt: string | null;
 };
@@ -339,6 +356,7 @@ export async function importInventory(
       updated: 0,
       skipped: errors.length,
       ignoredRows,
+      mergedDuplicates: 0,
       errors,
       lastImportAt: null,
     };
@@ -346,6 +364,7 @@ export async function importInventory(
 
   let created = 0;
   let updated = 0;
+  let mergedDuplicates = 0;
 
   const importStartedAt = new Date();
 
@@ -384,6 +403,7 @@ export async function importInventory(
 
     created += batchResult.created;
     updated += batchResult.updated;
+    mergedDuplicates += batchResult.mergedDuplicates;
     errors.push(...batchResult.errors);
   }
 
@@ -406,6 +426,7 @@ export async function importInventory(
     updated,
     skipped: errors.length,
     ignoredRows,
+    mergedDuplicates,
     errors: errors.slice(0, 100),
     lastImportAt: null as string | null,
   };
