@@ -535,18 +535,44 @@ function buildJsonColumns(rows: Record<string, string>[]): ParsedColumn[] {
 
 function extractJsonRows(payload: unknown): Record<string, string>[] {
   if (Array.isArray(payload)) {
+    if (payload.length === 0) {
+      throw new Error(
+        "JSON file is empty. Upload your inventory spreadsheet (Excel or CSV), not an import report.",
+      );
+    }
+
     return payload.map((item) => flattenRecord(item));
   }
 
   if (payload && typeof payload === "object") {
     const objectPayload = payload as Record<string, unknown>;
+
+    if ("skippedRows" in objectPayload || "columnMap" in objectPayload) {
+      throw new Error(
+        "This JSON file looks like an import report, not inventory data. Upload the original Excel (.xlsx) or CSV file instead.",
+      );
+    }
+
     const parts = objectPayload.parts ?? objectPayload.inventory ?? objectPayload.items;
     if (Array.isArray(parts)) {
+      if (parts.length === 0) {
+        throw new Error("JSON inventory array is empty.");
+      }
+
       return parts.map((item) => flattenRecord(item));
     }
+
+    const keys = Object.keys(objectPayload);
+    throw new Error(
+      keys.length === 0
+        ? "JSON file is empty. Upload your inventory spreadsheet (Excel or CSV)."
+        : `JSON must be an array of parts or an object with a parts/inventory/items array. Found keys: ${keys.slice(0, 6).join(", ")}.`,
+    );
   }
 
-  throw new Error("JSON must be an array of parts or an object with a parts/inventory/items array");
+  throw new Error(
+    "JSON must be an array of parts or an object with a parts/inventory/items array.",
+  );
 }
 
 function flattenRecord(value: unknown): Record<string, string> {

@@ -10,6 +10,7 @@ import {
   type ColumnMap,
 } from "../src/lib/inventory-import";
 import {
+  buildSkippedRowsCsv,
   rowListingMatchKey,
   skippedRowFromNormalized,
   type SkippedImportRow,
@@ -122,8 +123,8 @@ console.log(
   `Check: ${uniqueListings + mergedRows.length + ignoredRows.length + errorRows.length} = ${rows.length}`,
 );
 
-const reportPath = resolve(filePath).replace(/\.[^.]+$/, "") + "-import-skipped.json";
-writeFileSync(reportPath, JSON.stringify({ columnMap, skippedRows }, null, 2));
+const reportPath = resolve(filePath).replace(/\.[^.]+$/, "") + "-import-skipped.csv";
+writeFileSync(reportPath, buildSkippedRowsCsv(skippedRows));
 console.log(`\nWrote skipped-row report: ${reportPath}`);
 
 if (mergedRows.length > 0) {
