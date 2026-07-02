@@ -543,7 +543,8 @@ export function InventoryImportForm({
                   Append / update
                 </span>
                 <span className="mt-1 block text-sm text-slate-600">
-                  Add new parts and update matching MPN + manufacturer rows.
+                  Add new parts and update rows that match MPN, manufacturer,
+                  and date code.
                 </span>
               </span>
             </label>

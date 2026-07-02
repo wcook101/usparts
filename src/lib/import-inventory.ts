@@ -30,8 +30,20 @@ type ListingWriteResult = {
   errors: ImportRowError[];
 };
 
-function listingKey(mpn: string, manufacturer: string | null | undefined): string {
-  return `${mpn.toLowerCase()}::${(manufacturer ?? "").toLowerCase()}`;
+function normalizeDateCodeKey(dateCode: string | null | undefined): string {
+  return (dateCode ?? "").trim().toLowerCase();
+}
+
+function listingKey(
+  mpn: string,
+  manufacturer: string | null | undefined,
+  dateCode?: string | null,
+): string {
+  return `${mpn.toLowerCase()}::${(manufacturer ?? "").toLowerCase()}::${normalizeDateCodeKey(dateCode)}`;
+}
+
+function rowListingKey(row: Pick<NormalizedImportRow, "mpn" | "manufacturer" | "dateCode">): string {
+  return listingKey(row.mpn, row.manufacturer, row.dateCode);
 }
 
 function rowToCreateData(
@@ -68,7 +80,7 @@ async function refreshExistingMap(
   }
 
   const createdKeys = new Set(
-    createdRows.map((row) => listingKey(row.mpn, row.manufacturer)),
+    createdRows.map((row) => listingKey(row.mpn, row.manufacturer, row.dateCode)),
   );
   const mpns = [...new Set(createdRows.map((row) => row.mpn))];
   const listings = await tx.partListing.findMany({
@@ -81,11 +93,12 @@ async function refreshExistingMap(
       id: true,
       mpn: true,
       manufacturer: true,
+      dateCode: true,
     },
   });
 
   for (const listing of listings) {
-    const key = listingKey(listing.mpn, listing.manufacturer);
+    const key = listingKey(listing.mpn, listing.manufacturer, listing.dateCode);
     if (createdKeys.has(key)) {
       existingMap.set(key, listing.id);
     }
@@ -127,7 +140,7 @@ async function writeListingBatch(
           continue;
         }
 
-        const key = listingKey(row.mpn, row.manufacturer);
+        const key = rowListingKey(row);
         const existingId =
           options.mode === "append" ? options.existingMap.get(key) : undefined;
 
@@ -349,10 +362,11 @@ export async function importInventory(
                 id: true,
                 mpn: true,
                 manufacturer: true,
+                dateCode: true,
               },
             })
           ).map((listing) => [
-            listingKey(listing.mpn, listing.manufacturer),
+            listingKey(listing.mpn, listing.manufacturer, listing.dateCode),
             listing.id,
           ]),
         )
