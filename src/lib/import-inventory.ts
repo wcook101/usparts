@@ -10,6 +10,7 @@ import {
 } from "@/lib/import-limits";
 import {
   applyColumnMap,
+  getFieldValue,
   normalizeImportRow,
   parseImportContent,
   stripExcludedMappings,
@@ -19,6 +20,14 @@ import {
   type NormalizedImportRow,
 } from "@/lib/inventory-import";
 import type { ImportMode } from "@/lib/validations";
+import {
+  listingMatchKeyFromCreateRow,
+  listingMatchKeyFromDb,
+  MAX_SKIPPED_ROWS_IN_RESULT,
+  rowListingMatchKey,
+  skippedRowFromNormalized,
+  type SkippedImportRow,
+} from "@/lib/import-listing-key";
 
 const BATCH_SIZE = 1_000;
 const BATCH_TRANSACTION_TIMEOUT_MS = 180_000;
@@ -28,73 +37,14 @@ type ListingWriteResult = {
   created: number;
   updated: number;
   mergedDuplicates: number;
+  mergedSkippedRows: SkippedImportRow[];
   errors: ImportRowError[];
 };
 
-function normalizeDateCodeKey(dateCode: string | null | undefined): string {
-  return (dateCode ?? "").trim().toLowerCase();
-}
-
-function normalizePriceKey(price: number | undefined | null): string {
-  if (price == null || !Number.isFinite(price)) {
-    return "";
+function pushSkippedRow(rows: SkippedImportRow[], row: SkippedImportRow): void {
+  if (rows.length < MAX_SKIPPED_ROWS_IN_RESULT) {
+    rows.push(row);
   }
-
-  return price.toFixed(4);
-}
-
-function listingMatchKey(
-  mpn: string,
-  manufacturer: string | null | undefined,
-  dateCode: string | null | undefined,
-  quantity: number,
-  price?: number | null,
-): string {
-  return [
-    mpn.toLowerCase(),
-    (manufacturer ?? "").toLowerCase(),
-    normalizeDateCodeKey(dateCode),
-    String(quantity),
-    normalizePriceKey(price),
-  ].join("::");
-}
-
-function rowListingMatchKey(row: NormalizedImportRow): string {
-  return listingMatchKey(
-    row.mpn,
-    row.manufacturer,
-    row.dateCode,
-    row.quantity,
-    row.price,
-  );
-}
-
-function listingMatchKeyFromCreateRow(row: Prisma.PartListingCreateManyInput): string {
-  const price = row.price == null ? undefined : Number(row.price);
-  return listingMatchKey(row.mpn, row.manufacturer, row.dateCode, row.quantity, price);
-}
-
-function listingMatchKeyFromDb(listing: {
-  mpn: string;
-  manufacturer: string;
-  dateCode: string | null;
-  quantity: number;
-  price: Prisma.Decimal | number | null;
-}): string {
-  const price =
-    listing.price == null
-      ? undefined
-      : typeof listing.price === "number"
-        ? listing.price
-        : Number(listing.price);
-
-  return listingMatchKey(
-    listing.mpn,
-    listing.manufacturer,
-    listing.dateCode,
-    listing.quantity,
-    price,
-  );
 }
 
 function rowToCreateData(
@@ -170,6 +120,7 @@ async function writeListingBatch(
     async (tx) => {
       const errors: ImportRowError[] = [];
       let mergedDuplicates = 0;
+      const mergedSkippedRows: SkippedImportRow[] = [];
       const pendingCreates = new Map<
         string,
         { row: NormalizedImportRow; inventoryLocationId: string }
@@ -203,6 +154,15 @@ async function writeListingBatch(
 
         if (pendingCreates.has(key)) {
           mergedDuplicates += 1;
+          const kept = pendingCreates.get(key)!;
+          mergedSkippedRows.push(
+            skippedRowFromNormalized(
+              row,
+              "merged",
+              `Exact duplicate — row ${kept.row.rowNumber} was kept instead`,
+              kept.row.rowNumber,
+            ),
+          );
         }
 
         pendingCreates.set(key, { row, inventoryLocationId });
@@ -250,7 +210,7 @@ async function writeListingBatch(
         updated += chunk.length;
       }
 
-      return { created, updated, mergedDuplicates, errors };
+      return { created, updated, mergedDuplicates, mergedSkippedRows, errors };
     },
     {
       maxWait: 30_000,
@@ -279,6 +239,8 @@ export type ImportInventoryResult = {
   skipped: number;
   ignoredRows: number;
   mergedDuplicates: number;
+  skippedRowCount: number;
+  skippedRows: SkippedImportRow[];
   errors: ImportRowError[];
   lastImportAt: string | null;
 };
@@ -362,6 +324,7 @@ export async function importInventory(
 
   const normalizedRows: NormalizedImportRow[] = [];
   const errors: ImportRowError[] = [];
+  const skippedRows: SkippedImportRow[] = [];
   let ignoredRows = 0;
 
   rows.forEach((row, index) => {
@@ -371,10 +334,32 @@ export async function importInventory(
     const result = normalizeImportRow(mappedRow, index + 1);
     if (result.ignored) {
       ignoredRows += 1;
+      pushSkippedRow(skippedRows, {
+        rowNumber: index + 1,
+        reason: "ignored",
+        message: "Blank or header row",
+        mpn: getFieldValue(mappedRow, "mpn") || undefined,
+        manufacturer: getFieldValue(mappedRow, "manufacturer") || undefined,
+        dateCode: getFieldValue(mappedRow, "dateCode") || undefined,
+        quantity: getFieldValue(mappedRow, "quantity") || undefined,
+        price: getFieldValue(mappedRow, "price") || undefined,
+        description: getFieldValue(mappedRow, "description") || undefined,
+      });
       return;
     }
     if (result.error) {
       errors.push(result.error);
+      pushSkippedRow(skippedRows, {
+        rowNumber: result.error.rowNumber,
+        reason: "error",
+        message: result.error.message,
+        mpn: getFieldValue(mappedRow, "mpn") || undefined,
+        manufacturer: getFieldValue(mappedRow, "manufacturer") || undefined,
+        dateCode: getFieldValue(mappedRow, "dateCode") || undefined,
+        quantity: getFieldValue(mappedRow, "quantity") || undefined,
+        price: getFieldValue(mappedRow, "price") || undefined,
+        description: getFieldValue(mappedRow, "description") || undefined,
+      });
       return;
     }
     if (result.data) {
@@ -397,6 +382,8 @@ export async function importInventory(
       skipped: errors.length,
       ignoredRows,
       mergedDuplicates: 0,
+      skippedRowCount: ignoredRows + errors.length,
+      skippedRows,
       errors,
       lastImportAt: null,
     };
@@ -405,6 +392,7 @@ export async function importInventory(
   let created = 0;
   let updated = 0;
   let mergedDuplicates = 0;
+  const mergedSkippedRows: SkippedImportRow[] = [];
 
   const importStartedAt = new Date();
 
@@ -443,8 +431,23 @@ export async function importInventory(
     created += batchResult.created;
     updated += batchResult.updated;
     mergedDuplicates += batchResult.mergedDuplicates;
+    mergedSkippedRows.push(...batchResult.mergedSkippedRows);
     errors.push(...batchResult.errors);
+
+    for (const error of batchResult.errors) {
+      pushSkippedRow(skippedRows, {
+        rowNumber: error.rowNumber,
+        reason: "error",
+        message: error.message,
+      });
+    }
   }
+
+  for (const row of mergedSkippedRows) {
+    pushSkippedRow(skippedRows, row);
+  }
+
+  skippedRows.sort((left, right) => left.rowNumber - right.rowNumber);
 
   if (input.mode === "replace") {
     await db.partListing.updateMany({
@@ -466,6 +469,8 @@ export async function importInventory(
     skipped: errors.length,
     ignoredRows,
     mergedDuplicates,
+    skippedRowCount: ignoredRows + errors.length + mergedDuplicates,
+    skippedRows,
     errors: errors.slice(0, 100),
     lastImportAt: null as string | null,
   };

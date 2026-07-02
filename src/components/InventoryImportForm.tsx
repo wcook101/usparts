@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ColumnMappingPanel } from "@/components/ColumnMappingPanel";
 import { ImportProgressOverlay } from "@/components/ImportProgressOverlay";
+import { ImportSkippedRowsPanel } from "@/components/ImportSkippedRowsPanel";
 import { formatInventoryLocation } from "@/lib/format";
 import {
   formatImportCooldownMessage,
@@ -26,6 +27,7 @@ import {
   type ColumnMap,
   type ImportPreview,
 } from "@/lib/inventory-import";
+import type { SkippedImportRow } from "@/lib/import-listing-key";
 
 type InventoryLocationOption = {
   id: string;
@@ -51,6 +53,8 @@ type ImportResult = {
   skipped: number;
   ignoredRows?: number;
   mergedDuplicates?: number;
+  skippedRowCount?: number;
+  skippedRows?: SkippedImportRow[];
   errors: { rowNumber: number; message: string }[];
   lastImportAt: string | null;
 };
@@ -360,6 +364,15 @@ export function InventoryImportForm({
             of each group was kept.
           </p>
         ) : null}
+
+        <ImportSkippedRowsPanel
+          skippedRows={result.skippedRows ?? []}
+          skippedRowCount={
+            result.skippedRowCount ??
+            (result.ignoredRows ?? 0) + (result.mergedDuplicates ?? 0) + result.skipped
+          }
+          fileName={importFile?.name}
+        />
 
         {result.skipped > 0 ? (
           <div className="mt-4 rounded-lg border border-amber-200 bg-white p-4">
