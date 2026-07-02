@@ -355,9 +355,9 @@ export function InventoryImportForm({
 
         {result.mergedDuplicates ? (
           <p className="mt-3 text-sm text-slate-600">
-            {result.mergedDuplicates.toLocaleString()} rows shared the same part
-            number, manufacturer, and date code — only the last of each group was
-            kept.
+            {result.mergedDuplicates.toLocaleString()} rows were exact duplicates (same
+            part number, manufacturer, date code, quantity, and price) — only the last
+            of each group was kept.
           </p>
         ) : null}
 
@@ -552,8 +552,8 @@ export function InventoryImportForm({
                   Append / update
                 </span>
                 <span className="mt-1 block text-sm text-slate-600">
-                  Add new parts and update rows that match MPN, manufacturer,
-                  and date code.
+                  Add new parts and update rows that match part number,
+                  manufacturer, date code, quantity, and price.
                 </span>
               </span>
             </label>

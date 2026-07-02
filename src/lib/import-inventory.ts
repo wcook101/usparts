@@ -35,25 +35,66 @@ function normalizeDateCodeKey(dateCode: string | null | undefined): string {
   return (dateCode ?? "").trim().toLowerCase();
 }
 
-function listingKey(
-  mpn: string,
-  manufacturer: string | null | undefined,
-  dateCode?: string | null,
-): string {
-  return `${mpn.toLowerCase()}::${(manufacturer ?? "").toLowerCase()}::${normalizeDateCodeKey(dateCode)}`;
-}
-
-function rowListingKey(row: Pick<NormalizedImportRow, "mpn" | "manufacturer" | "dateCode">): string {
-  return listingKey(row.mpn, row.manufacturer, row.dateCode);
-}
-
-/** Rows without a date code are never collapsed together during import. */
-function importCreateKey(row: NormalizedImportRow): string {
-  if (!normalizeDateCodeKey(row.dateCode)) {
-    return `__row_${row.rowNumber}`;
+function normalizePriceKey(price: number | undefined | null): string {
+  if (price == null || !Number.isFinite(price)) {
+    return "";
   }
 
-  return rowListingKey(row);
+  return price.toFixed(4);
+}
+
+function listingMatchKey(
+  mpn: string,
+  manufacturer: string | null | undefined,
+  dateCode: string | null | undefined,
+  quantity: number,
+  price?: number | null,
+): string {
+  return [
+    mpn.toLowerCase(),
+    (manufacturer ?? "").toLowerCase(),
+    normalizeDateCodeKey(dateCode),
+    String(quantity),
+    normalizePriceKey(price),
+  ].join("::");
+}
+
+function rowListingMatchKey(row: NormalizedImportRow): string {
+  return listingMatchKey(
+    row.mpn,
+    row.manufacturer,
+    row.dateCode,
+    row.quantity,
+    row.price,
+  );
+}
+
+function listingMatchKeyFromCreateRow(row: Prisma.PartListingCreateManyInput): string {
+  const price = row.price == null ? undefined : Number(row.price);
+  return listingMatchKey(row.mpn, row.manufacturer, row.dateCode, row.quantity, price);
+}
+
+function listingMatchKeyFromDb(listing: {
+  mpn: string;
+  manufacturer: string;
+  dateCode: string | null;
+  quantity: number;
+  price: Prisma.Decimal | number | null;
+}): string {
+  const price =
+    listing.price == null
+      ? undefined
+      : typeof listing.price === "number"
+        ? listing.price
+        : Number(listing.price);
+
+  return listingMatchKey(
+    listing.mpn,
+    listing.manufacturer,
+    listing.dateCode,
+    listing.quantity,
+    price,
+  );
 }
 
 function rowToCreateData(
@@ -89,9 +130,7 @@ async function refreshExistingMap(
     return;
   }
 
-  const createdKeys = new Set(
-    createdRows.map((row) => listingKey(row.mpn, row.manufacturer, row.dateCode)),
-  );
+  const createdKeys = new Set(createdRows.map((row) => listingMatchKeyFromCreateRow(row)));
   const mpns = [...new Set(createdRows.map((row) => row.mpn))];
   const listings = await tx.partListing.findMany({
     where: {
@@ -104,11 +143,13 @@ async function refreshExistingMap(
       mpn: true,
       manufacturer: true,
       dateCode: true,
+      quantity: true,
+      price: true,
     },
   });
 
   for (const listing of listings) {
-    const key = listingKey(listing.mpn, listing.manufacturer, listing.dateCode);
+    const key = listingMatchKeyFromDb(listing);
     if (createdKeys.has(key)) {
       existingMap.set(key, listing.id);
     }
@@ -151,21 +192,20 @@ async function writeListingBatch(
           continue;
         }
 
-        const matchKey = rowListingKey(row);
+        const key = rowListingMatchKey(row);
         const existingId =
-          options.mode === "append" ? options.existingMap.get(matchKey) : undefined;
+          options.mode === "append" ? options.existingMap.get(key) : undefined;
 
         if (existingId) {
           toUpdate.push({ id: existingId, row, inventoryLocationId });
           continue;
         }
 
-        const createKey = importCreateKey(row);
-        if (pendingCreates.has(createKey)) {
+        if (pendingCreates.has(key)) {
           mergedDuplicates += 1;
         }
 
-        pendingCreates.set(createKey, { row, inventoryLocationId });
+        pendingCreates.set(key, { row, inventoryLocationId });
       }
 
       const toCreate = [...pendingCreates.values()].map(({ row, inventoryLocationId }) =>
@@ -382,12 +422,11 @@ export async function importInventory(
                 mpn: true,
                 manufacturer: true,
                 dateCode: true,
+                quantity: true,
+                price: true,
               },
             })
-          ).map((listing) => [
-            listingKey(listing.mpn, listing.manufacturer, listing.dateCode),
-            listing.id,
-          ]),
+          ).map((listing) => [listingMatchKeyFromDb(listing), listing.id]),
         )
       : new Map<string, string>();
 

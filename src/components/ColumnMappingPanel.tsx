@@ -140,9 +140,8 @@ export function ColumnMappingPanel({
           <p className="font-medium">Date code column not matched</p>
           <p className="mt-2 leading-6">
             If your file has a date code, lot, or D/C column, match it to{" "}
-            <strong>Date Code</strong>. Without it, rows with the same part number
-            and manufacturer are imported separately only when their date codes
-            differ — blank date codes will not be merged together.
+            <strong>Date Code</strong>. Rows are only merged when part number,
+            manufacturer, date code, quantity, and price all match.
           </p>
         </div>
       ) : null}
