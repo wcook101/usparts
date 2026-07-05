@@ -92,14 +92,14 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
       <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-600">
-        Resources
+        Blog & guides
       </p>
       <h1 className="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
-        Electronics parts resources
+        Electronic component guides & blog
       </h1>
       <p className="mt-4 max-w-3xl text-lg leading-8 text-slate-600">
-        Product guides, procurement tips, and industry insights for teams selling
-        surplus inventory and sourcing semiconductors through free BOM search.
+        Free articles on BOM search, MPN lookup, supplier quotes, selling surplus
+        inventory, and sourcing obsolete semiconductors on USParts.us.
       </p>
 
       <nav

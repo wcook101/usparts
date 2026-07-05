@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { CategoryBrowseSection } from "@/components/home/CategoryBrowseSection";
 import { FeaturesSection } from "@/components/home/FeaturesSection";
+import { GuidesPromoSection } from "@/components/home/GuidesPromoSection";
 import { HomeCtaBanner } from "@/components/home/HomeCtaBanner";
 import { HomeHero } from "@/components/home/HomeHero";
 import { HowItWorksSection } from "@/components/home/HowItWorksSection";
@@ -78,65 +79,13 @@ export default async function HomePage() {
         </div>
       </section>
 
+      <GuidesPromoSection />
+
       <CategoryBrowseSection counts={categoryCounts} />
       <HowItWorksSection />
       <FeaturesSection />
       <FeaturedSellersSection sellers={featuredSellers} />
       <TestimonialsSection />
-
-      <section className="border-b border-slate-200 bg-slate-50/80">
-        <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-16">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-            <div className="max-w-2xl">
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-600">
-                Resources
-              </p>
-              <h2 className="mt-3 text-2xl font-semibold text-slate-900 sm:text-3xl">
-                Guides for sourcing and selling electronic parts
-              </h2>
-              <p className="mt-3 text-sm leading-7 text-slate-600 sm:text-base">
-                BOM search best practices, pricing tips, shortage planning, and
-                surplus inventory guides for procurement teams.
-              </p>
-            </div>
-            <Link
-              href="/blog"
-              className="inline-flex w-fit rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700"
-            >
-              Browse all articles
-            </Link>
-          </div>
-
-          <div className="mt-8 grid gap-4 md:grid-cols-3">
-            {[
-              {
-                href: "/blog/bom-search-best-practices-for-new-users",
-                title: "BOM search best practices",
-                body: "Paste your first BOM, review matches, and request quotes like a pro.",
-              },
-              {
-                href: "/blog/how-mpn-search-works-on-usparts",
-                title: "How MPN search works",
-                body: "Full and partial part number matching behind the scenes.",
-              },
-              {
-                href: "/blog/best-component-pricing-with-bom-search",
-                title: "Get the best component pricing",
-                body: "Compare listed prices and quote-only lines on your BOM.",
-              },
-            ].map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-blue-200 hover:shadow-md"
-              >
-                <h3 className="font-semibold text-slate-900">{item.title}</h3>
-                <p className="mt-2 text-sm leading-6 text-slate-600">{item.body}</p>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
 
       <section className="relative overflow-hidden border-b border-slate-200">
         <PartsBackground variant="section" idPrefix="home-section" />

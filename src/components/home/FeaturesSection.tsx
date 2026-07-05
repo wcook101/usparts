@@ -23,7 +23,7 @@ const features = [
     title: "Guides & resources",
     body: "Product guides on BOM workflows, pricing, shortages, and selling surplus inventory.",
     href: "/blog",
-    cta: "Browse resources",
+    cta: "Read blog & guides",
   },
 ];
 

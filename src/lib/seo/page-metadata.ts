@@ -182,8 +182,8 @@ export const pageMetadata = {
     { noindex: true },
   ),
   blog: pageMeta(
-    "Electronics Resale Blog - Tips for Selling Parts",
-    "Product guides, procurement tips, and industry insights for selling surplus inventory and sourcing semiconductors with free BOM search on USParts.us.",
+    "Blog & Guides - Electronic Component Search Tips",
+    "Free guides on BOM search, MPN lookup, supplier quotes, selling surplus inventory, and sourcing obsolete semiconductors on USParts.us.",
   ),
   listingNotFound: pageMeta(
     "Part Not Found - Electronic Component Listing",

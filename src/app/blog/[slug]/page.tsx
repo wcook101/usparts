@@ -77,7 +77,7 @@ export default async function BlogArticlePage({ params }: BlogArticlePageProps) 
         href="/blog"
         className="text-sm font-medium text-blue-600 hover:text-blue-700"
       >
-        ← Back to resources
+        ← Back to blog & guides
       </Link>
 
       <header className="mt-6">

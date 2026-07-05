@@ -4,12 +4,11 @@ import Link from "next/link";
 import { useEffect, useId, useState } from "react";
 import { HeaderAuthNav } from "@/components/HeaderAuthNav";
 
-const navItems: Array<{ href: string; label: string; primary?: boolean }> = [
-  { href: "/search", label: "Search Parts", primary: true },
+const navLinks = [
   { href: "/search?mode=bulk", label: "BOM Search" },
-  { href: "/blog", label: "Resources" },
-  { href: "/company/upload", label: "Upload inventory" },
+  { href: "/blog", label: "Blog & Guides" },
   { href: "/company", label: "For Suppliers" },
+  { href: "/help", label: "Help" },
 ];
 
 function MenuIcon({ open }: { open: boolean }) {
@@ -52,7 +51,7 @@ export function SiteNav() {
 
   useEffect(() => {
     function handleResize() {
-      if (window.innerWidth >= 768) {
+      if (window.innerWidth >= 1024) {
         setOpen(false);
       }
     }
@@ -65,17 +64,13 @@ export function SiteNav() {
     <>
       <nav
         aria-label="Main navigation"
-        className="hidden items-center gap-2 md:flex md:gap-3"
+        className="hidden items-center gap-1 lg:flex"
       >
-        {navItems.map((item) => (
+        {navLinks.map((item) => (
           <Link
             key={item.href}
             href={item.href}
-            className={
-              item.primary
-                ? "rounded-lg bg-blue-600 px-3.5 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
-                : "rounded-md px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
-            }
+            className="rounded-md px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
           >
             {item.label}
           </Link>
@@ -83,13 +78,13 @@ export function SiteNav() {
         <HeaderAuthNav layout="inline" />
       </nav>
 
-      <div className="md:hidden">
+      <div className="lg:hidden">
         <button
           type="button"
           aria-expanded={open}
           aria-controls={panelId}
           onClick={() => setOpen((current) => !current)}
-          className="inline-flex min-h-11 min-w-11 touch-manipulation items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50"
+          className="inline-flex min-h-10 min-w-10 touch-manipulation items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50"
         >
           <span className="sr-only">{open ? "Close menu" : "Open menu"}</span>
           <MenuIcon open={open} />
@@ -105,32 +100,43 @@ export function SiteNav() {
             />
             <div
               id={panelId}
-              className="fixed inset-x-0 top-[4.5rem] z-50 max-h-[calc(100dvh-4.5rem)] overflow-y-auto border-b border-slate-200 bg-white shadow-lg"
+              className="fixed inset-x-0 top-[4.25rem] z-50 max-h-[calc(100dvh-4.25rem)] overflow-y-auto border-b border-slate-200 bg-white shadow-lg"
             >
               <div className="mx-auto max-w-6xl px-4 py-4">
-                <div className="flex flex-col gap-1">
-                  {navItems.map((item) => (
+                <div className="grid grid-cols-2 gap-2">
+                  <Link
+                    href="/search"
+                    onClick={() => setOpen(false)}
+                    className="rounded-lg bg-blue-600 px-4 py-3 text-center text-sm font-semibold text-white hover:bg-blue-700"
+                  >
+                    Search Parts
+                  </Link>
+                  <Link
+                    href="/company/upload"
+                    onClick={() => setOpen(false)}
+                    className="rounded-lg border-2 border-slate-900 px-4 py-3 text-center text-sm font-semibold text-slate-900 hover:bg-slate-50"
+                  >
+                    List Inventory
+                  </Link>
+                </div>
+
+                <div className="mt-4 flex flex-col gap-1">
+                  {navLinks.map((item) => (
                     <Link
                       key={item.href}
                       href={item.href}
                       onClick={() => setOpen(false)}
                       className={
-                        item.primary
-                          ? "rounded-lg bg-blue-600 px-4 py-3 text-center text-base font-semibold text-white transition hover:bg-blue-700"
+                        item.href === "/blog"
+                          ? "rounded-lg bg-blue-50 px-4 py-3 text-base font-semibold text-blue-800 transition hover:bg-blue-100"
                           : "rounded-lg px-4 py-3 text-base font-medium text-slate-700 transition hover:bg-slate-100"
                       }
                     >
                       {item.label}
                     </Link>
                   ))}
-                  <Link
-                    href="/help"
-                    onClick={() => setOpen(false)}
-                    className="rounded-lg px-4 py-3 text-base font-medium text-slate-700 transition hover:bg-slate-100"
-                  >
-                    Help
-                  </Link>
                 </div>
+
                 <div className="mt-4 border-t border-slate-200 pt-4">
                   <HeaderAuthNav layout="stacked" onNavigate={() => setOpen(false)} />
                 </div>
