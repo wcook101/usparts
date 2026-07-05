@@ -6,12 +6,11 @@ import { getSessionUser, userCanManageInventory } from "@/lib/auth";
 import { getSessionCompany } from "@/lib/auth/resource-access";
 import { db } from "@/lib/db";
 import { MAX_IMPORT_ROWS } from "@/lib/import-limits";
+import { pageMetadata } from "@/lib/seo/page-metadata";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = {
-  title: "Bulk Import Inventory",
-};
+export const metadata = pageMetadata.supplierImport;
 
 export default async function ImportInventoryPage() {
   const user = await getSessionUser();

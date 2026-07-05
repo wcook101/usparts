@@ -3,10 +3,9 @@ import { notFound, redirect } from "next/navigation";
 import { SupplierOutreachAdminPanel } from "@/components/SupplierOutreachAdminPanel";
 import { getSessionUser } from "@/lib/auth";
 import { isPlatformAdmin } from "@/lib/admin";
+import { pageMetadata } from "@/lib/seo/page-metadata";
 
-export const metadata = {
-  title: "Supplier outreach",
-};
+export const metadata = pageMetadata.adminOutreach;
 
 export const dynamic = "force-dynamic";
 

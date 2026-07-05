@@ -1,13 +1,12 @@
 import { Suspense } from "react";
 import { InviteAcceptCard } from "@/components/InviteAcceptCard";
+import { pageMetadata } from "@/lib/seo/page-metadata";
 
 type InvitePageProps = {
   params: Promise<{ token: string }>;
 };
 
-export const metadata = {
-  title: "Accept Invite",
-};
+export const metadata = pageMetadata.invite;
 
 export default async function InvitePage({ params }: InvitePageProps) {
   const { token } = await params;

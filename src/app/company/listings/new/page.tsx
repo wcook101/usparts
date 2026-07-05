@@ -4,12 +4,11 @@ import { ListingForm } from "@/components/ListingForm";
 import { getSessionUser, userCanManageInventory } from "@/lib/auth";
 import { getSessionCompany } from "@/lib/auth/resource-access";
 import { db } from "@/lib/db";
+import { pageMetadata } from "@/lib/seo/page-metadata";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = {
-  title: "List Inventory",
-};
+export const metadata = pageMetadata.supplierNewListing;
 
 export default async function NewListingPage() {
   const user = await getSessionUser();

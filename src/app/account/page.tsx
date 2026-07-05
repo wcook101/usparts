@@ -1,12 +1,11 @@
 import { redirect } from "next/navigation";
 import { ProfileForm } from "@/components/ProfileForm";
 import { getSessionUser } from "@/lib/auth";
+import { pageMetadata } from "@/lib/seo/page-metadata";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = {
-  title: "Account Settings",
-};
+export const metadata = pageMetadata.account;
 
 export default async function AccountPage() {
   const user = await getSessionUser();

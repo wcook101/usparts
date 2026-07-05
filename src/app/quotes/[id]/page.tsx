@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { formatQuantity } from "@/lib/format";
 import { canViewBuyerResource, getSessionUser } from "@/lib/auth";
 import { getQuoteById } from "@/lib/quotes";
+import { pageMetadata } from "@/lib/seo/page-metadata";
 
 type QuotePageProps = {
   params: Promise<{ id: string }>;
@@ -11,9 +12,23 @@ type QuotePageProps = {
 
 export const dynamic = "force-dynamic";
 
-export const metadata = {
-  title: "Quote Request Sent",
-};
+export async function generateMetadata({ params }: QuotePageProps) {
+  const { id } = await params;
+  const quote = await getQuoteById(id);
+
+  if (!quote?.listing) {
+    return pageMetadata.quoteSent;
+  }
+
+  const partLabel = quote.listing.manufacturer
+    ? `${quote.listing.mpn} by ${quote.listing.manufacturer}`
+    : quote.listing.mpn;
+
+  return {
+    title: `${partLabel} — Quote Request Sent for Electronic Component RFQ`,
+    description: `Your quote request for ${partLabel} was sent to the supplier on USParts.us. Track RFQ status from your account activity page.`,
+  };
+}
 
 export default async function QuotePage({ params, searchParams }: QuotePageProps) {
   const { id } = await params;

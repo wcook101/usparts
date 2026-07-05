@@ -1,9 +1,8 @@
 import { Suspense } from "react";
 import { ResetPasswordForm } from "@/components/ResetPasswordForm";
+import { pageMetadata } from "@/lib/seo/page-metadata";
 
-export const metadata = {
-  title: "Set New Password",
-};
+export const metadata = pageMetadata.resetPassword;
 
 type ResetPasswordPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;

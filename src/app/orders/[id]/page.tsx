@@ -9,6 +9,7 @@ import {
 } from "@/lib/format";
 import { canViewBuyerResource, getSessionUser } from "@/lib/auth";
 import { getOrderById } from "@/lib/orders";
+import { pageMetadata } from "@/lib/seo/page-metadata";
 
 type OrderPageProps = {
   params: Promise<{ id: string }>;
@@ -17,9 +18,23 @@ type OrderPageProps = {
 
 export const dynamic = "force-dynamic";
 
-export const metadata = {
-  title: "Order Confirmation",
-};
+export async function generateMetadata({ params }: OrderPageProps) {
+  const { id } = await params;
+  const order = await getOrderById(id);
+
+  if (!order?.listing) {
+    return pageMetadata.orderConfirmation;
+  }
+
+  const partLabel = order.listing.manufacturer
+    ? `${order.listing.mpn} by ${order.listing.manufacturer}`
+    : order.listing.mpn;
+
+  return {
+    title: `${partLabel} — Order Confirmation for Electronic Component Purchase`,
+    description: `Order confirmation for ${partLabel} on USParts.us, including supplier details, quantity, and purchase status.`,
+  };
+}
 
 export default async function OrderPage({ params, searchParams }: OrderPageProps) {
   const { id } = await params;

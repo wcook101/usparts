@@ -1,8 +1,7 @@
 import { ForgotPasswordForm } from "@/components/ForgotPasswordForm";
+import { pageMetadata } from "@/lib/seo/page-metadata";
 
-export const metadata = {
-  title: "Forgot Password",
-};
+export const metadata = pageMetadata.forgotPassword;
 
 export default function ForgotPasswordPage() {
   return (

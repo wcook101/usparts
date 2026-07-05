@@ -2,10 +2,9 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { AuthForm } from "@/components/AuthForm";
 import { SignedInNotice } from "@/components/SignedInNotice";
+import { pageMetadata } from "@/lib/seo/page-metadata";
 
-export const metadata = {
-  title: "Sign In",
-};
+export const metadata = pageMetadata.login;
 
 export default function LoginPage() {
   return (

@@ -4,12 +4,11 @@ import { CompanyProfileForm } from "@/components/CompanyProfileForm";
 import { getSessionUser, userCanManageInventory } from "@/lib/auth";
 import { getSessionCompany } from "@/lib/auth/resource-access";
 import { getCompanyById } from "@/lib/company";
+import { pageMetadata } from "@/lib/seo/page-metadata";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = {
-  title: "Company Settings",
-};
+export const metadata = pageMetadata.supplierSettings;
 
 export default async function CompanySettingsPage() {
   const user = await getSessionUser();

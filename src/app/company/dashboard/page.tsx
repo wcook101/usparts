@@ -5,12 +5,11 @@ import { isPlatformAdmin } from "@/lib/admin";
 import { getSessionUser } from "@/lib/auth";
 import { canInviteMembers, canManageInventory } from "@/lib/auth/membership";
 import { MAX_IMPORT_ROWS } from "@/lib/import-limits";
+import { pageMetadata } from "@/lib/seo/page-metadata";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = {
-  title: "Supplier Dashboard",
-};
+export const metadata = pageMetadata.supplierDashboard;
 
 export default async function CompanyDashboardPage() {
   const user = await getSessionUser();

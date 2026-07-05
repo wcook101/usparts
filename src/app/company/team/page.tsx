@@ -3,12 +3,11 @@ import { CompanyTeamPanel } from "@/components/CompanyTeamPanel";
 import { LogoutButton } from "@/components/LogoutButton";
 import { getSessionUser } from "@/lib/auth";
 import { canInviteMembers } from "@/lib/auth/membership";
+import { pageMetadata } from "@/lib/seo/page-metadata";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = {
-  title: "Team",
-};
+export const metadata = pageMetadata.supplierTeam;
 
 export default async function CompanyTeamPage() {
   const user = await getSessionUser();

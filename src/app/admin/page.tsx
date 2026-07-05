@@ -4,10 +4,9 @@ import { getSessionUser } from "@/lib/auth";
 import { isPlatformAdmin } from "@/lib/admin";
 import { getAdminOverview } from "@/lib/admin-overview";
 import { UPLOAD_EMAIL } from "@/lib/site";
+import { pageMetadata } from "@/lib/seo/page-metadata";
 
-export const metadata = {
-  title: "Admin",
-};
+export const metadata = pageMetadata.adminOverview;
 
 export const dynamic = "force-dynamic";
 

@@ -4,14 +4,11 @@ import { CompanyCard } from "@/components/CompanyCard";
 import { CompanyRegistrationForm } from "@/components/CompanyRegistrationForm";
 import { getSessionUser } from "@/lib/auth";
 import { getCompanies } from "@/lib/listings";
+import { pageMetadata } from "@/lib/seo/page-metadata";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = {
-  title: "List Electronic Component Inventory — Free Supplier Portal",
-  description:
-    "Register as a US electronic component supplier on USParts.us. List obsolete semiconductors, surplus ICs, and excess inventory by MPN so buyers can find and quote your stock — free.",
-};
+export const metadata = pageMetadata.supplierPortal;
 
 export default async function CompanyPage() {
   const [user, companies] = await Promise.all([getSessionUser(), getCompanies()]);

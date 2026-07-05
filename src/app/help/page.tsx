@@ -2,12 +2,9 @@ import Link from "next/link";
 import { SupportContactForm } from "@/components/SupportContactForm";
 import { getBuyerDefaults, getSessionUser } from "@/lib/auth";
 import { SUPPORT_EMAIL } from "@/lib/site";
+import { pageMetadata } from "@/lib/seo/page-metadata";
 
-export const metadata = {
-  title: "Help & Support — Electronic Component Search & Supplier Listings",
-  description:
-    "Get help searching obsolete semiconductors and MPNs, uploading supplier inventory, requesting quotes, and using bulk BOM search on USParts.us.",
-};
+export const metadata = pageMetadata.help;
 
 export const dynamic = "force-dynamic";
 

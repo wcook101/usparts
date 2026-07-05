@@ -13,6 +13,7 @@ import {
 } from "@/lib/format";
 import { getBuyerDefaults, getSessionUser } from "@/lib/auth";
 import { getListingById } from "@/lib/listings";
+import { listingMetadata } from "@/lib/seo/page-metadata";
 
 type ListingPageProps = {
   params: Promise<{ id: string }>;
@@ -25,7 +26,11 @@ export async function generateMetadata({ params }: ListingPageProps) {
   const listing = await getListingById(id);
 
   if (!listing) {
-    return { title: "Listing not found" };
+    return {
+      title: "Part Not Found — Electronic Component Listing",
+      description:
+        "This electronic component listing is no longer available on USParts.us. Search MPNs to find in-stock semiconductors and ICs from US suppliers.",
+    };
   }
 
   const categoryLabel = listing.category
@@ -37,24 +42,15 @@ export async function generateMetadata({ params }: ListingPageProps) {
   const stockLabel = formatQuantity(listing.quantity);
   const priceLabel = formatListingPrice(listing.price, listing.currency);
 
-  const title = listing.manufacturer
-    ? `${listing.mpn} by ${listing.manufacturer} — In Stock`
-    : `${listing.mpn} — Electronic Component In Stock`;
-
-  const description =
-    listing.description?.trim() ||
-    [
-      `Find ${listing.mpn}${listing.manufacturer ? ` by ${listing.manufacturer}` : ""} from US suppliers on USParts.us.`,
-      categoryLabel ? `${categoryLabel} component.` : null,
-      `${stockLabel} in stock.`,
-      conditionLabel ? `Condition: ${conditionLabel}.` : null,
-      priceLabel ? `Price: ${priceLabel}.` : null,
-      "Request a quote or compare supplier inventory for obsolete and hard-to-find electronic parts.",
-    ]
-      .filter(Boolean)
-      .join(" ");
-
-  return { title, description };
+  return listingMetadata({
+    mpn: listing.mpn,
+    manufacturer: listing.manufacturer,
+    description: listing.description,
+    categoryLabel,
+    conditionLabel,
+    stockLabel,
+    priceLabel,
+  });
 }
 
 export default async function ListingPage({ params }: ListingPageProps) {

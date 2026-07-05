@@ -15,6 +15,7 @@ import {
   searchListings,
 } from "@/lib/listings";
 import { looksLikeMultiPartQuery } from "@/lib/mpn-normalize";
+import { pageMetadata, searchResultsMetadata } from "@/lib/seo/page-metadata";
 import { isSmartSearchEnabled } from "@/lib/smart-search";
 import { searchQuerySchema } from "@/lib/validations";
 
@@ -39,34 +40,18 @@ export async function generateMetadata({
 
   if (q || manufacturer) {
     const label = [q, manufacturer].filter(Boolean).join(" · ");
-
-    return {
-      title: `${label} — Electronic Component Search Results`,
-      description: `Find ${label} in stock from US suppliers. Compare pricing, quantity, lead time, and condition for obsolete semiconductors, ICs, and hard-to-find electronic components on USParts.us.`,
-    };
+    return searchResultsMetadata(label);
   }
 
   if (mode === "bulk") {
-    return {
-      title: "Bulk BOM Part Search — Multi-MPN Electronic Component Lookup",
-      description:
-        "Paste a bill of materials (BOM) or part list to search hundreds of manufacturer part numbers at once. Compare US supplier inventory for semiconductors, ICs, and electronic components — free.",
-    };
+    return pageMetadata.searchBulk;
   }
 
   if (mode === "smart") {
-    return {
-      title: "Smart Part Search — Find Electronic Components by Description",
-      description:
-        "Describe the semiconductor, IC, connector, or electronic component you need in plain language. USParts smart search matches parts across US supplier inventory.",
-    };
+    return pageMetadata.searchSmart;
   }
 
-  return {
-    title: "Search Electronic Components, Semiconductors & MPNs",
-    description:
-      "Free electronic component search by manufacturer part number (MPN), manufacturer, or keyword. Compare obsolete semiconductors, ICs, and surplus inventory from US suppliers on USParts.us.",
-  };
+  return pageMetadata.searchDefault;
 }
 
 export default async function SearchPage({ searchParams }: SearchPageProps) {

@@ -4,12 +4,11 @@ import { CompanyListingsPanel } from "@/components/CompanyListingsPanel";
 import { getSessionUser, userCanManageInventory } from "@/lib/auth";
 import { getSessionCompany } from "@/lib/auth/resource-access";
 import { getListingsForCompany } from "@/lib/listings";
+import { pageMetadata } from "@/lib/seo/page-metadata";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = {
-  title: "Manage Listings",
-};
+export const metadata = pageMetadata.supplierListings;
 
 export default async function CompanyListingsPage() {
   const user = await getSessionUser();

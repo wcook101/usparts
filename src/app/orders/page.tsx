@@ -4,12 +4,11 @@ import { formatPrice } from "@/lib/format";
 import { getSessionUser } from "@/lib/auth";
 import { getOrdersForUser } from "@/lib/orders";
 import { getQuotesForUser } from "@/lib/quotes";
+import { pageMetadata } from "@/lib/seo/page-metadata";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = {
-  title: "My Activity",
-};
+export const metadata = pageMetadata.orders;
 
 export default async function MyOrdersPage() {
   const user = await getSessionUser();

@@ -5,10 +5,9 @@ import { getSessionUser } from "@/lib/auth";
 import { isPlatformAdmin } from "@/lib/admin";
 import { getCompaniesForAdminImport } from "@/lib/admin-import";
 import { UPLOAD_EMAIL } from "@/lib/site";
+import { pageMetadata } from "@/lib/seo/page-metadata";
 
-export const metadata = {
-  title: "Import supplier inventory",
-};
+export const metadata = pageMetadata.adminImport;
 
 export const dynamic = "force-dynamic";
 

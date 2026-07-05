@@ -2,12 +2,9 @@ import Link from "next/link";
 import { EmailInventoryUploadPanel } from "@/components/EmailInventoryUploadPanel";
 import { getSessionUser } from "@/lib/auth";
 import { UPLOAD_EMAIL } from "@/lib/site";
+import { pageMetadata } from "@/lib/seo/page-metadata";
 
-export const metadata = {
-  title: "Email Electronic Component Inventory Upload for Suppliers",
-  description:
-    "Email your semiconductor and electronic parts spreadsheet to upload@usparts.us. Our team imports MPNs, quantities, and pricing so buyers can search your surplus inventory on USParts.us.",
-};
+export const metadata = pageMetadata.supplierUpload;
 
 export const dynamic = "force-dynamic";
 

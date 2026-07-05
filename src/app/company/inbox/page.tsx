@@ -7,12 +7,11 @@ import {
   getOrdersForCompany,
   getQuotesForCompany,
 } from "@/lib/company-inbox";
+import { pageMetadata } from "@/lib/seo/page-metadata";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = {
-  title: "Supplier Inbox",
-};
+export const metadata = pageMetadata.supplierInbox;
 
 export default async function CompanyInboxPage() {
   const user = await getSessionUser();

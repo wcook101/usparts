@@ -3,10 +3,9 @@ import { notFound, redirect } from "next/navigation";
 import { PartAliasAdminPanel } from "@/components/PartAliasAdminPanel";
 import { getSessionUser } from "@/lib/auth";
 import { isPlatformAdmin } from "@/lib/admin";
+import { pageMetadata } from "@/lib/seo/page-metadata";
 
-export const metadata = {
-  title: "Part Aliases",
-};
+export const metadata = pageMetadata.adminAliases;
 
 export const dynamic = "force-dynamic";
 

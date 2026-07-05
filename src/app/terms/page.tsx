@@ -6,12 +6,9 @@ import {
   SUPPORT_MAILTO,
   TRADE_NAME,
 } from "@/lib/site";
+import { pageMetadata } from "@/lib/seo/page-metadata";
 
-export const metadata = {
-  title: "Terms of Service",
-  description:
-    "Terms of service for using USParts.us to search electronic components, list supplier inventory, request quotes, and access our free MPN and BOM search tools.",
-};
+export const metadata = pageMetadata.terms;
 
 export default function TermsPage() {
   return (
