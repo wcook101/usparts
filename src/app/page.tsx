@@ -15,12 +15,12 @@ export const metadata: Metadata = {
       "USParts.us — Search Obsolete Semiconductors, ICs & Electronic Components | Free MPN Lookup, BOM Search & US Supplier Inventory",
   },
   description:
-    "Search obsolete semiconductors, integrated circuits, and hard-to-find electronic components by manufacturer part number. Paste a BOM, compare US supplier inventory, pricing, and stock, and request quotes — free on USParts.us.",
+    "Free BOM Search & Electronics Marketplace – List Inventory or Find Parts Instantly",
   openGraph: {
     title:
       "USParts.us — Search Obsolete Semiconductors, ICs & Electronic Components | Free MPN Lookup, BOM Search & US Supplier Inventory",
     description:
-      "Find obsolete semiconductors, integrated circuits, and surplus electronic parts from US suppliers. Free MPN search, bulk BOM lookup, and quote requests on USParts.us.",
+      "Free BOM Search & Electronics Marketplace – List Inventory or Find Parts Instantly",
   },
   alternates: {
     canonical: "/",
@@ -38,7 +38,7 @@ export default async function HomePage() {
     name: "USParts",
     url: siteUrl,
     description:
-      "Free electronic component search for obsolete semiconductors, ICs, and surplus parts. Search MPNs and compare US supplier inventory on USParts.us.",
+      "Free BOM Search & Electronics Marketplace – List Inventory or Find Parts Instantly",
     potentialAction: {
       "@type": "SearchAction",
       target: {
