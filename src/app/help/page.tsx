@@ -4,8 +4,9 @@ import { getBuyerDefaults, getSessionUser } from "@/lib/auth";
 import { SUPPORT_EMAIL } from "@/lib/site";
 
 export const metadata = {
-  title: "Help",
-  description: "Get help using USParts — contact support, browse parts, or list inventory.",
+  title: "Help & Support — Electronic Component Search & Supplier Listings",
+  description:
+    "Get help searching obsolete semiconductors and MPNs, uploading supplier inventory, requesting quotes, and using bulk BOM search on USParts.us.",
 };
 
 export const dynamic = "force-dynamic";

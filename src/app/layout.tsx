@@ -20,24 +20,26 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(getSiteUrl()),
   title: {
-    default: "USParts | Free Part Find System for Electronic Components",
+    default:
+      "USParts | Free Electronic Component Search — Obsolete Semiconductors & MPN Lookup",
     template: "%s | USParts",
   },
   description:
-    "USParts is a free part find system for electronic components. Search MPNs, compare US supplier inventory, paste BOMs for multi-part lookup, and request quotes.",
+    "Search obsolete semiconductors, ICs, and hard-to-find electronic components by MPN or BOM. Compare US supplier inventory, pricing, and stock — free on USParts.us.",
   openGraph: {
     type: "website",
     locale: "en_US",
     siteName: "USParts",
-    title: "USParts | Free Part Find System for Electronic Components",
+    title:
+      "USParts | Free Electronic Component Search — Obsolete Semiconductors & MPN Lookup",
     description:
-      "The most technically advanced part find system for electronic components — free to search and free to list. Find parts from US suppliers.",
+      "Find obsolete semiconductors, integrated circuits, and surplus electronic parts from US suppliers. Free MPN search, bulk BOM lookup, and quote requests.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "USParts | Free Part Find System",
+    title: "USParts | Free Electronic Component & MPN Search",
     description:
-      "Search electronic components, compare supplier inventory, and run multi-part BOM lookups — free.",
+      "Search manufacturer part numbers, compare US supplier stock, and run bulk BOM lookups for semiconductors and electronic components — free.",
   },
   verification: {
     google: "7v20lSf51vU3qHgGO_QwMALrcWE-bzP9pihlTsJfnC8",

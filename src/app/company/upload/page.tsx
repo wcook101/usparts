@@ -4,9 +4,9 @@ import { getSessionUser } from "@/lib/auth";
 import { UPLOAD_EMAIL } from "@/lib/site";
 
 export const metadata = {
-  title: "Email Inventory Upload",
+  title: "Email Electronic Component Inventory Upload for Suppliers",
   description:
-    "Send your parts spreadsheet to upload@usparts.us and our team will import it for you.",
+    "Email your semiconductor and electronic parts spreadsheet to upload@usparts.us. Our team imports MPNs, quantities, and pricing so buyers can search your surplus inventory on USParts.us.",
 };
 
 export const dynamic = "force-dynamic";

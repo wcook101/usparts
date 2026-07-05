@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ListingResultsList } from "@/components/ListingResultsList";
@@ -25,11 +26,48 @@ type SearchMode = "single" | "bulk" | "smart";
 
 export const dynamic = "force-dynamic";
 
-export const metadata = {
-  title: "Search Parts | Part Find System",
-  description:
-    "Use the USParts part find system to search manufacturer part numbers, manufacturers, and categories across US supplier inventory.",
-};
+export async function generateMetadata({
+  searchParams,
+}: SearchPageProps): Promise<Metadata> {
+  const params = await searchParams;
+  const q = typeof params.q === "string" ? params.q.trim() : "";
+  const manufacturer =
+    typeof params.manufacturer === "string" ? params.manufacturer.trim() : "";
+  const modeParam = typeof params.mode === "string" ? params.mode : "single";
+  const mode: SearchMode =
+    modeParam === "bulk" ? "bulk" : modeParam === "smart" ? "smart" : "single";
+
+  if (q || manufacturer) {
+    const label = [q, manufacturer].filter(Boolean).join(" · ");
+
+    return {
+      title: `${label} — Electronic Component Search Results`,
+      description: `Find ${label} in stock from US suppliers. Compare pricing, quantity, lead time, and condition for obsolete semiconductors, ICs, and hard-to-find electronic components on USParts.us.`,
+    };
+  }
+
+  if (mode === "bulk") {
+    return {
+      title: "Bulk BOM Part Search — Multi-MPN Electronic Component Lookup",
+      description:
+        "Paste a bill of materials (BOM) or part list to search hundreds of manufacturer part numbers at once. Compare US supplier inventory for semiconductors, ICs, and electronic components — free.",
+    };
+  }
+
+  if (mode === "smart") {
+    return {
+      title: "Smart Part Search — Find Electronic Components by Description",
+      description:
+        "Describe the semiconductor, IC, connector, or electronic component you need in plain language. USParts smart search matches parts across US supplier inventory.",
+    };
+  }
+
+  return {
+    title: "Search Electronic Components, Semiconductors & MPNs",
+    description:
+      "Free electronic component search by manufacturer part number (MPN), manufacturer, or keyword. Compare obsolete semiconductors, ICs, and surplus inventory from US suppliers on USParts.us.",
+  };
+}
 
 export default async function SearchPage({ searchParams }: SearchPageProps) {
   const params = await searchParams;

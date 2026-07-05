@@ -10,9 +10,10 @@ import { getSiteUrl } from "@/lib/site";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Free Part Find System for Electronic Components",
+  title:
+    "Free Electronic Component Search — Obsolete Semiconductors, ICs & MPN Lookup",
   description:
-    "The most technically advanced part find system for electronic components is here — free to use. Search MPNs, paste part lists, and compare US supplier inventory on USParts.",
+    "Search obsolete semiconductors, integrated circuits, and hard-to-find electronic components by manufacturer part number. Paste a BOM, compare US supplier inventory, and request quotes — free on USParts.us.",
   alternates: {
     canonical: "/",
   },
@@ -29,7 +30,7 @@ export default async function HomePage() {
     name: "USParts",
     url: siteUrl,
     description:
-      "Free part find system for electronic components. Search manufacturer part numbers and compare US supplier inventory.",
+      "Free electronic component search for obsolete semiconductors, ICs, and surplus parts. Search MPNs and compare US supplier inventory on USParts.us.",
     potentialAction: {
       "@type": "SearchAction",
       target: {

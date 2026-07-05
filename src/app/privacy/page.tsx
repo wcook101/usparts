@@ -9,6 +9,8 @@ import {
 
 export const metadata = {
   title: "Privacy Policy",
+  description:
+    "USParts.us privacy policy for electronic component search, supplier listings, quote requests, and account data on our free MPN and BOM lookup platform.",
 };
 
 export default function PrivacyPage() {

@@ -28,16 +28,33 @@ export async function generateMetadata({ params }: ListingPageProps) {
     return { title: "Listing not found" };
   }
 
-  return {
-    title: listing.manufacturer
-      ? `${listing.mpn} by ${listing.manufacturer}`
-      : listing.mpn,
-    description:
-      listing.description ??
-      (listing.manufacturer
-        ? `${listing.mpn} by ${listing.manufacturer}`
-        : listing.mpn),
-  };
+  const categoryLabel = listing.category
+    ? CATEGORY_LABELS[listing.category]
+    : null;
+  const conditionLabel = listing.condition
+    ? CONDITION_LABELS[listing.condition]
+    : null;
+  const stockLabel = formatQuantity(listing.quantity);
+  const priceLabel = formatListingPrice(listing.price, listing.currency);
+
+  const title = listing.manufacturer
+    ? `${listing.mpn} by ${listing.manufacturer} — In Stock`
+    : `${listing.mpn} — Electronic Component In Stock`;
+
+  const description =
+    listing.description?.trim() ||
+    [
+      `Find ${listing.mpn}${listing.manufacturer ? ` by ${listing.manufacturer}` : ""} from US suppliers on USParts.us.`,
+      categoryLabel ? `${categoryLabel} component.` : null,
+      `${stockLabel} in stock.`,
+      conditionLabel ? `Condition: ${conditionLabel}.` : null,
+      priceLabel ? `Price: ${priceLabel}.` : null,
+      "Request a quote or compare supplier inventory for obsolete and hard-to-find electronic parts.",
+    ]
+      .filter(Boolean)
+      .join(" ");
+
+  return { title, description };
 }
 
 export default async function ListingPage({ params }: ListingPageProps) {

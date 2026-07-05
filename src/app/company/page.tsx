@@ -8,7 +8,9 @@ import { getCompanies } from "@/lib/listings";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "For Suppliers",
+  title: "List Electronic Component Inventory — Free Supplier Portal",
+  description:
+    "Register as a US electronic component supplier on USParts.us. List obsolete semiconductors, surplus ICs, and excess inventory by MPN so buyers can find and quote your stock — free.",
 };
 
 export default async function CompanyPage() {
