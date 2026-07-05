@@ -4,12 +4,12 @@ import Link from "next/link";
 import { useEffect, useId, useState } from "react";
 import { HeaderAuthNav } from "@/components/HeaderAuthNav";
 
-const navItems = [
-  { href: "/search", label: "Search Parts" },
+const navItems: Array<{ href: string; label: string; primary?: boolean }> = [
+  { href: "/search", label: "Search Parts", primary: true },
+  { href: "/search?mode=bulk", label: "BOM Search" },
   { href: "/blog", label: "Resources" },
   { href: "/company/upload", label: "Upload inventory" },
   { href: "/company", label: "For Suppliers" },
-  { href: "/help", label: "Help" },
 ];
 
 function MenuIcon({ open }: { open: boolean }) {
@@ -71,7 +71,11 @@ export function SiteNav() {
           <Link
             key={item.href}
             href={item.href}
-            className="rounded-md px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+            className={
+              item.primary
+                ? "rounded-lg bg-blue-600 px-3.5 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
+                : "rounded-md px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+            }
           >
             {item.label}
           </Link>
@@ -110,11 +114,22 @@ export function SiteNav() {
                       key={item.href}
                       href={item.href}
                       onClick={() => setOpen(false)}
-                      className="rounded-lg px-4 py-3 text-base font-medium text-slate-700 transition hover:bg-slate-100"
+                      className={
+                        item.primary
+                          ? "rounded-lg bg-blue-600 px-4 py-3 text-center text-base font-semibold text-white transition hover:bg-blue-700"
+                          : "rounded-lg px-4 py-3 text-base font-medium text-slate-700 transition hover:bg-slate-100"
+                      }
                     >
                       {item.label}
                     </Link>
                   ))}
+                  <Link
+                    href="/help"
+                    onClick={() => setOpen(false)}
+                    className="rounded-lg px-4 py-3 text-base font-medium text-slate-700 transition hover:bg-slate-100"
+                  >
+                    Help
+                  </Link>
                 </div>
                 <div className="mt-4 border-t border-slate-200 pt-4">
                   <HeaderAuthNav layout="stacked" onNavigate={() => setOpen(false)} />
