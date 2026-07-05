@@ -20,8 +20,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(getSiteUrl()),
   title: {
-    default:
-      "USParts.us — Search Obsolete Semiconductors, ICs & Electronic Components | Free MPN Lookup, BOM Search & US Supplier Inventory",
+    default: "Electronics Parts Marketplace - Free BOM Search & Inventory Listing",
     template: "%s | USParts",
   },
   description:
@@ -30,8 +29,7 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     siteName: "USParts",
-    title:
-      "USParts.us — Search Obsolete Semiconductors, ICs & Electronic Components | Free MPN Lookup, BOM Search & US Supplier Inventory",
+    title: "Electronics Parts Marketplace - Free BOM Search & Inventory Listing",
     description:
       "Find obsolete semiconductors, integrated circuits, and surplus electronic parts from US suppliers. Free MPN search, bulk BOM lookup, and quote requests.",
   },

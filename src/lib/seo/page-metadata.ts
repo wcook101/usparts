@@ -2,6 +2,10 @@ import type { Metadata } from "next";
 
 type PageMeta = Pick<Metadata, "title" | "description">;
 
+function seoTitle(title: string): Metadata["title"] {
+  return { absolute: title };
+}
+
 export const pageMetadata = {
   login: {
     title: "Sign In — Search Obsolete Semiconductors & Electronic Components",
@@ -29,9 +33,14 @@ export const pageMetadata = {
       "Update your USParts.us display name, email preferences, and password for electronic component search and supplier account access.",
   },
   help: {
-    title: "Help & Support — Electronic Component Search & Supplier Listings",
+    title: seoTitle("Contact Us - Sell or Source Electronic Components"),
     description:
-      "Get help searching obsolete semiconductors and MPNs, uploading supplier inventory, requesting quotes, and using bulk BOM search on USParts.us.",
+      "Contact USParts.us to sell electronic component inventory, source hard-to-find parts, request quotes, or get help with free BOM search and marketplace listings.",
+  },
+  about: {
+    title: seoTitle("About Us - Free Electronics Parts Marketplace"),
+    description:
+      "Learn about USParts.us, a free electronics parts marketplace for BOM search, supplier inventory listings, and connecting buyers with US electronic component stock.",
   },
   privacy: {
     title: "Privacy Policy — Electronic Component Search & Marketplace Data",
@@ -44,9 +53,9 @@ export const pageMetadata = {
       "Terms of service for using USParts.us to search electronic components, list supplier inventory, request quotes, and access free MPN and BOM search tools.",
   },
   searchDefault: {
-    title: "Search Electronic Components, Semiconductors & MPNs",
+    title: seoTitle("Search Electronic Components - Free BOM Upload & Quotes"),
     description:
-      "Free electronic component search by manufacturer part number (MPN), manufacturer, or keyword. Compare obsolete semiconductors, ICs, and surplus inventory from US suppliers on USParts.us.",
+      "Search electronic components by MPN or keyword, upload a BOM, compare US supplier inventory, and request quotes for free on USParts.us.",
   },
   searchBulk: {
     title: "Bulk BOM Part Search — Multi-MPN Electronic Component Lookup",
@@ -59,7 +68,7 @@ export const pageMetadata = {
       "Describe the semiconductor, IC, connector, or electronic component you need in plain language. USParts smart search matches parts across US supplier inventory.",
   },
   supplierPortal: {
-    title: "List Electronic Component Inventory — Free Supplier Portal",
+    title: seoTitle("Sell Your Electronics Inventory - Free Listing Platform"),
     description:
       "Register as a US electronic component supplier on USParts.us. List obsolete semiconductors, surplus ICs, and excess inventory by MPN so buyers can find and quote your stock — free.",
   },
@@ -142,6 +151,11 @@ export const pageMetadata = {
     title: "Supplier Outreach — Track Onboarding & Inventory Uploads",
     description:
       "Track supplier outreach, follow-ups, registrations, and inventory upload progress for the USParts.us electronic component marketplace.",
+  },
+  blog: {
+    title: seoTitle("Electronics Resale Blog - Tips for Selling Parts"),
+    description:
+      "Tips and guides for selling electronic components, managing surplus inventory, and sourcing obsolete semiconductors on the USParts.us marketplace.",
   },
 } satisfies Record<string, PageMeta>;
 

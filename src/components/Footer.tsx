@@ -21,8 +21,11 @@ export function Footer() {
             </p>
           </div>
           <nav className="flex flex-wrap gap-4">
+            <Link href="/about" className="hover:text-slate-900">
+              About
+            </Link>
             <Link href="/help" className="hover:text-slate-900">
-              Help
+              Contact
             </Link>
             <Link href="/privacy" className="hover:text-slate-900">
               Privacy

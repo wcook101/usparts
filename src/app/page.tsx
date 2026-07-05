@@ -12,13 +12,12 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: {
     absolute:
-      "USParts.us — Search Obsolete Semiconductors, ICs & Electronic Components | Free MPN Lookup, BOM Search & US Supplier Inventory",
+      "Electronics Parts Marketplace - Free BOM Search & Inventory Listing",
   },
   description:
     "Free BOM Search & Electronics Marketplace – List Inventory or Find Parts Instantly",
   openGraph: {
-    title:
-      "USParts.us — Search Obsolete Semiconductors, ICs & Electronic Components | Free MPN Lookup, BOM Search & US Supplier Inventory",
+    title: "Electronics Parts Marketplace - Free BOM Search & Inventory Listing",
     description:
       "Free BOM Search & Electronics Marketplace – List Inventory or Find Parts Instantly",
   },
