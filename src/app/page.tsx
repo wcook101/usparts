@@ -137,6 +137,67 @@ export default async function HomePage() {
         </div>
       </section>
 
+      <section className="relative border-t border-slate-200 bg-white/80">
+        <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-2xl">
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-600">
+                Resources
+              </p>
+              <h2 className="mt-3 text-2xl font-semibold text-slate-900">
+                Guides for selling and sourcing electronic parts
+              </h2>
+              <p className="mt-3 text-sm leading-7 text-slate-600">
+                Learn how to list surplus inventory, run BOM search, find obsolete
+                semiconductors, and grow traffic in the electronics marketplace.
+              </p>
+            </div>
+            <Link
+              href="/blog"
+              className="inline-flex w-fit rounded-lg bg-blue-600 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-700"
+            >
+              Browse all articles
+            </Link>
+          </div>
+
+          <div className="mt-8 grid gap-4 md:grid-cols-3">
+            <Link
+              href="/blog/how-to-sell-excess-electronic-component-inventory"
+              className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-blue-200"
+            >
+              <h3 className="font-semibold text-slate-900">
+                Sell excess component inventory
+              </h3>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                List surplus semiconductors and ICs so buyers find your MPNs.
+              </p>
+            </Link>
+            <Link
+              href="/blog/what-is-bom-search-for-electronic-components"
+              className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-blue-200"
+            >
+              <h3 className="font-semibold text-slate-900">
+                What is BOM search?
+              </h3>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                Compare US supplier stock for hundreds of part numbers at once.
+              </p>
+            </Link>
+            <Link
+              href="/blog/how-to-find-obsolete-semiconductors-and-ics"
+              className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-blue-200"
+            >
+              <h3 className="font-semibold text-slate-900">
+                Find obsolete semiconductors
+              </h3>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                Source hard-to-find ICs and legacy components from US suppliers.
+              </p>
+            </Link>
+          </div>
+        </div>
+      </section>
+
       <section className="relative overflow-hidden">
         <PartsBackground variant="section" idPrefix="home-section" />
         <div className="relative mx-auto max-w-6xl px-4 py-14 sm:px-6">
