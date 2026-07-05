@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isPlatformAdmin } from "@/lib/admin";
 import { db } from "@/lib/db";
 import { slugify } from "@/lib/format";
 import { getEmailDomain } from "@/lib/email-domain";
@@ -26,26 +27,29 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const user = await requireAuth();
+    const adminCreatingSupplier = isPlatformAdmin(user.email);
 
-    if (user.company) {
-      return NextResponse.json(
-        { error: "Your account already has a registered company" },
-        { status: 409 },
-      );
-    }
+    if (!adminCreatingSupplier) {
+      if (user.company) {
+        return NextResponse.json(
+          { error: "Your account already has a registered company" },
+          { status: 409 },
+        );
+      }
 
-    if (user.membership) {
-      return NextResponse.json(
-        {
-          error: `Your account is already on the ${user.membership.company.name} team`,
-        },
-        { status: 409 },
-      );
-    }
+      if (user.membership) {
+        return NextResponse.json(
+          {
+            error: `Your account is already on the ${user.membership.company.name} team`,
+          },
+          { status: 409 },
+        );
+      }
 
-    const existingUnowned = await linkUnownedCompanyByEmail(user.id, user.email);
-    if (existingUnowned) {
-      return NextResponse.json(existingUnowned, { status: 200 });
+      const existingUnowned = await linkUnownedCompanyByEmail(user.id, user.email);
+      if (existingUnowned) {
+        return NextResponse.json(existingUnowned, { status: 200 });
+      }
     }
 
     const body = await request.json();
@@ -93,7 +97,7 @@ export async function POST(request: Request) {
 
     const company = await db.company.create({
       data: {
-        ownerId: user.id,
+        ownerId: adminCreatingSupplier ? null : user.id,
         name: data.name,
         slug,
         email: companyEmail,
@@ -116,7 +120,9 @@ export async function POST(request: Request) {
       include: { inventoryLocations: true },
     });
 
-    await ensureOwnerMembership(user.id, company);
+    if (!adminCreatingSupplier) {
+      await ensureOwnerMembership(user.id, company);
+    }
 
     return NextResponse.json(company, { status: 201 });
   } catch (error) {

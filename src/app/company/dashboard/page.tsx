@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { LogoutButton } from "@/components/LogoutButton";
+import { isPlatformAdmin } from "@/lib/admin";
 import { getSessionUser } from "@/lib/auth";
 import { canInviteMembers, canManageInventory } from "@/lib/auth/membership";
 import { MAX_IMPORT_ROWS } from "@/lib/import-limits";
@@ -16,6 +17,10 @@ export default async function CompanyDashboardPage() {
 
   if (!user) {
     redirect("/login?next=/company/dashboard");
+  }
+
+  if (isPlatformAdmin(user.email)) {
+    redirect("/admin");
   }
 
   const company = user.membership?.company ?? user.company;

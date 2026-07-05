@@ -6,6 +6,7 @@ import { isPlatformAdmin } from "@/lib/admin";
 import { AuthError } from "@/lib/auth/errors";
 import {
   claimCompanyForUser,
+  detachPlatformAdminSupplierIdentity,
   linkUnownedCompanyByEmail,
 } from "@/lib/auth/ownership";
 import {
@@ -76,6 +77,16 @@ export async function deleteSessionByToken(token: string): Promise<void> {
 async function loadSessionUser(
   user: User & { company: Company | null },
 ): Promise<SessionUser> {
+  if (isPlatformAdmin(user.email)) {
+    await detachPlatformAdminSupplierIdentity(user.id, user.email);
+
+    return {
+      ...user,
+      company: null,
+      membership: null,
+    };
+  }
+
   let company = user.company;
 
   if (!company) {

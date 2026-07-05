@@ -1,4 +1,5 @@
 import type { Company } from "@/generated/prisma/client";
+import { isPlatformAdmin } from "@/lib/admin";
 import { db } from "@/lib/db";
 import { ensureCompanyEmailDomain, ensureOwnerMembership } from "@/lib/auth/membership";
 
@@ -27,10 +28,41 @@ async function linkCompanyToOwner(
   return updated;
 }
 
+export async function detachPlatformAdminSupplierIdentity(
+  userId: string,
+  email: string,
+): Promise<void> {
+  if (!isPlatformAdmin(email)) {
+    return;
+  }
+
+  const owned = await findOwnedCompany(userId);
+  if (!owned) {
+    return;
+  }
+
+  await db.$transaction(async (tx) => {
+    await tx.company.update({
+      where: { id: owned.id },
+      data: { ownerId: null },
+    });
+    await tx.companyMember.deleteMany({
+      where: {
+        userId,
+        companyId: owned.id,
+      },
+    });
+  });
+}
+
 export async function linkUnownedCompanyByEmail(
   userId: string,
   email: string,
 ): Promise<Company | null> {
+  if (isPlatformAdmin(email)) {
+    return null;
+  }
+
   const owned = await findOwnedCompany(userId);
   if (owned) {
     await ensureOwnerMembership(userId, owned);
@@ -56,6 +88,10 @@ export async function claimCompanyForUser(
   email: string,
   companyId: string,
 ): Promise<Company | null> {
+  if (isPlatformAdmin(email)) {
+    return null;
+  }
+
   const owned = await findOwnedCompany(userId);
   if (owned) {
     return owned.id === companyId ? owned : null;

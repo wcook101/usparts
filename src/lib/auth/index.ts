@@ -18,6 +18,7 @@ export {
 } from "@/lib/auth/session";
 export {
   claimCompanyForUser,
+  detachPlatformAdminSupplierIdentity,
   findOwnedCompany,
   linkUnownedCompanyByEmail,
 } from "@/lib/auth/ownership";

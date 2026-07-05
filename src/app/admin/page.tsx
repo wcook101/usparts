@@ -102,7 +102,7 @@ export default async function AdminPage() {
           </Link>
           <Link
             href="/admin/import"
-            className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
           >
             Import inventory
           </Link>
@@ -111,12 +111,6 @@ export default async function AdminPage() {
             className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
           >
             Search parts
-          </Link>
-          <Link
-            href="/company/dashboard"
-            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-          >
-            Supplier dashboard
           </Link>
         </div>
       </div>
