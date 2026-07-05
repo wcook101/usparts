@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(getSiteUrl()),
   title: {
     default:
-      "USParts | Free Electronic Component Search — Obsolete Semiconductors & MPN Lookup",
+      "USParts.us — Search Obsolete Semiconductors, ICs & Electronic Components | Free MPN Lookup, BOM Search & US Supplier Inventory",
     template: "%s | USParts",
   },
   description:
@@ -31,13 +31,13 @@ export const metadata: Metadata = {
     locale: "en_US",
     siteName: "USParts",
     title:
-      "USParts | Free Electronic Component Search — Obsolete Semiconductors & MPN Lookup",
+      "USParts.us — Search Obsolete Semiconductors, ICs & Electronic Components | Free MPN Lookup, BOM Search & US Supplier Inventory",
     description:
       "Find obsolete semiconductors, integrated circuits, and surplus electronic parts from US suppliers. Free MPN search, bulk BOM lookup, and quote requests.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "USParts | Free Electronic Component & MPN Search",
+    title: "USParts.us | Free Obsolete Semiconductor & Electronic Component Search",
     description:
       "Search manufacturer part numbers, compare US supplier stock, and run bulk BOM lookups for semiconductors and electronic components — free.",
   },

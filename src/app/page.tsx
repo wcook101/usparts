@@ -10,10 +10,18 @@ import { getSiteUrl } from "@/lib/site";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title:
-    "Free Electronic Component Search — Obsolete Semiconductors, ICs & MPN Lookup",
+  title: {
+    absolute:
+      "USParts.us — Search Obsolete Semiconductors, ICs & Electronic Components | Free MPN Lookup, BOM Search & US Supplier Inventory",
+  },
   description:
-    "Search obsolete semiconductors, integrated circuits, and hard-to-find electronic components by manufacturer part number. Paste a BOM, compare US supplier inventory, and request quotes — free on USParts.us.",
+    "Search obsolete semiconductors, integrated circuits, and hard-to-find electronic components by manufacturer part number. Paste a BOM, compare US supplier inventory, pricing, and stock, and request quotes — free on USParts.us.",
+  openGraph: {
+    title:
+      "USParts.us — Search Obsolete Semiconductors, ICs & Electronic Components | Free MPN Lookup, BOM Search & US Supplier Inventory",
+    description:
+      "Find obsolete semiconductors, integrated circuits, and surplus electronic parts from US suppliers. Free MPN search, bulk BOM lookup, and quote requests on USParts.us.",
+  },
   alternates: {
     canonical: "/",
   },
