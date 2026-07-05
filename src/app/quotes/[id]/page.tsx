@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { formatQuantity } from "@/lib/format";
 import { canViewBuyerResource, getSessionUser } from "@/lib/auth";
 import { getQuoteById } from "@/lib/quotes";
-import { pageMetadata } from "@/lib/seo/page-metadata";
+import { pageMetadata, quoteMetadata } from "@/lib/seo/page-metadata";
 
 type QuotePageProps = {
   params: Promise<{ id: string }>;
@@ -24,10 +24,7 @@ export async function generateMetadata({ params }: QuotePageProps) {
     ? `${quote.listing.mpn} by ${quote.listing.manufacturer}`
     : quote.listing.mpn;
 
-  return {
-    title: `${partLabel} — Quote Request Sent for Electronic Component RFQ`,
-    description: `Your quote request for ${partLabel} was sent to the supplier on USParts.us. Track RFQ status from your account activity page.`,
-  };
+  return quoteMetadata(partLabel);
 }
 
 export default async function QuotePage({ params, searchParams }: QuotePageProps) {

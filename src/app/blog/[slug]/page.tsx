@@ -7,6 +7,7 @@ import {
   getBlogPostBySlug,
   getBlogPostsByCategory,
 } from "@/lib/blog/posts";
+import { blogArticleMetadata } from "@/lib/seo/page-metadata";
 import { getSiteUrl } from "@/lib/site";
 
 type BlogArticlePageProps = {
@@ -29,16 +30,11 @@ export async function generateMetadata({
     };
   }
 
-  return {
-    title: { absolute: `${post.title} | USParts Blog` },
+  return blogArticleMetadata({
+    title: post.title,
     description: post.description,
-    openGraph: {
-      title: post.title,
-      description: post.description,
-      type: "article",
-      publishedTime: post.publishedAt,
-    },
-  };
+    publishedAt: post.publishedAt,
+  });
 }
 
 export default async function BlogArticlePage({ params }: BlogArticlePageProps) {

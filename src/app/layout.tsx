@@ -20,16 +20,16 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(getSiteUrl()),
   title: {
-    default: "Electronics Parts Marketplace - Free BOM Search & Inventory Listing",
+    default: "Electronics Parts Marketplace - Free BOM Search & Inventory",
     template: "%s | USParts",
   },
   description:
-    "Search obsolete semiconductors, ICs, and hard-to-find electronic components by MPN or BOM. Compare US supplier inventory, pricing, and stock — free on USParts.us.",
+    "Free BOM search and electronics marketplace – list inventory or find parts instantly. Search obsolete semiconductors, ICs, and surplus stock by MPN from US suppliers on USParts.us.",
   openGraph: {
     type: "website",
     locale: "en_US",
     siteName: "USParts",
-    title: "Electronics Parts Marketplace - Free BOM Search & Inventory Listing",
+    title: "Electronics Parts Marketplace - Free BOM Search & Inventory",
     description:
       "Find obsolete semiconductors, integrated circuits, and surplus electronic parts from US suppliers. Free MPN search, bulk BOM lookup, and quote requests.",
   },

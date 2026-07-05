@@ -13,7 +13,7 @@ import {
 } from "@/lib/format";
 import { getBuyerDefaults, getSessionUser } from "@/lib/auth";
 import { getListingById } from "@/lib/listings";
-import { listingMetadata } from "@/lib/seo/page-metadata";
+import { listingMetadata, pageMetadata } from "@/lib/seo/page-metadata";
 
 type ListingPageProps = {
   params: Promise<{ id: string }>;
@@ -26,11 +26,7 @@ export async function generateMetadata({ params }: ListingPageProps) {
   const listing = await getListingById(id);
 
   if (!listing) {
-    return {
-      title: "Part Not Found — Electronic Component Listing",
-      description:
-        "This electronic component listing is no longer available on USParts.us. Search MPNs to find in-stock semiconductors and ICs from US suppliers.",
-    };
+    return pageMetadata.listingNotFound;
   }
 
   const categoryLabel = listing.category

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { BlogPostCard } from "@/components/BlogPostContent";
 import {
@@ -7,9 +8,7 @@ import {
   getLatestBlogPosts,
   type BlogCategory,
 } from "@/lib/blog/posts";
-import { pageMetadata } from "@/lib/seo/page-metadata";
-
-export const metadata = pageMetadata.blog;
+import { pageMetadata, seoDescription, seoTitle } from "@/lib/seo/page-metadata";
 
 const categoryDescriptions: Record<BlogCategory, string> = {
   "Product Guides":
@@ -23,6 +22,29 @@ const categoryDescriptions: Record<BlogCategory, string> = {
   Marketplace:
     "How free electronics marketplaces compare to brokers and traditional channels.",
 };
+
+type BlogPageProps = {
+  searchParams: Promise<{ category?: string }>;
+};
+
+export async function generateMetadata({
+  searchParams,
+}: BlogPageProps): Promise<Metadata> {
+  const { category: categoryFilter } = await searchParams;
+
+  if (
+    categoryFilter &&
+    blogCategoryOrder.includes(categoryFilter as BlogCategory)
+  ) {
+    const category = categoryFilter as BlogCategory;
+    return {
+      title: seoTitle(`${category} - Electronics Parts Resources`),
+      description: seoDescription(categoryDescriptions[category]),
+    };
+  }
+
+  return pageMetadata.blog;
+}
 
 function CategorySection({ category }: { category: BlogCategory }) {
   const posts = getBlogPostsByCategory(category).slice(0, 3);
@@ -57,10 +79,6 @@ function CategorySection({ category }: { category: BlogCategory }) {
     </section>
   );
 }
-
-type BlogPageProps = {
-  searchParams: Promise<{ category?: string }>;
-};
 
 export default async function BlogPage({ searchParams }: BlogPageProps) {
   const { category: categoryFilter } = await searchParams;

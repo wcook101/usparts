@@ -9,7 +9,7 @@ import {
 } from "@/lib/format";
 import { canViewBuyerResource, getSessionUser } from "@/lib/auth";
 import { getOrderById } from "@/lib/orders";
-import { pageMetadata } from "@/lib/seo/page-metadata";
+import { orderMetadata, pageMetadata } from "@/lib/seo/page-metadata";
 
 type OrderPageProps = {
   params: Promise<{ id: string }>;
@@ -30,10 +30,7 @@ export async function generateMetadata({ params }: OrderPageProps) {
     ? `${order.listing.mpn} by ${order.listing.manufacturer}`
     : order.listing.mpn;
 
-  return {
-    title: `${partLabel} — Order Confirmation for Electronic Component Purchase`,
-    description: `Order confirmation for ${partLabel} on USParts.us, including supplier details, quantity, and purchase status.`,
-  };
+  return orderMetadata(partLabel);
 }
 
 export default async function OrderPage({ params, searchParams }: OrderPageProps) {

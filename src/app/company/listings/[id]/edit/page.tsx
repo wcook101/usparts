@@ -5,7 +5,7 @@ import { getSessionUser, userCanManageInventory } from "@/lib/auth";
 import { getSessionCompany } from "@/lib/auth/resource-access";
 import { db } from "@/lib/db";
 import { getListingById } from "@/lib/listings";
-import { editListingMetadata } from "@/lib/seo/page-metadata";
+import { editListingMetadata, pageMetadata } from "@/lib/seo/page-metadata";
 
 export const dynamic = "force-dynamic";
 
@@ -17,11 +17,7 @@ export async function generateMetadata({ params }: PageProps) {
   const { id } = await params;
   const listing = await getListingById(id);
   if (!listing) {
-    return {
-      title: "Edit Listing — Supplier Inventory Management",
-      description:
-        "Update an electronic component listing in your USParts.us supplier inventory.",
-    };
+    return pageMetadata.editListingNotFound;
   }
 
   return editListingMetadata({

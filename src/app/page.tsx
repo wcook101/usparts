@@ -12,14 +12,14 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: {
     absolute:
-      "Electronics Parts Marketplace - Free BOM Search & Inventory Listing",
+      "Electronics Parts Marketplace - Free BOM Search & Inventory",
   },
   description:
-    "Free BOM Search & Electronics Marketplace – List Inventory or Find Parts Instantly",
+    "Free BOM search and electronics marketplace – list inventory or find parts instantly. Search obsolete semiconductors, ICs, and surplus stock by MPN from US suppliers on USParts.us.",
   openGraph: {
-    title: "Electronics Parts Marketplace - Free BOM Search & Inventory Listing",
+    title: "Electronics Parts Marketplace - Free BOM Search & Inventory",
     description:
-      "Free BOM Search & Electronics Marketplace – List Inventory or Find Parts Instantly",
+      "Free BOM search and electronics marketplace – list inventory or find parts instantly. Search obsolete semiconductors, ICs, and surplus stock by MPN from US suppliers.",
   },
   alternates: {
     canonical: "/",
