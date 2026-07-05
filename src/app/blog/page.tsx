@@ -1,12 +1,75 @@
 import Link from "next/link";
 import { BlogPostCard } from "@/components/BlogPostContent";
-import { getAllBlogPosts } from "@/lib/blog/posts";
+import {
+  blogCategoryOrder,
+  getAllBlogPosts,
+  getBlogPostsByCategory,
+  getLatestBlogPosts,
+  type BlogCategory,
+} from "@/lib/blog/posts";
 import { pageMetadata } from "@/lib/seo/page-metadata";
 
 export const metadata = pageMetadata.blog;
 
-export default function BlogPage() {
-  const posts = getAllBlogPosts();
+const categoryDescriptions: Record<BlogCategory, string> = {
+  "Product Guides":
+    "How to use BOM search, MPN lookup, and marketplace tools — workflows inspired by leading component search platforms.",
+  Procurement:
+    "Pricing, quotes, proto-BOMs, and supplier comparison for electronic component buyers.",
+  Selling:
+    "List surplus inventory, reach buyers, and turn excess stock into revenue.",
+  Industry:
+    "Shortages, allocation risk, counterfeit awareness, and supply chain trends.",
+  Marketplace:
+    "How free electronics marketplaces compare to brokers and traditional channels.",
+};
+
+function CategorySection({ category }: { category: BlogCategory }) {
+  const posts = getBlogPostsByCategory(category).slice(0, 3);
+
+  if (posts.length === 0) {
+    return null;
+  }
+
+  return (
+    <section className="mt-14">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h2 className="text-xl font-semibold text-slate-900">{category}</h2>
+          <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-600">
+            {categoryDescriptions[category]}
+          </p>
+        </div>
+        {posts.length >= 3 ? (
+          <Link
+            href={`/blog?category=${encodeURIComponent(category)}`}
+            className="text-sm font-medium text-blue-600 hover:text-blue-700"
+          >
+            View all in {category}
+          </Link>
+        ) : null}
+      </div>
+      <div className="mt-6 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {posts.map((post) => (
+          <BlogPostCard key={post.slug} post={post} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+type BlogPageProps = {
+  searchParams: Promise<{ category?: string }>;
+};
+
+export default async function BlogPage({ searchParams }: BlogPageProps) {
+  const { category: categoryFilter } = await searchParams;
+  const allPosts = getAllBlogPosts();
+  const filteredPosts =
+    categoryFilter &&
+    blogCategoryOrder.includes(categoryFilter as BlogCategory)
+      ? getBlogPostsByCategory(categoryFilter as BlogCategory)
+      : null;
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
@@ -14,21 +77,77 @@ export default function BlogPage() {
         Resources
       </p>
       <h1 className="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
-        Electronics resale blog
+        Electronics parts resources
       </h1>
       <p className="mt-4 max-w-3xl text-lg leading-8 text-slate-600">
-        Practical guides for selling surplus inventory, sourcing obsolete
-        semiconductors, running BOM search, and growing traffic in the electronic
-        components marketplace.
+        Product guides, procurement tips, and industry insights for teams selling
+        surplus inventory and sourcing semiconductors through free BOM search.
       </p>
 
-      <div className="mt-10 grid gap-6 md:grid-cols-2">
-        {posts.map((post) => (
-          <BlogPostCard key={post.slug} post={post} />
+      <nav
+        className="mt-8 flex flex-wrap gap-2"
+        aria-label="Article categories"
+      >
+        <Link
+          href="/blog"
+          className={`rounded-full px-3 py-1.5 text-sm font-medium transition ${
+            !categoryFilter
+              ? "bg-blue-600 text-white"
+              : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+          }`}
+        >
+          All
+        </Link>
+        {blogCategoryOrder.map((category) => (
+          <Link
+            key={category}
+            href={`/blog?category=${encodeURIComponent(category)}`}
+            className={`rounded-full px-3 py-1.5 text-sm font-medium transition ${
+              categoryFilter === category
+                ? "bg-blue-600 text-white"
+                : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+            }`}
+          >
+            {category}
+          </Link>
         ))}
-      </div>
+      </nav>
 
-      <section className="mt-12 rounded-2xl border border-slate-200 bg-slate-50 p-6">
+      {filteredPosts ? (
+        <section className="mt-10">
+          <h2 className="text-xl font-semibold text-slate-900">
+            {categoryFilter}
+          </h2>
+          <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-600">
+            {categoryDescriptions[categoryFilter as BlogCategory]}
+          </p>
+          <div className="mt-6 grid gap-6 md:grid-cols-2">
+            {filteredPosts.map((post) => (
+              <BlogPostCard key={post.slug} post={post} />
+            ))}
+          </div>
+        </section>
+      ) : (
+        <>
+          <section className="mt-10">
+            <h2 className="text-xl font-semibold text-slate-900">Latest</h2>
+            <p className="mt-2 text-sm leading-7 text-slate-600">
+              New guides for BOM search, pricing, and marketplace workflows.
+            </p>
+            <div className="mt-6 grid gap-6 md:grid-cols-2">
+              {getLatestBlogPosts(6).map((post) => (
+                <BlogPostCard key={post.slug} post={post} />
+              ))}
+            </div>
+          </section>
+
+          {blogCategoryOrder.map((category) => (
+            <CategorySection key={category} category={category} />
+          ))}
+        </>
+      )}
+
+      <section className="mt-14 rounded-2xl border border-slate-200 bg-slate-50 p-6">
         <h2 className="text-lg font-semibold text-slate-900">
           Put the guides to work
         </h2>

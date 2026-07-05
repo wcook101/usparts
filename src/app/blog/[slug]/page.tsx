@@ -1,8 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { BlogPostBody } from "@/components/BlogPostContent";
-import { getAllBlogPosts, getBlogPostBySlug } from "@/lib/blog/posts";
+import { BlogPostBody, BlogPostCard } from "@/components/BlogPostContent";
+import {
+  getAllBlogPosts,
+  getBlogPostBySlug,
+  getBlogPostsByCategory,
+} from "@/lib/blog/posts";
 import { getSiteUrl } from "@/lib/site";
 
 type BlogArticlePageProps = {
@@ -46,6 +50,9 @@ export default async function BlogArticlePage({ params }: BlogArticlePageProps) 
   }
 
   const siteUrl = getSiteUrl();
+  const relatedPosts = getBlogPostsByCategory(post.category)
+    .filter((related) => related.slug !== post.slug)
+    .slice(0, 3);
   const articleJsonLd = {
     "@context": "https://schema.org",
     "@type": "Article",
@@ -90,6 +97,19 @@ export default async function BlogArticlePage({ params }: BlogArticlePageProps) 
       <div className="mt-10">
         <BlogPostBody post={post} />
       </div>
+
+      {relatedPosts.length > 0 ? (
+        <section className="mt-16 border-t border-slate-200 pt-10">
+          <h2 className="text-lg font-semibold text-slate-900">
+            More in {post.category}
+          </h2>
+          <div className="mt-6 grid gap-6 sm:grid-cols-2">
+            {relatedPosts.map((related) => (
+              <BlogPostCard key={related.slug} post={related} />
+            ))}
+          </div>
+        </section>
+      ) : null}
     </div>
   );
 }

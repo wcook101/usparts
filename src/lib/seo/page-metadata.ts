@@ -155,7 +155,7 @@ export const pageMetadata = {
   blog: {
     title: seoTitle("Electronics Resale Blog - Tips for Selling Parts"),
     description:
-      "Tips and guides for selling electronic components, managing surplus inventory, and sourcing obsolete semiconductors on the USParts.us marketplace.",
+      "Product guides, procurement tips, and industry insights for selling surplus inventory and sourcing semiconductors with free BOM search on USParts.us.",
   },
 } satisfies Record<string, PageMeta>;
 

@@ -162,36 +162,36 @@ export default async function HomePage() {
 
           <div className="mt-8 grid gap-4 md:grid-cols-3">
             <Link
-              href="/blog/how-to-sell-excess-electronic-component-inventory"
+              href="/blog/bom-search-best-practices-for-new-users"
               className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-blue-200"
             >
               <h3 className="font-semibold text-slate-900">
-                Sell excess component inventory
+                BOM search best practices
               </h3>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                List surplus semiconductors and ICs so buyers find your MPNs.
+                Paste your first BOM, review matches, and request quotes like a pro.
               </p>
             </Link>
             <Link
-              href="/blog/what-is-bom-search-for-electronic-components"
+              href="/blog/how-mpn-search-works-on-usparts"
               className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-blue-200"
             >
               <h3 className="font-semibold text-slate-900">
-                What is BOM search?
+                How MPN search works
               </h3>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                Compare US supplier stock for hundreds of part numbers at once.
+                Full and partial part number matching behind the scenes.
               </p>
             </Link>
             <Link
-              href="/blog/how-to-find-obsolete-semiconductors-and-ics"
+              href="/blog/best-component-pricing-with-bom-search"
               className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-blue-200"
             >
               <h3 className="font-semibold text-slate-900">
-                Find obsolete semiconductors
+                Get the best component pricing
               </h3>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                Source hard-to-find ICs and legacy components from US suppliers.
+                Compare listed prices and quote-only lines on your BOM.
               </p>
             </Link>
           </div>
