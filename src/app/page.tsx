@@ -4,7 +4,10 @@ import Link from "next/link";
 import { PartsBackground } from "@/components/PartsBackground";
 import { RecentUploadsList } from "@/components/RecentUploadsList";
 import { QuickSearchLinks, SearchBar } from "@/components/SearchBar";
-import { getRecentListings } from "@/lib/listings";
+import { FeaturedSellersSection } from "@/components/trust/FeaturedSellersSection";
+import { SecurityBadges } from "@/components/trust/SecurityBadges";
+import { TestimonialsSection } from "@/components/trust/TestimonialsSection";
+import { getFeaturedSellers, getRecentListings } from "@/lib/listings";
 import { getSiteUrl } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
@@ -27,7 +30,10 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  const recentUploads = await getRecentListings();
+  const [recentUploads, featuredSellers] = await Promise.all([
+    getRecentListings(),
+    getFeaturedSellers(6),
+  ]);
   const hasUploads = recentUploads.length > 0;
   const siteUrl = getSiteUrl();
 
@@ -134,8 +140,16 @@ export default async function HomePage() {
               </div>
             ))}
           </div>
+
+          <div className="mx-auto mt-10 max-w-5xl">
+            <SecurityBadges />
+          </div>
         </div>
       </section>
+
+      <FeaturedSellersSection sellers={featuredSellers} />
+
+      <TestimonialsSection />
 
       <section className="relative border-t border-slate-200 bg-white/80">
         <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6">

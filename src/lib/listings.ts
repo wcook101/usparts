@@ -426,6 +426,58 @@ export async function getRecentListings() {
   return getRecentListingsByCompany(RECENT_COMPANIES_LIMIT, RECENT_LISTINGS_PER_COMPANY);
 }
 
+export type FeaturedSeller = {
+  id: string;
+  name: string;
+  city: string | null;
+  state: string | null;
+  country: string;
+  listingCount: number;
+  sampleMpn: string | null;
+};
+
+export async function getFeaturedSellers(limit = 6): Promise<FeaturedSeller[]> {
+  const companies = await db.company.findMany({
+    where: {
+      listings: { some: { isActive: true } },
+    },
+    select: {
+      id: true,
+      name: true,
+      city: true,
+      state: true,
+      country: true,
+      listings: {
+        where: { isActive: true },
+        select: { mpn: true },
+        orderBy: { updatedAt: "desc" },
+        take: 1,
+      },
+      _count: {
+        select: {
+          listings: { where: { isActive: true } },
+        },
+      },
+    },
+    orderBy: {
+      listings: {
+        _count: "desc",
+      },
+    },
+    take: limit,
+  });
+
+  return companies.map((company) => ({
+    id: company.id,
+    name: company.name,
+    city: company.city,
+    state: company.state,
+    country: company.country,
+    listingCount: company._count.listings,
+    sampleMpn: company.listings[0]?.mpn ?? null,
+  }));
+}
+
 export async function getCompanies() {
   return db.company.findMany({
     include: {
