@@ -50,7 +50,40 @@ export function RecentUploadsList({ groups }: RecentUploadsListProps) {
             </Link>
           </div>
 
-          <div className="overflow-x-auto">
+          <div className="divide-y divide-slate-100 md:hidden">
+            {group.listings.map((listing) => (
+              <article key={listing.id} className="px-4 py-4">
+                <Link
+                  href={`/listings/${listing.id}`}
+                  className="font-mono text-base font-semibold text-blue-700 hover:text-blue-800"
+                >
+                  {listing.mpn}
+                </Link>
+                <dl className="mt-3 grid grid-cols-[minmax(0,7rem)_1fr] gap-x-3 gap-y-2 text-sm">
+                  <dt className="text-slate-500">Manufacturer</dt>
+                  <dd className="text-slate-800">{listing.manufacturer || "—"}</dd>
+                  <dt className="text-slate-500">Location</dt>
+                  <dd className="text-slate-800">
+                    <InventoryLocationText location={listing.inventoryLocation} />
+                  </dd>
+                  <dt className="text-slate-500">Qty</dt>
+                  <dd className="font-medium text-slate-900">
+                    {formatQuantity(listing.quantity)}
+                  </dd>
+                  <dt className="text-slate-500">Price</dt>
+                  <dd className="font-medium text-slate-900">
+                    {formatListingPrice(listing.price, listing.currency)}
+                  </dd>
+                  <dt className="text-slate-500">Condition</dt>
+                  <dd className="text-slate-800">
+                    {CONDITION_LABELS[listing.condition]}
+                  </dd>
+                </dl>
+              </article>
+            ))}
+          </div>
+
+          <div className="hidden overflow-x-auto md:block">
             <table className="min-w-full text-sm">
               <thead>
                 <tr className="border-b border-slate-100 bg-slate-50/80 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">

@@ -15,9 +15,25 @@ type AuthUser = {
   isPlatformAdmin: boolean;
 };
 
-export function HeaderAuthNav() {
+type HeaderAuthNavProps = {
+  layout?: "inline" | "stacked";
+  onNavigate?: () => void;
+};
+
+const inlineLinkClass =
+  "rounded-md px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900";
+const stackedLinkClass =
+  "block rounded-lg px-4 py-3 text-base font-medium text-slate-700 transition hover:bg-slate-100";
+const stackedButtonClass =
+  "block w-full rounded-lg px-4 py-3 text-center text-base font-medium transition";
+
+export function HeaderAuthNav({
+  layout = "inline",
+  onNavigate,
+}: HeaderAuthNavProps) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loaded, setLoaded] = useState(false);
+  const stacked = layout === "stacked";
 
   useEffect(() => {
     let cancelled = false;
@@ -56,17 +72,40 @@ export function HeaderAuthNav() {
 
   if (!loaded) {
     return (
-      <div className="h-9 w-24 animate-pulse rounded-lg bg-slate-100" aria-hidden />
+      <div
+        className={`animate-pulse rounded-lg bg-slate-100 ${stacked ? "h-24 w-full" : "h-9 w-24"}`}
+        aria-hidden
+      />
     );
   }
 
+  const linkProps = stacked ? { onClick: onNavigate } : {};
+
   if (!user) {
+    if (stacked) {
+      return (
+        <div className="flex flex-col gap-2">
+          <Link
+            href="/login"
+            onClick={onNavigate}
+            className={`${stackedButtonClass} border border-slate-300 bg-white text-slate-700 hover:bg-slate-50`}
+          >
+            Sign in
+          </Link>
+          <Link
+            href="/signup"
+            onClick={onNavigate}
+            className={`${stackedButtonClass} bg-blue-600 text-white hover:bg-blue-700`}
+          >
+            Sign up
+          </Link>
+        </div>
+      );
+    }
+
     return (
       <>
-        <Link
-          href="/login"
-          className="rounded-md px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
-        >
+        <Link href="/login" className={inlineLinkClass}>
           Sign in
         </Link>
         <Link
@@ -80,20 +119,24 @@ export function HeaderAuthNav() {
   }
 
   const hasCompany = Boolean(user.company);
+  const linkClass = stacked ? stackedLinkClass : inlineLinkClass;
+  const actionLinkClass = stacked
+    ? `${stackedButtonClass} border border-slate-300 bg-white text-slate-700 hover:bg-slate-50`
+    : "hidden rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100 md:inline-flex";
 
-  return (
-    <div className="flex flex-wrap items-center gap-2">
+  const links = (
+    <>
       {user.isPlatformAdmin ? (
-        <Link
-          href="/admin"
-          className="rounded-md px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
-        >
+        <Link href="/admin" className={linkClass} {...linkProps}>
           Admin
         </Link>
       ) : null}
       <Link
         href="/account"
-        className="hidden rounded-md px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 sm:inline"
+        className={
+          stacked ? linkClass : `${inlineLinkClass} hidden sm:inline`
+        }
+        {...linkProps}
       >
         Account
       </Link>
@@ -101,13 +144,19 @@ export function HeaderAuthNav() {
         <>
           <Link
             href="/company/dashboard"
-            className="hidden rounded-md px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 sm:inline"
+            className={
+              stacked ? linkClass : `${inlineLinkClass} hidden sm:inline`
+            }
+            {...linkProps}
           >
             Dashboard
           </Link>
           <Link
             href="/orders"
-            className="hidden rounded-md px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 md:inline"
+            className={
+              stacked ? linkClass : `${inlineLinkClass} hidden md:inline`
+            }
+            {...linkProps}
           >
             My activity
           </Link>
@@ -115,31 +164,46 @@ export function HeaderAuthNav() {
             <>
               <Link
                 href="/company/inbox"
-                className="hidden rounded-md px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 lg:inline"
+                className={
+                  stacked ? linkClass : `${inlineLinkClass} hidden lg:inline`
+                }
+                {...linkProps}
               >
                 Inbox
               </Link>
               <Link
                 href="/company/listings"
-                className="hidden rounded-md px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 lg:inline"
+                className={
+                  stacked ? linkClass : `${inlineLinkClass} hidden lg:inline`
+                }
+                {...linkProps}
               >
                 Listings
               </Link>
               <Link
                 href="/company/import"
-                className="hidden rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100 md:inline-flex"
+                className={actionLinkClass}
+                {...linkProps}
               >
                 Bulk Import
               </Link>
               <Link
                 href="/company/listings/new"
-                className="hidden rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100 lg:inline-flex"
+                className={
+                  stacked
+                    ? `${stackedButtonClass} border border-slate-300 bg-white text-slate-700 hover:bg-slate-50`
+                    : `${inlineLinkClass} hidden lg:inline-flex rounded-lg border border-slate-300 px-3 py-2`
+                }
+                {...linkProps}
               >
                 List Part
               </Link>
               <Link
                 href="/company/settings"
-                className="hidden rounded-md px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 xl:inline"
+                className={
+                  stacked ? linkClass : `${inlineLinkClass} hidden xl:inline`
+                }
+                {...linkProps}
               >
                 Settings
               </Link>
@@ -148,7 +212,10 @@ export function HeaderAuthNav() {
           {user.canInviteMembers ? (
             <Link
               href="/company/team"
-              className="hidden rounded-md px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 lg:inline"
+              className={
+                stacked ? linkClass : `${inlineLinkClass} hidden lg:inline`
+              }
+              {...linkProps}
             >
               Team
             </Link>
@@ -157,11 +224,34 @@ export function HeaderAuthNav() {
       ) : (
         <Link
           href="/orders"
-          className="hidden rounded-md px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 md:inline"
+          className={
+            stacked ? linkClass : `${inlineLinkClass} hidden md:inline`
+          }
+          {...linkProps}
         >
           My activity
         </Link>
       )}
+    </>
+  );
+
+  if (stacked) {
+    return (
+      <div className="flex flex-col gap-1">
+        {links}
+        <p className="px-4 py-2 text-sm text-slate-500" title={user.email}>
+          {user.company?.name ?? user.email}
+        </p>
+        <LogoutButton
+          className={`${stackedButtonClass} bg-slate-800 text-white hover:bg-slate-900`}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      {links}
       <span
         className="max-w-[120px] truncate text-xs text-slate-500 sm:max-w-[160px] sm:text-sm"
         title={user.email}

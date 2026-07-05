@@ -84,13 +84,13 @@ export default async function ListingPage({ params }: ListingPageProps) {
       </Link>
 
       <div className="mt-6 grid gap-8 lg:grid-cols-[1.4fr_0.8fr]">
-        <section className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div>
+        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
+          <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
+            <div className="min-w-0">
               <p className="font-mono text-sm font-semibold text-blue-700">
                 {listing.mpn}
               </p>
-              <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">
+              <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
                 {listing.manufacturer || listing.mpn}
               </h1>
               <p className="mt-3 text-sm text-slate-500">
@@ -98,8 +98,8 @@ export default async function ListingPage({ params }: ListingPageProps) {
                 {CONDITION_LABELS[listing.condition]}
               </p>
             </div>
-            <div className="text-right">
-              <p className="text-3xl font-bold text-slate-900">
+            <div className="sm:text-right">
+              <p className="text-2xl font-bold text-slate-900 sm:text-3xl">
                 {formatListingPrice(listingPrice, listing.currency)}
               </p>
               <p className="text-sm text-slate-500">

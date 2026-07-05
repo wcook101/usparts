@@ -46,15 +46,15 @@ export function SearchBar({
           defaultValue={defaultQuery}
           disabled={disabled}
           placeholder="Search by part number, manufacturer, or description..."
-          className={`min-w-0 flex-1 border-0 bg-transparent px-4 text-slate-900 outline-none placeholder:text-slate-400 disabled:cursor-not-allowed disabled:text-slate-400 ${
-            large ? "py-4" : "py-3"
+          className={`min-w-0 flex-1 border-0 bg-transparent px-3 text-base text-slate-900 outline-none placeholder:text-slate-400 disabled:cursor-not-allowed disabled:text-slate-400 sm:px-4 ${
+            large ? "py-3.5 sm:py-4" : "py-3"
           }`}
         />
         <button
           type="submit"
           disabled={disabled}
-          className={`bg-blue-600 font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300 ${
-            large ? "px-6 py-4" : "px-5 py-3"
+          className={`min-h-11 shrink-0 touch-manipulation bg-blue-600 font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300 ${
+            large ? "px-5 py-3.5 sm:px-6 sm:py-4" : "px-4 py-3 sm:px-5"
           }`}
         >
           Search
