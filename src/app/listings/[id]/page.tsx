@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { InventoryLocationText } from "@/components/InventoryLocationText";
+import { DatasheetSection } from "@/components/parts/DatasheetSection";
 import { PlaceOrderForm } from "@/components/PlaceOrderForm";
 import { RequestQuoteForm } from "@/components/RequestQuoteForm";
 import {
@@ -14,6 +15,7 @@ import {
 import { getBuyerDefaults, getSessionUser } from "@/lib/auth";
 import { getListingById } from "@/lib/listings";
 import { getPartPagePath } from "@/lib/parts/part-path";
+import { collectDatasheetUrls } from "@/lib/datasheet";
 import { listingMetadata, pageMetadata } from "@/lib/seo/page-metadata";
 
 type ListingPageProps = {
@@ -156,18 +158,14 @@ export default async function ListingPage({ params }: ListingPageProps) {
             </div>
           ) : null}
 
-          {listing.datasheetUrl ? (
-            <div className="mt-8">
-              <a
-                href={listing.datasheetUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm font-medium text-blue-600 hover:text-blue-700"
-              >
-                View datasheet
-              </a>
-            </div>
-          ) : null}
+          <DatasheetSection
+            mpn={listing.mpn}
+            manufacturer={listing.manufacturer}
+            datasheetUrls={collectDatasheetUrls([listing])}
+            quoteHref={`#quote`}
+            supplierCount={1}
+            variant="listing"
+          />
         </section>
 
         <aside className="space-y-6">
@@ -223,7 +221,7 @@ export default async function ListingPage({ params }: ListingPageProps) {
           </section>
 
           {buyNow ? (
-            <section className="rounded-2xl border border-blue-200 bg-blue-50 p-6">
+            <section id="quote" className="rounded-2xl border border-blue-200 bg-blue-50 p-6">
               <h2 className="text-lg font-semibold text-slate-900">
                 Buy now
               </h2>
@@ -248,7 +246,7 @@ export default async function ListingPage({ params }: ListingPageProps) {
               </div>
             </section>
           ) : inStock ? (
-            <section className="rounded-2xl border border-amber-100 bg-amber-50 p-6">
+            <section id="quote" className="rounded-2xl border border-amber-100 bg-amber-50 p-6">
               <h2 className="text-lg font-semibold text-slate-900">
                 Request a quote
               </h2>
@@ -267,7 +265,7 @@ export default async function ListingPage({ params }: ListingPageProps) {
               </div>
             </section>
           ) : (
-            <section className="rounded-2xl border border-amber-100 bg-amber-50 p-6">
+            <section id="quote" className="rounded-2xl border border-amber-100 bg-amber-50 p-6">
               <h2 className="text-lg font-semibold text-slate-900">
                 Out of stock
               </h2>

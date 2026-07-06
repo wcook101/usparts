@@ -2,13 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { PartImagePlaceholder } from "@/components/parts/PartImagePlaceholder";
+import { DatasheetSection } from "@/components/parts/DatasheetSection";
 import { PartSupplierListings } from "@/components/parts/PartSupplierListings";
 import { RelatedPartsSection } from "@/components/parts/RelatedPartsSection";
 import {
   CATEGORY_LABELS,
   formatPrice,
   formatQuantity,
-  normalizeWebsiteUrl,
 } from "@/lib/format";
 import { getPartPagePath } from "@/lib/parts/part-path";
 import { getPartPageData } from "@/lib/parts/part-pages";
@@ -49,11 +49,6 @@ export async function generateMetadata({
       canonical: getPartPagePath(part.mpn),
     },
   };
-}
-
-function datasheetSearchUrl(mpn: string, manufacturer: string | null): string {
-  const query = [mpn, manufacturer, "datasheet pdf"].filter(Boolean).join(" ");
-  return `https://www.google.com/search?q=${encodeURIComponent(query)}`;
 }
 
 export default async function PartPage({ params }: PartPageProps) {
@@ -214,26 +209,15 @@ export default async function PartPage({ params }: PartPageProps) {
             </p>
           )}
 
+          <DatasheetSection
+            mpn={part.mpn}
+            manufacturer={part.primaryManufacturer}
+            datasheetUrls={part.datasheetUrls}
+            quoteHref={primaryListing ? `/listings/${primaryListing.id}` : null}
+            supplierCount={part.supplierCount}
+          />
+
           <div className="mt-6 flex flex-wrap gap-3">
-            {part.datasheetUrl ? (
-              <a
-                href={normalizeWebsiteUrl(part.datasheetUrl)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
-              >
-                View datasheet
-              </a>
-            ) : (
-              <a
-                href={datasheetSearchUrl(part.mpn, part.primaryManufacturer)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50"
-              >
-                Find datasheet
-              </a>
-            )}
             {part.category ? (
               <Link
                 href={`/search?category=${encodeURIComponent(part.category)}`}

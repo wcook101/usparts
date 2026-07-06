@@ -2,6 +2,7 @@ import type { PartCategory } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
 import type { ListingWithCompany } from "@/lib/listings";
 import { normalizeMpn, parseSingleLetterPackageVariant, bulkQueryMatchesListing, isSingleLetterPackageVariantSibling } from "@/lib/mpn-normalize";
+import { collectDatasheetUrls } from "@/lib/datasheet";
 import { lookupAliasTargets } from "@/lib/part-aliases";
 import { getPartPagePath } from "@/lib/parts/part-path";
 
@@ -26,6 +27,7 @@ export type PartPageData = {
   primaryManufacturer: string | null;
   description: string | null;
   datasheetUrl: string | null;
+  datasheetUrls: string[];
   category: PartCategory | null;
   listings: ListingWithCompany[];
   totalQuantity: number;
@@ -283,6 +285,7 @@ function buildPartPageData(
     primaryManufacturer: manufacturers[0] ?? null,
     description: pickPrimaryDescription(listings),
     datasheetUrl: pickDatasheetUrl(listings),
+    datasheetUrls: collectDatasheetUrls(listings),
     category: pickCategory(listings),
     listings,
     totalQuantity,
