@@ -17,7 +17,8 @@ export function RelatedPartsSection({ parts, currentMpn }: RelatedPartsSectionPr
     <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
       <h2 className="text-xl font-semibold text-slate-900">Related parts & alternatives</h2>
       <p className="mt-2 text-sm text-slate-600">
-        Package variants and known alternates for {currentMpn} with active US supplier stock.
+        Approved alternates and package suffix variants for {currentMpn}. Different catalog
+        numbers in the same series are not shown unless mapped as aliases.
       </p>
 
       <div className="mt-6 grid gap-3 sm:grid-cols-2">
@@ -35,7 +36,7 @@ export function RelatedPartsSection({ parts, currentMpn }: RelatedPartsSectionPr
                 </p>
               </div>
               <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
-                {part.reason === "alias" ? "Alternate" : "Variant"}
+                {part.reason === "alias" ? "Approved alternate" : "Package variant"}
               </span>
             </div>
             <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-slate-500">

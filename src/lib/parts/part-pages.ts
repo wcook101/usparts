@@ -1,7 +1,7 @@
 import type { PartCategory } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
 import type { ListingWithCompany } from "@/lib/listings";
-import { normalizeMpn, parseSingleLetterPackageVariant, bulkQueryMatchesListing } from "@/lib/mpn-normalize";
+import { normalizeMpn, parseSingleLetterPackageVariant, bulkQueryMatchesListing, isSingleLetterPackageVariantSibling } from "@/lib/mpn-normalize";
 import { lookupAliasTargets } from "@/lib/part-aliases";
 import { getPartPagePath } from "@/lib/parts/part-path";
 
@@ -130,33 +130,39 @@ async function getRelatedParts(
     });
   }
 
-  const family = parseSingleLetterPackageVariant(mpnNormalized);
-  const prefix = family?.base ?? mpnNormalized.slice(0, Math.min(6, mpnNormalized.length));
-
-  if (prefix.length >= 3) {
-    const variants = await db.partListing.groupBy({
+  // Only true package suffix siblings (e.g. NE555N ↔ NE555P), not shared catalog prefixes.
+  const packageVariant = parseSingleLetterPackageVariant(mpnNormalized);
+  if (packageVariant) {
+    const candidates = await db.partListing.groupBy({
       by: ["mpnNormalized"],
       where: {
         isActive: true,
-        mpnNormalized: { startsWith: prefix },
+        mpnNormalized: { startsWith: packageVariant.base },
         NOT: { mpnNormalized },
       },
       _count: { id: true },
     });
 
-    for (const variant of variants.sort((a, b) => b._count.id - a._count.id).slice(0, limit)) {
-      if (related.has(variant.mpnNormalized)) {
+    for (const candidate of candidates.sort((a, b) => b._count.id - a._count.id)) {
+      if (related.size >= limit) {
+        break;
+      }
+
+      if (
+        related.has(candidate.mpnNormalized) ||
+        !isSingleLetterPackageVariantSibling(mpnNormalized, candidate.mpnNormalized)
+      ) {
         continue;
       }
 
-      const display = await getDisplayMpnForNormalized(variant.mpnNormalized);
+      const display = await getDisplayMpnForNormalized(candidate.mpnNormalized);
       if (!display) {
         continue;
       }
 
-      related.set(variant.mpnNormalized, {
+      related.set(candidate.mpnNormalized, {
         mpn: display.mpn,
-        mpnNormalized: variant.mpnNormalized,
+        mpnNormalized: candidate.mpnNormalized,
         manufacturer: display.manufacturer,
         listingCount: display.listingCount,
         reason: "variant",
