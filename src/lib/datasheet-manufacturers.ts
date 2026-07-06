@@ -84,7 +84,7 @@ function withTimeout(signal: AbortSignal, timeoutMs: number): AbortSignal {
   return controller.signal;
 }
 
-async function urlLooksReachable(url: string): Promise<boolean> {
+export async function urlLooksReachable(url: string): Promise<boolean> {
   const controller = new AbortController();
   const signal = withTimeout(controller.signal, FETCH_TIMEOUT_MS);
 
@@ -139,22 +139,42 @@ export function buildManufacturerDatasheetCandidates(
   mpn: string,
   manufacturer: string | null,
 ): string[] {
-  if (!manufacturer?.trim()) {
-    return [];
-  }
-
   const normalizedMpn = mpn.trim().toUpperCase();
   const urls = new Set<string>();
+  const manufacturerNames = expandManufacturerAliases(manufacturer);
 
-  for (const pattern of MANUFACTURER_PATTERNS) {
-    if (pattern.test(manufacturer)) {
-      for (const candidate of pattern.candidates(normalizedMpn)) {
-        urls.add(candidate);
+  for (const name of manufacturerNames) {
+    for (const pattern of MANUFACTURER_PATTERNS) {
+      if (pattern.test(name)) {
+        for (const candidate of pattern.candidates(normalizedMpn)) {
+          urls.add(candidate);
+        }
       }
     }
   }
 
   return [...urls];
+}
+
+function expandManufacturerAliases(manufacturer: string | null): string[] {
+  if (!manufacturer?.trim()) {
+    return [];
+  }
+
+  const base = manufacturer.trim();
+  const names = new Set<string>([base]);
+
+  if (/^nsc$/i.test(base) || /national semiconductor|nat\.?\s*semi/i.test(base)) {
+    names.add("Texas Instruments");
+    names.add("National Semiconductor");
+  }
+
+  if (/signetics|fairchild/i.test(base)) {
+    names.add("Texas Instruments");
+    names.add("ON Semiconductor");
+  }
+
+  return [...names];
 }
 
 export async function resolveManufacturerDatasheetUrl(
@@ -166,6 +186,20 @@ export async function resolveManufacturerDatasheetUrl(
   for (const candidate of candidates) {
     if (await urlLooksReachable(candidate)) {
       return candidate;
+    }
+  }
+
+  return null;
+}
+
+export async function resolveManufacturerDatasheetUrls(
+  mpns: string[],
+  manufacturer: string | null,
+): Promise<string | null> {
+  for (const mpn of mpns) {
+    const url = await resolveManufacturerDatasheetUrl(mpn, manufacturer);
+    if (url) {
+      return url;
     }
   }
 

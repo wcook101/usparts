@@ -2,13 +2,20 @@ import type { DatasheetSource } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
 import {
   collectUniqueUrls,
+  getCanonicalListingMpn,
   getCatalogDatasheet,
   getListingDatasheetUrls,
   mergeDatasheetUrls,
   upsertCatalogDatasheet,
 } from "@/lib/datasheet-catalog";
-import { resolveManufacturerDatasheetUrl } from "@/lib/datasheet-manufacturers";
-import { isNexarConfigured, resolveNexarDatasheetUrl } from "@/lib/datasheet-nexar";
+import { getDatasheetLookupMpns } from "@/lib/datasheet-mpn-formats";
+import { resolveManufacturerDatasheetUrls } from "@/lib/datasheet-manufacturers";
+import {
+  isOpenAiDatasheetLookupEnabled,
+  resolveOpenAiDatasheetUrl,
+} from "@/lib/datasheet-openai";
+import { isNexarConfigured, resolveNexarDatasheetUrls } from "@/lib/datasheet-nexar";
+import { lookupAliasTargets } from "@/lib/part-aliases";
 import { normalizeMpn } from "@/lib/mpn-normalize";
 
 const inFlightResolves = new Map<string, Promise<ResolveDatasheetResult>>();
@@ -20,7 +27,78 @@ export type ResolveDatasheetResult = {
   datasheetUrls: string[];
   source: DatasheetSource | null;
   resolved: boolean;
+  matchNote: string | null;
 };
+
+async function resolveFromAliasTargets(input: {
+  mpn: string;
+  mpnNormalized: string;
+  manufacturer: string | null;
+}): Promise<ResolveDatasheetResult | null> {
+  const aliasMap = await lookupAliasTargets([input.mpnNormalized]);
+  const targets = aliasMap.get(input.mpnNormalized) ?? [];
+
+  for (const target of targets) {
+    const targetNormalized = normalizeMpn(target.inventoryMpn);
+    if (!targetNormalized) {
+      continue;
+    }
+
+    const [catalog, listingUrls] = await Promise.all([
+      getCatalogDatasheet(targetNormalized),
+      getListingDatasheetUrls(targetNormalized),
+    ]);
+
+    const urls = mergeDatasheetUrls(catalog?.datasheetUrl ?? null, listingUrls);
+    if (urls.length > 0) {
+      await upsertCatalogDatasheet({
+        mpn: input.mpn,
+        manufacturer: input.manufacturer ?? target.manufacturer,
+        datasheetUrl: urls[0]!,
+        source: catalog?.source ?? "LISTING",
+        verified: true,
+      });
+
+      return {
+        mpnNormalized: input.mpnNormalized,
+        mpn: input.mpn,
+        manufacturer: input.manufacturer,
+        datasheetUrls: urls,
+        source: catalog?.source ?? "LISTING",
+        resolved: true,
+        matchNote: `Matched via part alias to ${target.inventoryMpn}.`,
+      };
+    }
+
+    const lookupMpns = getDatasheetLookupMpns(target.inventoryMpn);
+    const manufacturerUrl = await resolveManufacturerDatasheetUrls(
+      lookupMpns,
+      target.manufacturer ?? input.manufacturer,
+    );
+
+    if (manufacturerUrl) {
+      await upsertCatalogDatasheet({
+        mpn: input.mpn,
+        manufacturer: input.manufacturer ?? target.manufacturer,
+        datasheetUrl: manufacturerUrl,
+        source: "MANUFACTURER",
+        verified: true,
+      });
+
+      return {
+        mpnNormalized: input.mpnNormalized,
+        mpn: input.mpn,
+        manufacturer: input.manufacturer,
+        datasheetUrls: [manufacturerUrl],
+        source: "MANUFACTURER",
+        resolved: true,
+        matchNote: `Matched via part alias to ${target.inventoryMpn}.`,
+      };
+    }
+  }
+
+  return null;
+}
 
 async function resolveMissingDatasheet(input: {
   mpn: string;
@@ -40,6 +118,7 @@ async function resolveMissingDatasheet(input: {
       ),
       source: existingCatalog.source,
       resolved: false,
+      matchNote: null,
     };
   }
 
@@ -60,11 +139,18 @@ async function resolveMissingDatasheet(input: {
       datasheetUrls: input.listingUrls,
       source: "LISTING",
       resolved: true,
+      matchNote: null,
     };
   }
 
-  const manufacturerUrl = await resolveManufacturerDatasheetUrl(
-    input.mpn,
+  const aliasResult = await resolveFromAliasTargets(input);
+  if (aliasResult) {
+    return aliasResult;
+  }
+
+  const lookupMpns = getDatasheetLookupMpns(input.mpn);
+  const manufacturerUrl = await resolveManufacturerDatasheetUrls(
+    lookupMpns,
     input.manufacturer,
   );
 
@@ -84,11 +170,12 @@ async function resolveMissingDatasheet(input: {
       datasheetUrls: [manufacturerUrl],
       source: "MANUFACTURER",
       resolved: true,
+      matchNote: null,
     };
   }
 
   if (isNexarConfigured()) {
-    const nexarUrl = await resolveNexarDatasheetUrl(input.mpn);
+    const nexarUrl = await resolveNexarDatasheetUrls(lookupMpns);
     if (nexarUrl) {
       await upsertCatalogDatasheet({
         mpn: input.mpn,
@@ -105,7 +192,41 @@ async function resolveMissingDatasheet(input: {
         datasheetUrls: [nexarUrl],
         source: "NEXAR",
         resolved: true,
+        matchNote: null,
       };
+    }
+  }
+
+  if (isOpenAiDatasheetLookupEnabled()) {
+    for (const lookupMpn of lookupMpns) {
+      const openAiMatch = await resolveOpenAiDatasheetUrl(
+        lookupMpn,
+        input.manufacturer,
+      );
+
+      if (openAiMatch) {
+        await upsertCatalogDatasheet({
+          mpn: input.mpn,
+          manufacturer: input.manufacturer,
+          datasheetUrl: openAiMatch.url,
+          source: "MANUAL",
+          verified: true,
+        });
+
+        return {
+          mpnNormalized: input.mpnNormalized,
+          mpn: input.mpn,
+          manufacturer: input.manufacturer,
+          datasheetUrls: [openAiMatch.url],
+          source: "MANUAL",
+          resolved: true,
+          matchNote:
+            openAiMatch.matchType === "family"
+              ? openAiMatch.note ??
+                "Showing the closest official manufacturer family datasheet for this military part number."
+              : openAiMatch.note,
+        };
+      }
     }
   }
 
@@ -116,14 +237,17 @@ async function resolveMissingDatasheet(input: {
     datasheetUrls: [],
     source: null,
     resolved: false,
+    matchNote: null,
   };
 }
 
 export async function resolveDatasheetsForMpn(input: {
   mpn: string;
+  mpnNormalized: string;
   manufacturer?: string | null;
+  force?: boolean;
 }): Promise<ResolveDatasheetResult> {
-  const mpnNormalized = normalizeMpn(input.mpn);
+  const mpnNormalized = input.mpnNormalized || normalizeMpn(input.mpn);
   if (!mpnNormalized) {
     return {
       mpnNormalized: "",
@@ -132,13 +256,14 @@ export async function resolveDatasheetsForMpn(input: {
       datasheetUrls: [],
       source: null,
       resolved: false,
+      matchNote: null,
     };
   }
 
   const listingUrls = await getListingDatasheetUrls(mpnNormalized);
   const catalog = await getCatalogDatasheet(mpnNormalized);
 
-  if (catalog || listingUrls.length > 0) {
+  if (!input.force && (catalog || listingUrls.length > 0)) {
     return {
       mpnNormalized,
       mpn: catalog?.mpn ?? input.mpn.trim(),
@@ -146,6 +271,7 @@ export async function resolveDatasheetsForMpn(input: {
       datasheetUrls: mergeDatasheetUrls(catalog?.datasheetUrl ?? null, listingUrls),
       source: catalog?.source ?? (listingUrls.length > 0 ? "LISTING" : null),
       resolved: false,
+      matchNote: null,
     };
   }
 
@@ -168,6 +294,21 @@ export async function resolveDatasheetsForMpn(input: {
   } finally {
     inFlightResolves.delete(mpnNormalized);
   }
+}
+
+export async function resolveDatasheetsForNormalizedMpn(
+  mpnNormalized: string,
+  options?: { force?: boolean },
+): Promise<ResolveDatasheetResult> {
+  const canonical = await getCanonicalListingMpn(mpnNormalized);
+  const mpn = canonical?.mpn ?? mpnNormalized;
+
+  return resolveDatasheetsForMpn({
+    mpn,
+    mpnNormalized,
+    manufacturer: canonical?.manufacturer ?? null,
+    force: options?.force,
+  });
 }
 
 export async function getAuthorizedDatasheetUrl(input: {

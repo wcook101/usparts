@@ -54,6 +54,7 @@ export function datasheetDownloadPath(mpnNormalized: string, index = 0): string 
   return `/api/datasheets/${encodeURIComponent(mpnNormalized)}/download${params}`;
 }
 
-export function datasheetResolvePath(mpnNormalized: string): string {
-  return `/api/datasheets/${encodeURIComponent(mpnNormalized)}/resolve`;
+export function datasheetResolvePath(mpnNormalized: string, force = false): string {
+  const params = force ? "?force=1" : "";
+  return `/api/datasheets/${encodeURIComponent(mpnNormalized)}/resolve${params}`;
 }

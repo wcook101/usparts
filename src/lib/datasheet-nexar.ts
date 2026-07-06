@@ -105,6 +105,29 @@ export async function resolveNexarDatasheetUrl(mpn: string): Promise<string | nu
     return null;
   }
 
+  return resolveNexarDatasheetUrlWithToken(mpn, token);
+}
+
+export async function resolveNexarDatasheetUrls(mpns: string[]): Promise<string | null> {
+  const token = await getNexarAccessToken();
+  if (!token) {
+    return null;
+  }
+
+  for (const mpn of mpns) {
+    const url = await resolveNexarDatasheetUrlWithToken(mpn, token);
+    if (url) {
+      return url;
+    }
+  }
+
+  return null;
+}
+
+async function resolveNexarDatasheetUrlWithToken(
+  mpn: string,
+  token: string,
+): Promise<string | null> {
   const query = `
     query SearchMpn($q: String!) {
       supSearchMpn(q: $q, limit: 3) {

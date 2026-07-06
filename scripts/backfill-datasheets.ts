@@ -1,9 +1,8 @@
 import "dotenv/config";
 import {
   backfillDatasheetsFromListings,
-  resolveDatasheetsForMpn,
+  resolveDatasheetsForNormalizedMpn,
 } from "@/lib/datasheet-resolve";
-import { getPrimaryManufacturerForMpn } from "@/lib/datasheet-catalog";
 import { db } from "@/lib/db";
 
 async function main() {
@@ -50,10 +49,8 @@ async function main() {
       continue;
     }
 
-    const manufacturer = await getPrimaryManufacturerForMpn(group.mpnNormalized);
-    const result = await resolveDatasheetsForMpn({
-      mpn: listing.mpn,
-      manufacturer,
+    const result = await resolveDatasheetsForNormalizedMpn(group.mpnNormalized, {
+      force: true,
     });
 
     if (result.datasheetUrls.length > 0) {

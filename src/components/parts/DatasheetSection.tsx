@@ -24,6 +24,7 @@ type DatasheetSectionProps = {
 type ResolvePayload = {
   datasheetUrls?: string[];
   resolved?: boolean;
+  matchNote?: string | null;
 };
 
 export function DatasheetSection({
@@ -44,6 +45,7 @@ export function DatasheetSection({
     initialUrls.length === 0 && Boolean(mpnNormalized),
   );
   const [resolveFailed, setResolveFailed] = useState(false);
+  const [matchNote, setMatchNote] = useState<string | null>(null);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
 
   const loginNext = encodeURIComponent(pathname || "/");
@@ -58,9 +60,10 @@ export function DatasheetSection({
 
     setIsResolving(true);
     setResolveFailed(false);
+    setMatchNote(null);
 
     try {
-      const response = await fetch(datasheetResolvePath(mpnNormalized));
+      const response = await fetch(datasheetResolvePath(mpnNormalized, true));
       if (!response.ok) {
         setResolveFailed(true);
         return;
@@ -69,6 +72,7 @@ export function DatasheetSection({
       const data = (await response.json()) as ResolvePayload;
       if (data.datasheetUrls?.length) {
         setDatasheetUrls(data.datasheetUrls);
+        setMatchNote(data.matchNote ?? null);
         setViewerOpen(true);
       } else {
         setResolveFailed(true);
@@ -83,6 +87,7 @@ export function DatasheetSection({
   useEffect(() => {
     setDatasheetUrls(initialUrls);
     setResolveFailed(false);
+    setMatchNote(null);
     setActiveIndex(0);
     setViewerOpen(false);
   }, [initialUrls, mpnNormalized]);
@@ -139,7 +144,7 @@ export function DatasheetSection({
         <h3 className="text-base font-semibold text-slate-900">Datasheet</h3>
         <p className="mt-2 text-sm leading-7 text-slate-600">
           {resolveFailed
-            ? `We could not find a manufacturer datasheet for ${mpn} yet. Stay on USParts to compare supplier stock, pricing, and condition — then request a quote for specs, date code, and traceability.`
+            ? `We could not find a public manufacturer datasheet for ${mpn} yet. Military and legacy NSC parts often need a supplier-provided URL or Nexar lookup. Stay on USParts to compare stock and request a quote for specs, date code, and traceability.`
             : `We do not have a manufacturer datasheet linked for ${mpn} yet. Stay on USParts to compare US supplier stock, pricing, and condition — then request a quote for specs, date code, and traceability from the listing supplier.`}
         </p>
         <div className="mt-4 flex flex-wrap gap-3">
@@ -229,6 +234,7 @@ export function DatasheetSection({
         <div className="mt-5 overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
           <div className="border-b border-slate-200 bg-white px-4 py-2 text-xs text-slate-500">
             Official datasheet preview on USParts
+            {matchNote ? ` — ${matchNote}` : ""}
           </div>
           <iframe
             title={`${mpn} datasheet`}

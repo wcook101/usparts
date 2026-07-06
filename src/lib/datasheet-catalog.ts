@@ -146,3 +146,22 @@ export async function getPrimaryManufacturerForMpn(
 
   return listing?.manufacturer?.trim() || null;
 }
+
+export async function getCanonicalListingMpn(
+  mpnNormalized: string,
+): Promise<{ mpn: string; manufacturer: string | null } | null> {
+  const listing = await db.partListing.findFirst({
+    where: { isActive: true, mpnNormalized },
+    select: { mpn: true, manufacturer: true },
+    orderBy: { updatedAt: "desc" },
+  });
+
+  if (!listing) {
+    return null;
+  }
+
+  return {
+    mpn: listing.mpn.trim(),
+    manufacturer: listing.manufacturer?.trim() || null,
+  };
+}
