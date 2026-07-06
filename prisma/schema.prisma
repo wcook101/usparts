@@ -185,6 +185,27 @@ model InventoryLocation {
   @@index([companyId])
 }
 
+enum DatasheetSource {
+  LISTING
+  MANUFACTURER
+  NEXAR
+  MANUAL
+}
+
+model PartDatasheet {
+  id            String          @id @default(cuid())
+  mpnNormalized String          @unique
+  mpn           String
+  manufacturer  String?
+  datasheetUrl  String
+  source        DatasheetSource @default(LISTING)
+  verifiedAt    DateTime?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@index([mpnNormalized])
+}
+
 model PartListing {
   id                  String             @id @default(cuid())
   companyId           String

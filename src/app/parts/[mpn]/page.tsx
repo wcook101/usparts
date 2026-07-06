@@ -10,6 +10,7 @@ import {
   formatPrice,
   formatQuantity,
 } from "@/lib/format";
+import { getSessionUser } from "@/lib/auth/session";
 import { getPartPagePath } from "@/lib/parts/part-path";
 import { getPartPageData } from "@/lib/parts/part-pages";
 import {
@@ -65,6 +66,7 @@ export default async function PartPage({ params }: PartPageProps) {
 
   const siteUrl = getSiteUrl();
   const pageUrl = `${siteUrl}${getPartPagePath(part.mpn)}`;
+  const sessionUser = await getSessionUser();
   const displayMpn = part.matchType === "family" ? part.queryMpn : part.mpn;
   const categoryLabel = part.category ? CATEGORY_LABELS[part.category] : null;
   const primaryListing = part.listings[0] ?? null;
@@ -211,10 +213,12 @@ export default async function PartPage({ params }: PartPageProps) {
 
           <DatasheetSection
             mpn={part.mpn}
+            mpnNormalized={part.mpnNormalized}
             manufacturer={part.primaryManufacturer}
             datasheetUrls={part.datasheetUrls}
             quoteHref={primaryListing ? `/listings/${primaryListing.id}` : null}
             supplierCount={part.supplierCount}
+            isLoggedIn={Boolean(sessionUser)}
           />
 
           <div className="mt-6 flex flex-wrap gap-3">

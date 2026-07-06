@@ -44,10 +44,16 @@ export function isLikelyPdfUrl(url: string): boolean {
   }
 }
 
-export function datasheetEmbedUrl(url: string): string {
-  if (isLikelyPdfUrl(url)) {
-    return url;
-  }
+export function datasheetViewPath(mpnNormalized: string, index = 0): string {
+  const params = index > 0 ? `?index=${index}` : "";
+  return `/api/datasheets/${encodeURIComponent(mpnNormalized)}/view${params}`;
+}
 
-  return url;
+export function datasheetDownloadPath(mpnNormalized: string, index = 0): string {
+  const params = index > 0 ? `?index=${index}` : "";
+  return `/api/datasheets/${encodeURIComponent(mpnNormalized)}/download${params}`;
+}
+
+export function datasheetResolvePath(mpnNormalized: string): string {
+  return `/api/datasheets/${encodeURIComponent(mpnNormalized)}/resolve`;
 }

@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import type { ListingWithCompany } from "@/lib/listings";
 import { normalizeMpn, parseSingleLetterPackageVariant, bulkQueryMatchesListing, isSingleLetterPackageVariantSibling } from "@/lib/mpn-normalize";
 import { collectDatasheetUrls } from "@/lib/datasheet";
+import { getDatasheetSourcesForMpn } from "@/lib/datasheet-catalog";
 import { lookupAliasTargets } from "@/lib/part-aliases";
 import { getPartPagePath } from "@/lib/parts/part-path";
 
@@ -314,6 +315,11 @@ export async function getPartPageData(mpnSlug: string): Promise<PartPageData | n
 
   const part = buildPartPageData(decoded, normalized, listings, matchType);
   part.relatedParts = await getRelatedParts(part.mpnNormalized);
+  part.datasheetUrls = await getDatasheetSourcesForMpn({
+    mpn: part.mpn,
+    mpnNormalized: part.mpnNormalized,
+  });
+  part.datasheetUrl = part.datasheetUrls[0] ?? null;
 
   return part;
 }

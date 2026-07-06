@@ -15,7 +15,7 @@ import {
 import { getBuyerDefaults, getSessionUser } from "@/lib/auth";
 import { getListingById } from "@/lib/listings";
 import { getPartPagePath } from "@/lib/parts/part-path";
-import { collectDatasheetUrls } from "@/lib/datasheet";
+import { getDatasheetSourcesForMpn } from "@/lib/datasheet-catalog";
 import { listingMetadata, pageMetadata } from "@/lib/seo/page-metadata";
 
 type ListingPageProps = {
@@ -68,6 +68,10 @@ export default async function ListingPage({ params }: ListingPageProps) {
   const buyNow = canBuyListingNow(listing.price, listing.quantity);
   const inStock = listing.quantity > 0;
   const listingPrice = listing.price;
+  const datasheetUrls = await getDatasheetSourcesForMpn({
+    mpn: listing.mpn,
+    mpnNormalized: listing.mpnNormalized,
+  });
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
@@ -160,10 +164,12 @@ export default async function ListingPage({ params }: ListingPageProps) {
 
           <DatasheetSection
             mpn={listing.mpn}
+            mpnNormalized={listing.mpnNormalized}
             manufacturer={listing.manufacturer}
-            datasheetUrls={collectDatasheetUrls([listing])}
+            datasheetUrls={datasheetUrls}
             quoteHref={`#quote`}
             supplierCount={1}
+            isLoggedIn={Boolean(user)}
             variant="listing"
           />
         </section>

@@ -16,6 +16,7 @@
     "db:deploy": "prisma migrate deploy",
     "db:seed": "tsx prisma/seed.ts",
     "db:link-company": "tsx scripts/link-company-owner.ts",
+    "db:backfill-datasheets": "tsx scripts/backfill-datasheets.ts",
     "db:setup": "npm run db:up && npm run db:deploy && npm run db:seed",
     "dev:setup": "npm install && npm run db:setup",
     "verify": "tsx scripts/verify.ts",
