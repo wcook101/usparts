@@ -269,7 +269,7 @@ export function SmartSearchForm({
       ) : null}
 
       {results && search ? (
-        <div id={resultsId} className="space-y-6 scroll-mt-24">
+        <div id={resultsId} className="space-y-6 scroll-mt-24 font-search-mono">
           <div className="rounded-lg border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-950">
             <p>
               <span className="font-semibold">You described:</span>{" "}
@@ -283,7 +283,7 @@ export function SmartSearchForm({
             ) : null}
             <p className="mt-2">
               <span className="font-semibold">AI suggested:</span>{" "}
-              <span className="font-mono text-violet-900">
+              <span className="font-search-mono text-violet-900">
                 {results.suggestedMpns.join(", ")}
               </span>
             </p>
@@ -333,7 +333,7 @@ export function SmartSearchForm({
               {foundRows.map((row) => (
                 <section key={row.normalizedMpn} className="space-y-3">
                   <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="font-mono text-base font-semibold text-slate-900">
+                    <h3 className="font-search-mono text-base font-semibold text-slate-900">
                       {row.input}
                     </h3>
                     <span className="inline-flex items-center rounded-full border border-violet-200 bg-violet-50 px-2.5 py-0.5 text-xs font-medium text-violet-900">
@@ -375,7 +375,7 @@ export function SmartSearchForm({
                 {missingMpns.map((mpn) => (
                   <li
                     key={mpn}
-                    className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 font-mono text-xs text-slate-600"
+                    className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 font-search-mono text-xs text-slate-600"
                   >
                     {mpn}
                   </li>

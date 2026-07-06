@@ -357,7 +357,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
             </div>
 
             {recentOnly && companyGroups && companyGroups.length > 0 ? (
-              <RecentUploadsList groups={companyGroups} />
+              <RecentUploadsList groups={companyGroups} useSearchMono />
             ) : listings.length > 0 ? (
               <ListingResultsList listings={listings} />
             ) : (

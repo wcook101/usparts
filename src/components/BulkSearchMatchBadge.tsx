@@ -18,11 +18,11 @@ export function BulkSearchMatchBadge({
         {alternateFor ? (
           <>
             {" "}
-            for <span className="font-mono">{alternateFor}</span>
+            for <span className="font-search-mono">{alternateFor}</span>
           </>
         ) : null}
         {matchedViaMpn ? (
-          <span className="ml-1 font-mono text-amber-800">→ {matchedViaMpn}</span>
+          <span className="ml-1 font-search-mono text-amber-800">→ {matchedViaMpn}</span>
         ) : null}
       </span>
     );

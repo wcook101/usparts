@@ -17,7 +17,7 @@ function ListingMobileCard({ listing }: { listing: ListingWithCompany }) {
     <article className="px-4 py-4">
       <Link
         href={getPartPagePath(listing.mpn)}
-        className="font-mono text-base font-semibold text-blue-700 hover:text-blue-800"
+        className="font-search-mono text-base font-semibold text-blue-700 hover:text-blue-800"
       >
         {listing.mpn}
       </Link>
@@ -51,7 +51,7 @@ export function ListingResultsList({ listings }: ListingResultsListProps) {
   }
 
   return (
-    <section className="overflow-hidden rounded-xl border border-slate-200/80 bg-white/90 shadow-sm shadow-slate-200/60 backdrop-blur-sm">
+    <section className="overflow-hidden rounded-xl border border-slate-200/80 bg-white/90 font-search-mono shadow-sm shadow-slate-200/60 backdrop-blur-sm">
       <div className="divide-y divide-slate-100 md:hidden">
         {listings.map((listing) => (
           <ListingMobileCard key={listing.id} listing={listing} />
@@ -80,7 +80,7 @@ export function ListingResultsList({ listings }: ListingResultsListProps) {
                 <td className="px-4 py-3 lg:px-5">
                   <Link
                     href={getPartPagePath(listing.mpn)}
-                    className="font-mono font-medium text-blue-700 hover:text-blue-800"
+                    className="font-search-mono font-medium text-blue-700 hover:text-blue-800"
                   >
                     {listing.mpn}
                   </Link>

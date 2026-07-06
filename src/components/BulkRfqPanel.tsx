@@ -280,7 +280,7 @@ export function BulkRfqPanel({ results, buyerDefaults = null }: BulkRfqPanelProp
             </div>
           ) : null}
 
-          <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
+          <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white font-search-mono">
             <table className="min-w-full text-sm">
               <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
                 <tr>
@@ -320,7 +320,7 @@ export function BulkRfqPanel({ results, buyerDefaults = null }: BulkRfqPanelProp
                           matchedViaMpn={match?.matchedViaMpn}
                         />
                       </td>
-                      <td className="px-3 py-3 font-mono text-slate-900">{listing.mpn}</td>
+                      <td className="px-3 py-3 font-search-mono text-slate-900">{listing.mpn}</td>
                       <td className="px-3 py-3">{listing.manufacturer || "—"}</td>
                       <td className="px-3 py-3">{listing.company.name}</td>
                       <td className="px-3 py-3 text-right tabular-nums">

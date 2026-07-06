@@ -93,7 +93,7 @@ export function MultiPartSearchForm({
             onChange={(event) => setMpns(event.target.value)}
             rows={10}
             placeholder={"LM358N 1N4148\nor one part per line"}
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 font-mono text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            className="w-full rounded-lg border border-slate-300 px-3 py-2 font-search-mono text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             required
           />
           <span className="block text-xs text-slate-500">
@@ -150,11 +150,11 @@ export function MultiPartSearchForm({
           ) : null}
 
           {foundRows.length > 0 ? (
-            <div className="space-y-6">
+            <div className="space-y-6 font-search-mono">
               {foundRows.map((row) => (
                 <section key={row.normalizedMpn} className="space-y-3">
                   <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="font-mono text-base font-semibold text-slate-900">
+                    <h3 className="font-search-mono text-base font-semibold text-slate-900">
                       {row.input}
                     </h3>
                     <BulkSearchMatchBadge
@@ -190,7 +190,7 @@ export function MultiPartSearchForm({
                 {missingRows.map((row) => (
                   <li
                     key={row.normalizedMpn}
-                    className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 font-mono text-xs text-slate-600"
+                    className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 font-search-mono text-xs text-slate-600"
                   >
                     {row.input}
                   </li>

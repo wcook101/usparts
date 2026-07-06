@@ -10,6 +10,7 @@ import { getPartPagePath } from "@/lib/parts/part-path";
 
 type RecentUploadsListProps = {
   groups: CompanyRecentListings[];
+  useSearchMono?: boolean;
 };
 
 function formatUploadedAt(value: Date) {
@@ -22,13 +23,16 @@ function formatUploadedAt(value: Date) {
   }).format(value);
 }
 
-export function RecentUploadsList({ groups }: RecentUploadsListProps) {
+export function RecentUploadsList({
+  groups,
+  useSearchMono = false,
+}: RecentUploadsListProps) {
   if (groups.length === 0) {
     return null;
   }
 
   return (
-    <div className="space-y-8">
+    <div className={`space-y-8 ${useSearchMono ? "font-search-mono" : ""}`}>
       {groups.map((group) => (
         <section
           key={group.company.id}
@@ -56,7 +60,7 @@ export function RecentUploadsList({ groups }: RecentUploadsListProps) {
               <article key={listing.id} className="px-4 py-4">
                 <Link
                   href={getPartPagePath(listing.mpn)}
-                  className="font-mono text-base font-semibold text-blue-700 hover:text-blue-800"
+                  className="font-search-mono text-base font-semibold text-blue-700 hover:text-blue-800"
                 >
                   {listing.mpn}
                 </Link>
@@ -105,7 +109,7 @@ export function RecentUploadsList({ groups }: RecentUploadsListProps) {
                     <td className="px-4 py-3 sm:px-5">
                       <Link
                         href={getPartPagePath(listing.mpn)}
-                        className="font-mono font-medium text-blue-700 hover:text-blue-800"
+                        className="font-search-mono font-medium text-blue-700 hover:text-blue-800"
                       >
                         {listing.mpn}
                       </Link>
