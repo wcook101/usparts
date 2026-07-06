@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { PartImagePlaceholder } from "@/components/parts/PartImagePlaceholder";
 import { PartSupplierListings } from "@/components/parts/PartSupplierListings";
 import { RelatedPartsSection } from "@/components/parts/RelatedPartsSection";
@@ -64,8 +64,13 @@ export default async function PartPage({ params }: PartPageProps) {
     notFound();
   }
 
+  if (part.canonicalRedirectPath) {
+    redirect(part.canonicalRedirectPath);
+  }
+
   const siteUrl = getSiteUrl();
   const pageUrl = `${siteUrl}${getPartPagePath(part.mpn)}`;
+  const displayMpn = part.matchType === "family" ? part.queryMpn : part.mpn;
   const categoryLabel = part.category ? CATEGORY_LABELS[part.category] : null;
   const primaryListing = part.listings[0] ?? null;
 
@@ -130,8 +135,13 @@ export default async function PartPage({ params }: PartPageProps) {
             {categoryLabel ?? "Electronic component"}
           </p>
           <h1 className="mt-3 font-mono text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
-            {part.mpn}
+            {displayMpn}
           </h1>
+          {part.matchType === "family" ? (
+            <p className="mt-2 text-sm text-slate-600">
+              Showing supplier stock for {part.matchedMpns.join(", ")}
+            </p>
+          ) : null}
           {part.primaryManufacturer ? (
             <p className="mt-3 text-lg text-slate-700">{part.primaryManufacturer}</p>
           ) : null}

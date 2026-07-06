@@ -1,7 +1,7 @@
 import type { PartCategory } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
 import type { ListingWithCompany } from "@/lib/listings";
-import { normalizeMpn, parseSingleLetterPackageVariant } from "@/lib/mpn-normalize";
+import { normalizeMpn, parseSingleLetterPackageVariant, bulkQueryMatchesListing } from "@/lib/mpn-normalize";
 import { lookupAliasTargets } from "@/lib/part-aliases";
 import { getPartPagePath } from "@/lib/parts/part-path";
 
@@ -17,7 +17,11 @@ export type RelatedPart = {
 
 export type PartPageData = {
   mpn: string;
+  queryMpn: string;
   mpnNormalized: string;
+  matchType: "exact" | "prefix" | "family";
+  canonicalRedirectPath: string | null;
+  matchedMpns: string[];
   manufacturers: string[];
   primaryManufacturer: string | null;
   description: string | null;
@@ -163,25 +167,86 @@ async function getRelatedParts(
   return [...related.values()].slice(0, limit);
 }
 
-export async function getPartPageData(mpnSlug: string): Promise<PartPageData | null> {
-  const decoded = decodeURIComponent(mpnSlug).trim();
-  const normalized = normalizeMpn(decoded);
+const listingInclude = { company: true, inventoryLocation: true } as const;
+const listingOrder = [
+  { price: "asc" as const },
+  { quantity: "desc" as const },
+  { updatedAt: "desc" as const },
+];
 
-  if (!normalized || normalized.length < 2) {
-    return null;
-  }
-
-  const listings = (await db.partListing.findMany({
+async function findListingsForPartQuery(normalized: string): Promise<{
+  listings: ListingWithCompany[];
+  matchType: "exact" | "prefix" | "family";
+}> {
+  const exact = (await db.partListing.findMany({
     where: { isActive: true, mpnNormalized: normalized },
-    include: { company: true, inventoryLocation: true },
-    orderBy: [{ price: "asc" }, { quantity: "desc" }, { updatedAt: "desc" }],
+    include: listingInclude,
+    orderBy: listingOrder,
   })) as ListingWithCompany[];
 
-  if (listings.length === 0) {
-    return null;
+  if (exact.length > 0) {
+    return { listings: exact, matchType: "exact" };
   }
 
+  if (normalized.length < 3) {
+    return { listings: [], matchType: "exact" };
+  }
+
+  const prefixMatches = (await db.partListing.findMany({
+    where: { isActive: true, mpnNormalized: { startsWith: normalized } },
+    include: listingInclude,
+    orderBy: listingOrder,
+    take: 100,
+  })) as ListingWithCompany[];
+
+  if (prefixMatches.length > 0) {
+    const distinct = new Set(prefixMatches.map((listing) => listing.mpnNormalized));
+    return {
+      listings: prefixMatches,
+      matchType: distinct.size === 1 ? "prefix" : "family",
+    };
+  }
+
+  const broadCandidates = (await db.partListing.findMany({
+    where: {
+      isActive: true,
+      mpnNormalized: { startsWith: normalized.slice(0, 3) },
+    },
+    include: listingInclude,
+    take: 250,
+  })) as ListingWithCompany[];
+
+  const matched = broadCandidates.filter((listing) =>
+    bulkQueryMatchesListing(normalized, listing.mpnNormalized),
+  );
+
+  if (matched.length > 0) {
+    matched.sort((a, b) => {
+      if (a.mpnNormalized === b.mpnNormalized) {
+        return b.quantity - a.quantity;
+      }
+      return a.mpnNormalized.localeCompare(b.mpnNormalized);
+    });
+
+    const distinct = new Set(matched.map((listing) => listing.mpnNormalized));
+    return {
+      listings: matched,
+      matchType: distinct.size === 1 ? "prefix" : "family",
+    };
+  }
+
+  return { listings: [], matchType: "exact" };
+}
+
+function buildPartPageData(
+  decoded: string,
+  normalized: string,
+  listings: ListingWithCompany[],
+  matchType: "exact" | "prefix" | "family",
+): PartPageData {
   const mpn = pickCanonicalMpn(listings);
+  const matchedMpns = [...new Set(listings.map((listing) => listing.mpn))].sort();
+  const distinctNormalized = new Set(listings.map((listing) => listing.mpnNormalized));
   const manufacturers = [
     ...new Set(
       listings.map((listing) => listing.manufacturer.trim()).filter(Boolean),
@@ -193,11 +258,21 @@ export async function getPartPageData(mpnSlug: string): Promise<PartPageData | n
 
   const totalQuantity = listings.reduce((sum, listing) => sum + listing.quantity, 0);
   const supplierCount = new Set(listings.map((listing) => listing.companyId)).size;
-  const relatedParts = await getRelatedParts(normalized);
+  const canonicalMpnNormalized = [...distinctNormalized][0] ?? normalized;
+
+  const shouldRedirect =
+    matchType === "prefix" &&
+    distinctNormalized.size === 1 &&
+    normalizeMpn(decoded) !== canonicalMpnNormalized &&
+    normalizeMpn(mpn) === canonicalMpnNormalized;
 
   return {
     mpn,
-    mpnNormalized: normalized,
+    queryMpn: decoded,
+    mpnNormalized: canonicalMpnNormalized,
+    matchType,
+    canonicalRedirectPath: shouldRedirect ? getPartPagePath(mpn) : null,
+    matchedMpns,
     manufacturers,
     primaryManufacturer: manufacturers[0] ?? null,
     description: pickPrimaryDescription(listings),
@@ -209,9 +284,40 @@ export async function getPartPageData(mpnSlug: string): Promise<PartPageData | n
     lowestPrice: prices.length > 0 ? Math.min(...prices) : null,
     highestPrice: prices.length > 0 ? Math.max(...prices) : null,
     supplierCount,
-    relatedParts,
+    relatedParts: [],
     lastUpdated: listings[0]?.updatedAt ?? new Date(),
   };
+}
+
+export async function getPartPageData(mpnSlug: string): Promise<PartPageData | null> {
+  const decoded = decodeURIComponent(mpnSlug).trim();
+  const normalized = normalizeMpn(decoded);
+
+  if (!normalized || normalized.length < 2) {
+    return null;
+  }
+
+  const { listings, matchType } = await findListingsForPartQuery(normalized);
+
+  if (listings.length === 0) {
+    return null;
+  }
+
+  const part = buildPartPageData(decoded, normalized, listings, matchType);
+  part.relatedParts = await getRelatedParts(part.mpnNormalized);
+
+  return part;
+}
+
+export async function getPartPageDataWithoutRedirect(
+  mpnSlug: string,
+): Promise<PartPageData | null> {
+  const part = await getPartPageData(mpnSlug);
+  if (!part) {
+    return null;
+  }
+
+  return { ...part, canonicalRedirectPath: null };
 }
 
 export type PartSitemapEntry = {

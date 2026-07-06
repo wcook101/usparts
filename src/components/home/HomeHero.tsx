@@ -12,6 +12,7 @@ type SearchMode = "single" | "bulk" | "smart";
 
 type HomeHeroProps = {
   stats: PlatformStats;
+  popularParts?: string[];
 };
 
 const modes: { id: SearchMode; label: string; href: string }[] = [
@@ -26,9 +27,13 @@ const placeholders: Record<SearchMode, string> = {
   smart: "Describe the component you need in plain language…",
 };
 
-export function HomeHero({ stats }: HomeHeroProps) {
+export function HomeHero({ stats, popularParts = [] }: HomeHeroProps) {
   const router = useRouter();
   const [mode, setMode] = useState<SearchMode>("single");
+  const popularTerms =
+    popularParts.length > 0
+      ? popularParts.slice(0, 4)
+      : ["LM358", "STM32F407", "ESP32", "NE555"];
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     const form = event.currentTarget;
@@ -120,10 +125,14 @@ export function HomeHero({ stats }: HomeHeroProps) {
 
           <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-sm text-slate-500">
             <span>Popular:</span>
-            {["LM358", "STM32F407", "ESP32", "NE555"].map((term) => (
+            {popularTerms.map((term) => (
               <Link
                 key={term}
-                href={getPartPagePath(term)}
+                href={
+                  popularParts.length > 0
+                    ? getPartPagePath(term)
+                    : `/search?q=${encodeURIComponent(term)}`
+                }
                 className="rounded-full bg-white px-3 py-1 font-medium text-slate-700 ring-1 ring-slate-200 transition hover:text-blue-700 hover:ring-blue-200"
               >
                 {term}

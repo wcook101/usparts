@@ -65,8 +65,11 @@ export function SearchBar({
   );
 }
 
-export function QuickSearchLinks() {
-  const examples = ["STM32F407", "LM358", "1N4148", "ESP32", "NE555"];
+export function QuickSearchLinks({ popularParts = [] }: { popularParts?: string[] }) {
+  const examples =
+    popularParts.length > 0
+      ? popularParts.slice(0, 5)
+      : ["LM358", "STM32F407", "1N4148", "ESP32", "NE555"];
 
   return (
     <div className="flex flex-wrap items-center gap-2 text-sm text-slate-500">
@@ -74,7 +77,11 @@ export function QuickSearchLinks() {
       {examples.map((term) => (
         <Link
           key={term}
-          href={getPartPagePath(term)}
+          href={
+            popularParts.length > 0
+              ? getPartPagePath(term)
+              : `/search?q=${encodeURIComponent(term)}`
+          }
           className="rounded-full border border-slate-200 bg-white px-3 py-1 text-slate-700 transition hover:border-blue-300 hover:text-blue-700"
         >
           {term}

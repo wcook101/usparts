@@ -16,6 +16,7 @@ import {
   getCategoryListingCounts,
   getPlatformStats,
 } from "@/lib/marketplace-stats";
+import { getTopPartPages } from "@/lib/parts/part-pages";
 import { getSiteUrl } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
@@ -37,12 +38,13 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  const [recentUploads, featuredSellers, stats, categoryCounts] =
+  const [recentUploads, featuredSellers, stats, categoryCounts, popularParts] =
     await Promise.all([
       getRecentListings(),
       getFeaturedSellers(6),
       getPlatformStats(),
       getCategoryListingCounts(),
+      getTopPartPages(4),
     ]);
   const hasUploads = recentUploads.length > 0;
   const siteUrl = getSiteUrl();
@@ -71,7 +73,7 @@ export default async function HomePage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
       />
 
-      <HomeHero stats={stats} />
+      <HomeHero stats={stats} popularParts={popularParts.map((part) => part.mpn)} />
 
       <section className="border-b border-slate-200 bg-white py-8">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
