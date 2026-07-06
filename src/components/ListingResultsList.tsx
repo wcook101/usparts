@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ListingWithCompany } from "@/lib/listings";
 import { InventoryLocationText } from "@/components/InventoryLocationText";
+import { DatasheetLookupButton } from "@/components/parts/DatasheetLookupButton";
 import {
   CONDITION_LABELS,
   formatListingPrice,
@@ -40,6 +41,15 @@ function ListingMobileCard({ listing }: { listing: ListingWithCompany }) {
         </dd>
         <dt className="text-slate-500">Condition</dt>
         <dd className="text-slate-800">{CONDITION_LABELS[listing.condition]}</dd>
+        <dt className="text-slate-500">Datasheet</dt>
+        <dd>
+          <DatasheetLookupButton
+            mpn={listing.mpn}
+            mpnNormalized={listing.mpnNormalized}
+            manufacturer={listing.manufacturer}
+            cachedUrl={listing.datasheetUrl}
+          />
+        </dd>
       </dl>
     </article>
   );
@@ -69,6 +79,7 @@ export function ListingResultsList({ listings }: ListingResultsListProps) {
               <th className="px-4 py-3 lg:px-5">Qty</th>
               <th className="px-4 py-3 lg:px-5">Price</th>
               <th className="px-4 py-3 lg:px-5">Condition</th>
+              <th className="px-4 py-3 lg:px-5">Datasheet</th>
             </tr>
           </thead>
           <tbody>
@@ -102,6 +113,14 @@ export function ListingResultsList({ listings }: ListingResultsListProps) {
                 </td>
                 <td className="px-4 py-3 text-slate-600 lg:px-5">
                   {CONDITION_LABELS[listing.condition]}
+                </td>
+                <td className="px-4 py-3 lg:px-5">
+                  <DatasheetLookupButton
+                    mpn={listing.mpn}
+                    mpnNormalized={listing.mpnNormalized}
+                    manufacturer={listing.manufacturer}
+                    cachedUrl={listing.datasheetUrl}
+                  />
                 </td>
               </tr>
             ))}

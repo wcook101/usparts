@@ -41,9 +41,8 @@ export function DatasheetSection({
   const [viewerOpen, setViewerOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const [datasheetUrls, setDatasheetUrls] = useState(initialUrls);
-  const [isResolving, setIsResolving] = useState(
-    initialUrls.length === 0 && Boolean(mpnNormalized),
-  );
+  const [isResolving, setIsResolving] = useState(false);
+  const [hasAttemptedLookup, setHasAttemptedLookup] = useState(false);
   const [resolveFailed, setResolveFailed] = useState(false);
   const [matchNote, setMatchNote] = useState<string | null>(null);
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
@@ -52,21 +51,21 @@ export function DatasheetSection({
   const signupHref = `/signup?next=${loginNext}`;
   const loginHref = `/login?next=${loginNext}`;
 
-  const refreshDatasheets = useCallback(async () => {
+  const lookupDatasheets = useCallback(async () => {
     if (!mpnNormalized) {
-      setIsResolving(false);
-      return;
+      return false;
     }
 
     setIsResolving(true);
     setResolveFailed(false);
+    setHasAttemptedLookup(true);
     setMatchNote(null);
 
     try {
       const response = await fetch(datasheetResolvePath(mpnNormalized, true));
       if (!response.ok) {
         setResolveFailed(true);
-        return;
+        return false;
       }
 
       const data = (await response.json()) as ResolvePayload;
@@ -74,11 +73,14 @@ export function DatasheetSection({
         setDatasheetUrls(data.datasheetUrls);
         setMatchNote(data.matchNote ?? null);
         setViewerOpen(true);
-      } else {
-        setResolveFailed(true);
+        return true;
       }
+
+      setResolveFailed(true);
+      return false;
     } catch {
       setResolveFailed(true);
+      return false;
     } finally {
       setIsResolving(false);
     }
@@ -87,19 +89,12 @@ export function DatasheetSection({
   useEffect(() => {
     setDatasheetUrls(initialUrls);
     setResolveFailed(false);
+    setHasAttemptedLookup(false);
     setMatchNote(null);
     setActiveIndex(0);
     setViewerOpen(false);
+    setIsResolving(false);
   }, [initialUrls, mpnNormalized]);
-
-  useEffect(() => {
-    if (initialUrls.length > 0 || !mpnNormalized) {
-      setIsResolving(false);
-      return;
-    }
-
-    void refreshDatasheets();
-  }, [initialUrls.length, mpnNormalized, refreshDatasheets]);
 
   const primaryUrl = datasheetUrls[activeIndex] ?? null;
   const hasDatasheet = Boolean(primaryUrl);
@@ -123,19 +118,13 @@ export function DatasheetSection({
     window.location.assign(downloadPath);
   }
 
-  if (isResolving) {
-    return (
-      <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-        <h3 className="text-base font-semibold text-slate-900">Datasheet</h3>
-        <p className="mt-2 text-sm leading-7 text-slate-600">
-          Looking up the official datasheet for {mpn}
-          {manufacturer ? ` by ${manufacturer}` : ""}…
-        </p>
-        <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-slate-100">
-          <div className="h-full w-1/3 animate-pulse rounded-full bg-blue-500" />
-        </div>
-      </section>
-    );
+  async function handleViewClick() {
+    if (hasDatasheet) {
+      setViewerOpen((open) => !open);
+      return;
+    }
+
+    await lookupDatasheets();
   }
 
   if (!hasDatasheet) {
@@ -145,15 +134,28 @@ export function DatasheetSection({
         <p className="mt-2 text-sm leading-7 text-slate-600">
           {resolveFailed
             ? `We could not find a public manufacturer datasheet for ${mpn} yet. Military and legacy NSC parts often need a supplier-provided URL or Nexar lookup. Stay on USParts to compare stock and request a quote for specs, date code, and traceability.`
-            : `We do not have a manufacturer datasheet linked for ${mpn} yet. Stay on USParts to compare US supplier stock, pricing, and condition — then request a quote for specs, date code, and traceability from the listing supplier.`}
+            : `Datasheets load on demand so search and part pages stay fast. Click below when you want the official PDF for ${mpn}${manufacturer ? ` (${manufacturer})` : ""}.`}
         </p>
         <div className="mt-4 flex flex-wrap gap-3">
           <button
             type="button"
-            onClick={() => void refreshDatasheets()}
-            className="inline-flex rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50"
+            onClick={() => void lookupDatasheets()}
+            disabled={isResolving}
+            className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:cursor-wait disabled:opacity-80"
           >
-            Try datasheet lookup again
+            {isResolving ? (
+              <>
+                <span
+                  className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white"
+                  aria-hidden
+                />
+                Looking up datasheet…
+              </>
+            ) : hasAttemptedLookup ? (
+              "Try datasheet lookup again"
+            ) : (
+              "Look up datasheet"
+            )}
           </button>
           {quoteHref ? (
             <Link
@@ -172,7 +174,7 @@ export function DatasheetSection({
         </div>
         <p className="mt-4 text-xs text-slate-500">
           Suppliers: add a datasheet URL when you upload or edit inventory so buyers can
-          preview it here without leaving USParts.
+          preview it instantly without a lookup.
         </p>
       </section>
     );
@@ -184,18 +186,31 @@ export function DatasheetSection({
         <div>
           <h3 className="text-base font-semibold text-slate-900">Datasheet</h3>
           <p className="mt-1 text-sm text-slate-600">
-            Preview {mpn}
-            {manufacturer ? ` by ${manufacturer}` : ""} on USParts — stay on site while
-            you review specs.
+            Official datasheet for {mpn}
+            {manufacturer ? ` by ${manufacturer}` : ""} — preview on USParts when you are
+            ready.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
-            onClick={() => setViewerOpen((open) => !open)}
-            className="inline-flex rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
+            onClick={() => void handleViewClick()}
+            disabled={isResolving}
+            className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 disabled:cursor-wait disabled:opacity-80"
           >
-            {viewerOpen ? "Hide preview" : "View datasheet"}
+            {isResolving ? (
+              <>
+                <span
+                  className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white"
+                  aria-hidden
+                />
+                Loading…
+              </>
+            ) : viewerOpen ? (
+              "Hide preview"
+            ) : (
+              "View datasheet"
+            )}
           </button>
           <button
             type="button"
