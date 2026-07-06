@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -69,18 +70,35 @@ export function HomeHero({ stats, popularParts = [] }: HomeHeroProps) {
       />
 
       <div className="relative mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20 lg:py-24">
-        <div className="mx-auto max-w-4xl text-center">
-          <p className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-blue-700">
-            Free electronic component search
-          </p>
-          <h1 className="mt-6 text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl lg:text-[3.25rem] lg:leading-[1.1]">
-            Search electronic components from US suppliers
-          </h1>
-          <p className="mx-auto mt-5 max-w-3xl text-lg leading-8 text-slate-600 sm:text-xl">
-            Compare pricing, stock, and lead time on semiconductors, ICs, and
-            hard-to-find parts. Paste a BOM, request quotes, or list surplus
-            inventory — free on USParts.
-          </p>
+        <div className="flex flex-col items-center gap-8 lg:flex-row lg:items-start lg:gap-10 xl:gap-14">
+          <Link
+            href="/"
+            className="shrink-0 lg:pt-2"
+            aria-label="USParts home"
+          >
+            <Image
+              src="/usparts-logo.png"
+              alt="USParts.com — All roads lead to US parts"
+              width={560}
+              height={240}
+              priority
+              className="h-28 w-auto sm:h-36 lg:h-[9.5rem]"
+            />
+          </Link>
+
+          <div className="min-w-0 flex-1 text-center lg:text-left">
+            <p className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-blue-700">
+              Free electronic component search
+            </p>
+            <h1 className="mt-6 text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl lg:text-[3.25rem] lg:leading-[1.1]">
+              Search electronic components from US suppliers
+            </h1>
+            <p className="mt-5 max-w-3xl text-lg leading-8 text-slate-600 sm:text-xl lg:max-w-none">
+              Compare pricing, stock, and lead time on semiconductors, ICs, and
+              hard-to-find parts. Paste a BOM, request quotes, or list surplus
+              inventory — free on USParts.
+            </p>
+          </div>
         </div>
 
         <div className="mx-auto mt-10 max-w-3xl">

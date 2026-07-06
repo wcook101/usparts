@@ -101,7 +101,7 @@ export function SiteNav() {
             />
             <div
               id={panelId}
-              className="fixed inset-x-0 top-[11.5rem] z-50 max-h-[calc(100dvh-11.5rem)] overflow-y-auto border-b border-slate-200 bg-white shadow-lg sm:top-[14.5rem] sm:max-h-[calc(100dvh-14.5rem)]"
+              className="fixed inset-x-0 top-[4.25rem] z-50 max-h-[calc(100dvh-4.25rem)] overflow-y-auto border-b border-slate-200 bg-white shadow-lg"
             >
               <div className="mx-auto max-w-6xl px-4 py-4">
                 <div className="grid grid-cols-2 gap-2">
