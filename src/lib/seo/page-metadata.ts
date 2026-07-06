@@ -315,3 +315,31 @@ export function partPageNotFoundMetadata(mpn: string): PageMeta {
     `No active US supplier listings found for ${mpn}. Search MPNs and BOMs for semiconductors, ICs, and electronic components on USParts.us.`,
   );
 }
+
+export function manufacturersIndexMetadata(): PageMeta {
+  return pageMeta(
+    "Electronic Component Manufacturers - US Stock",
+    "Browse Texas Instruments, Analog Devices, Microchip, STMicro, NXP, and more. Search US supplier inventory by semiconductor manufacturer on USParts.us.",
+  );
+}
+
+export function manufacturerPageMetadata(input: {
+  name: string;
+  listingCount: number;
+  partCount: number;
+}): PageMeta {
+  const title = `${input.name} Parts - US Stock & Quotes`;
+  const description =
+    input.listingCount > 0
+      ? `Search ${input.partCount.toLocaleString()} ${input.name} part numbers from US suppliers on USParts.us. ${input.listingCount.toLocaleString()} active listings — compare stock, request quotes, and upload BOMs.`
+      : `Search ${input.name} semiconductors and ICs from US suppliers on USParts.us. Compare surplus inventory, request quotes, and run free BOM search.`;
+
+  return pageMeta(title, description);
+}
+
+export function manufacturerPageNotFoundMetadata(): PageMeta {
+  return pageMeta(
+    "Manufacturer Not Found",
+    "Browse semiconductor manufacturers with active US supplier inventory on USParts.us.",
+  );
+}

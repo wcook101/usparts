@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ManufacturerBrowseSection } from "@/components/home/ManufacturerBrowseSection";
 import { CategoryBrowseSection } from "@/components/home/CategoryBrowseSection";
 import { FeaturesSection } from "@/components/home/FeaturesSection";
 import { GuidesPromoSection } from "@/components/home/GuidesPromoSection";
@@ -16,6 +17,7 @@ import {
   getCategoryListingCounts,
   getPlatformStats,
 } from "@/lib/marketplace-stats";
+import { getManufacturerIndexEntries } from "@/lib/manufacturers/pages";
 import { getTopPartPages } from "@/lib/parts/part-pages";
 import { getSiteUrl } from "@/lib/site";
 
@@ -38,13 +40,14 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  const [recentUploads, featuredSellers, stats, categoryCounts, popularParts] =
+  const [recentUploads, featuredSellers, stats, categoryCounts, popularParts, manufacturers] =
     await Promise.all([
       getRecentListings(),
       getFeaturedSellers(6),
       getPlatformStats(),
       getCategoryListingCounts(),
       getTopPartPages(4),
+      getManufacturerIndexEntries(),
     ]);
   const hasUploads = recentUploads.length > 0;
   const siteUrl = getSiteUrl();
@@ -84,6 +87,7 @@ export default async function HomePage() {
       <GuidesPromoSection />
 
       <CategoryBrowseSection counts={categoryCounts} />
+      <ManufacturerBrowseSection manufacturers={manufacturers} />
       <HowItWorksSection />
       <FeaturesSection />
       <FeaturedSellersSection sellers={featuredSellers} />

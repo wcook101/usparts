@@ -6,6 +6,7 @@ import { HeaderAuthNav } from "@/components/HeaderAuthNav";
 
 const navLinks = [
   { href: "/search?mode=bulk", label: "BOM Search" },
+  { href: "/manufacturers", label: "Manufacturers" },
   { href: "/blog", label: "Blog & Guides" },
   { href: "/company", label: "For Suppliers" },
   { href: "/help", label: "Help" },

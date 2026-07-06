@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { getAllBlogPosts } from "@/lib/blog/posts";
 import { getPartPagePath } from "@/lib/parts/part-path";
 import { getPartSitemapEntries } from "@/lib/parts/part-pages";
+import { getAllManufacturerProfiles, getManufacturerPagePath } from "@/lib/manufacturers/catalog";
 import { getSiteUrl } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
@@ -31,6 +32,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "daily",
       priority: 0.9,
     },
+    {
+      url: `${siteUrl}/manufacturers`,
+      lastModified,
+      changeFrequency: "weekly",
+      priority: 0.88,
+    },
+    ...getAllManufacturerProfiles().map((profile) => ({
+      url: `${siteUrl}${getManufacturerPagePath(profile.slug)}`,
+      lastModified,
+      changeFrequency: "weekly" as const,
+      priority: 0.86,
+    })),
     {
       url: `${siteUrl}/blog`,
       lastModified,
