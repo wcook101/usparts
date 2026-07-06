@@ -6,6 +6,7 @@ import { useState } from "react";
 import { looksLikeMultiPartQuery } from "@/lib/mpn-normalize";
 import type { PlatformStats } from "@/lib/marketplace-stats";
 import { formatQuantity } from "@/lib/format";
+import { getPartPagePath } from "@/lib/parts/part-path";
 
 type SearchMode = "single" | "bulk" | "smart";
 
@@ -122,7 +123,7 @@ export function HomeHero({ stats }: HomeHeroProps) {
             {["LM358", "STM32F407", "ESP32", "NE555"].map((term) => (
               <Link
                 key={term}
-                href={`/search?q=${encodeURIComponent(term)}`}
+                href={getPartPagePath(term)}
                 className="rounded-full bg-white px-3 py-1 font-medium text-slate-700 ring-1 ring-slate-200 transition hover:text-blue-700 hover:ring-blue-200"
               >
                 {term}

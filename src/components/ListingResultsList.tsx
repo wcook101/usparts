@@ -6,6 +6,7 @@ import {
   formatListingPrice,
   formatQuantity,
 } from "@/lib/format";
+import { getPartPagePath } from "@/lib/parts/part-path";
 
 type ListingResultsListProps = {
   listings: ListingWithCompany[];
@@ -15,7 +16,7 @@ function ListingMobileCard({ listing }: { listing: ListingWithCompany }) {
   return (
     <article className="px-4 py-4">
       <Link
-        href={`/listings/${listing.id}`}
+        href={getPartPagePath(listing.mpn)}
         className="font-mono text-base font-semibold text-blue-700 hover:text-blue-800"
       >
         {listing.mpn}
@@ -78,7 +79,7 @@ export function ListingResultsList({ listings }: ListingResultsListProps) {
               >
                 <td className="px-4 py-3 lg:px-5">
                   <Link
-                    href={`/listings/${listing.id}`}
+                    href={getPartPagePath(listing.mpn)}
                     className="font-mono font-medium text-blue-700 hover:text-blue-800"
                   >
                     {listing.mpn}

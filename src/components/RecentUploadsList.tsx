@@ -6,6 +6,7 @@ import {
   formatListingPrice,
   formatQuantity,
 } from "@/lib/format";
+import { getPartPagePath } from "@/lib/parts/part-path";
 
 type RecentUploadsListProps = {
   groups: CompanyRecentListings[];
@@ -54,7 +55,7 @@ export function RecentUploadsList({ groups }: RecentUploadsListProps) {
             {group.listings.map((listing) => (
               <article key={listing.id} className="px-4 py-4">
                 <Link
-                  href={`/listings/${listing.id}`}
+                  href={getPartPagePath(listing.mpn)}
                   className="font-mono text-base font-semibold text-blue-700 hover:text-blue-800"
                 >
                   {listing.mpn}
@@ -103,7 +104,7 @@ export function RecentUploadsList({ groups }: RecentUploadsListProps) {
                   >
                     <td className="px-4 py-3 sm:px-5">
                       <Link
-                        href={`/listings/${listing.id}`}
+                        href={getPartPagePath(listing.mpn)}
                         className="font-mono font-medium text-blue-700 hover:text-blue-800"
                       >
                         {listing.mpn}

@@ -1,11 +1,22 @@
 import type { MetadataRoute } from "next";
 import { getAllBlogPosts } from "@/lib/blog/posts";
+import { getPartPagePath } from "@/lib/parts/part-path";
+import { getPartSitemapEntries } from "@/lib/parts/part-pages";
 import { getSiteUrl } from "@/lib/site";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export const dynamic = "force-dynamic";
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const siteUrl = getSiteUrl();
   const lastModified = new Date();
   const blogPosts = getAllBlogPosts();
+
+  let partPages: Awaited<ReturnType<typeof getPartSitemapEntries>> = [];
+  try {
+    partPages = await getPartSitemapEntries(5000);
+  } catch {
+    partPages = [];
+  }
 
   return [
     {
@@ -31,6 +42,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: new Date(post.publishedAt),
       changeFrequency: "monthly" as const,
       priority: 0.75,
+    })),
+    ...partPages.map((part) => ({
+      url: `${siteUrl}${getPartPagePath(part.mpn)}`,
+      lastModified: part.lastModified,
+      changeFrequency: "daily" as const,
+      priority: 0.8,
     })),
     {
       url: `${siteUrl}/company`,

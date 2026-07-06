@@ -13,6 +13,7 @@ import {
 } from "@/lib/format";
 import { getBuyerDefaults, getSessionUser } from "@/lib/auth";
 import { getListingById } from "@/lib/listings";
+import { getPartPagePath } from "@/lib/parts/part-path";
 import { listingMetadata, pageMetadata } from "@/lib/seo/page-metadata";
 
 type ListingPageProps = {
@@ -85,6 +86,12 @@ export default async function ListingPage({ params }: ListingPageProps) {
               <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
                 {listing.manufacturer || listing.mpn}
               </h1>
+              <Link
+                href={getPartPagePath(listing.mpn)}
+                className="mt-2 inline-flex text-sm font-semibold text-blue-600 hover:text-blue-700"
+              >
+                View all offers for {listing.mpn} →
+              </Link>
               <p className="mt-3 text-sm text-slate-500">
                 {CATEGORY_LABELS[listing.category]} ·{" "}
                 {CONDITION_LABELS[listing.condition]}

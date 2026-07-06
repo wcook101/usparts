@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { looksLikeMultiPartQuery } from "@/lib/mpn-normalize";
+import { getPartPagePath } from "@/lib/parts/part-path";
 
 type SearchBarProps = {
   defaultQuery?: string;
@@ -73,7 +74,7 @@ export function QuickSearchLinks() {
       {examples.map((term) => (
         <Link
           key={term}
-          href={`/search?q=${encodeURIComponent(term)}`}
+          href={getPartPagePath(term)}
           className="rounded-full border border-slate-200 bg-white px-3 py-1 text-slate-700 transition hover:border-blue-300 hover:text-blue-700"
         >
           {term}

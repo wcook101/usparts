@@ -285,3 +285,33 @@ export function blogArticleMetadata(input: {
     },
   };
 }
+
+export function partPageMetadata(input: {
+  mpn: string;
+  manufacturer: string | null;
+  description: string | null;
+  supplierCount: number;
+  totalQuantity: number;
+  lowestPrice: number | null;
+}): PageMeta {
+  const manufacturerLabel = input.manufacturer ? ` by ${input.manufacturer}` : "";
+  const title = `${input.mpn}${manufacturerLabel} - Buy, Price & Stock`;
+
+  const priceSnippet =
+    input.lowestPrice !== null
+      ? ` Prices from $${input.lowestPrice.toFixed(2)}.`
+      : " Request quotes for bulk pricing.";
+
+  const description =
+    input.description?.trim() ||
+    `Buy ${input.mpn}${manufacturerLabel} from ${input.supplierCount} US supplier${input.supplierCount === 1 ? "" : "s"} on USParts.us.${priceSnippet} ${input.totalQuantity.toLocaleString()} units in stock. Compare offers, view datasheets, and request quotes.`;
+
+  return pageMeta(title, description);
+}
+
+export function partPageNotFoundMetadata(mpn: string): PageMeta {
+  return pageMeta(
+    `${mpn} - Part Not Found`,
+    `No active US supplier listings found for ${mpn}. Search MPNs and BOMs for semiconductors, ICs, and electronic components on USParts.us.`,
+  );
+}
