@@ -3,16 +3,13 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { looksLikeMultiPartQuery } from "@/lib/mpn-normalize";
-import { formatQuantity } from "@/lib/format";
-import type { PlatformStats } from "@/lib/marketplace-stats";
 import { getPartPagePath } from "@/lib/parts/part-path";
 
 type HomeHeroProps = {
-  stats: PlatformStats;
   popularParts?: string[];
 };
 
-export function HomeHero({ stats, popularParts = [] }: HomeHeroProps) {
+export function HomeHero({ popularParts = [] }: HomeHeroProps) {
   const router = useRouter();
   const popularTerms =
     popularParts.length > 0
@@ -96,9 +93,8 @@ export function HomeHero({ stats, popularParts = [] }: HomeHeroProps) {
         </p>
 
         <p className="mt-6 max-w-2xl mx-auto text-sm leading-6 text-slate-600 sm:text-base sm:leading-7">
-          Find electronic components from U.S. suppliers. Search{" "}
-          {formatQuantity(stats.activeListings)}+ listed parts, upload a BOM,
-          request quotes, and list surplus inventory for free.
+          Find electronic components from U.S. suppliers. Search listed parts,
+          upload a BOM, request quotes, and list surplus inventory for free.
         </p>
 
         <div className="mt-5 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-sm text-slate-500">

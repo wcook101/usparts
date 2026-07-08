@@ -7,7 +7,6 @@ import { HomeHero } from "@/components/home/HomeHero";
 import { RecentUploadsList } from "@/components/RecentUploadsList";
 import { TestimonialsSection } from "@/components/trust/TestimonialsSection";
 import { getRecentListings } from "@/lib/listings";
-import { getPlatformStats } from "@/lib/marketplace-stats";
 import { getManufacturerIndexEntries } from "@/lib/manufacturers/pages";
 import { getTopPartPages } from "@/lib/parts/part-pages";
 import { getSiteUrl } from "@/lib/site";
@@ -19,7 +18,7 @@ export const metadata: Metadata = {
     absolute: "Electronics Parts Marketplace - Free BOM Search & Inventory",
   },
   description:
-    "Find electronic components from U.S. suppliers. Search 350,000+ listed parts, upload a BOM, request quotes, and list surplus inventory for free on USParts.us.",
+    "Find electronic components from U.S. suppliers. Search listed parts, upload a BOM, request quotes, and list surplus inventory for free on USParts.us.",
   openGraph: {
     title: "Electronics Parts Marketplace - Free BOM Search & Inventory",
     description:
@@ -31,13 +30,11 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  const [recentUploads, stats, popularParts, manufacturers] =
-    await Promise.all([
-      getRecentListings(),
-      getPlatformStats(),
-      getTopPartPages(4),
-      getManufacturerIndexEntries(),
-    ]);
+  const [recentUploads, popularParts, manufacturers] = await Promise.all([
+    getRecentListings(),
+    getTopPartPages(4),
+    getManufacturerIndexEntries(),
+  ]);
   const hasUploads = recentUploads.length > 0;
   const siteUrl = getSiteUrl();
 
@@ -65,7 +62,7 @@ export default async function HomePage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
       />
 
-      <HomeHero stats={stats} popularParts={popularParts.map((part) => part.mpn)} />
+      <HomeHero popularParts={popularParts.map((part) => part.mpn)} />
 
       <ManufacturerBrowseSection manufacturers={manufacturers} />
 
