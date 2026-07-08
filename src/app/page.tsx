@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ManufacturerBrowseSection } from "@/components/home/ManufacturerBrowseSection";
-import { CategoryBrowseSection } from "@/components/home/CategoryBrowseSection";
 import { GuidesPromoSection } from "@/components/home/GuidesPromoSection";
 import { HomeCtaBanner } from "@/components/home/HomeCtaBanner";
 import { HomeHero } from "@/components/home/HomeHero";
@@ -9,10 +8,7 @@ import { RecentUploadsList } from "@/components/RecentUploadsList";
 import { FeaturedSellersSection } from "@/components/trust/FeaturedSellersSection";
 import { TestimonialsSection } from "@/components/trust/TestimonialsSection";
 import { getFeaturedSellers, getRecentListings } from "@/lib/listings";
-import {
-  getCategoryListingCounts,
-  getPlatformStats,
-} from "@/lib/marketplace-stats";
+import { getPlatformStats } from "@/lib/marketplace-stats";
 import { getManufacturerIndexEntries } from "@/lib/manufacturers/pages";
 import { getTopPartPages } from "@/lib/parts/part-pages";
 import { getSiteUrl } from "@/lib/site";
@@ -36,12 +32,11 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  const [recentUploads, featuredSellers, stats, categoryCounts, popularParts, manufacturers] =
+  const [recentUploads, featuredSellers, stats, popularParts, manufacturers] =
     await Promise.all([
       getRecentListings(),
       getFeaturedSellers(6),
       getPlatformStats(),
-      getCategoryListingCounts(),
       getTopPartPages(4),
       getManufacturerIndexEntries(),
     ]);
@@ -74,7 +69,6 @@ export default async function HomePage() {
 
       <HomeHero stats={stats} popularParts={popularParts.map((part) => part.mpn)} />
 
-      <CategoryBrowseSection counts={categoryCounts} />
       <ManufacturerBrowseSection manufacturers={manufacturers} />
 
       <section className="border-b border-slate-200 bg-white">
