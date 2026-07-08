@@ -5,9 +5,8 @@ import { GuidesPromoSection } from "@/components/home/GuidesPromoSection";
 import { HomeCtaBanner } from "@/components/home/HomeCtaBanner";
 import { HomeHero } from "@/components/home/HomeHero";
 import { RecentUploadsList } from "@/components/RecentUploadsList";
-import { FeaturedSellersSection } from "@/components/trust/FeaturedSellersSection";
 import { TestimonialsSection } from "@/components/trust/TestimonialsSection";
-import { getFeaturedSellers, getRecentListings } from "@/lib/listings";
+import { getRecentListings } from "@/lib/listings";
 import { getPlatformStats } from "@/lib/marketplace-stats";
 import { getManufacturerIndexEntries } from "@/lib/manufacturers/pages";
 import { getTopPartPages } from "@/lib/parts/part-pages";
@@ -32,10 +31,9 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  const [recentUploads, featuredSellers, stats, popularParts, manufacturers] =
+  const [recentUploads, stats, popularParts, manufacturers] =
     await Promise.all([
       getRecentListings(),
-      getFeaturedSellers(6),
       getPlatformStats(),
       getTopPartPages(4),
       getManufacturerIndexEntries(),
@@ -109,7 +107,6 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <FeaturedSellersSection sellers={featuredSellers} />
       <GuidesPromoSection />
       <TestimonialsSection />
       <HomeCtaBanner />

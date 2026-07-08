@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { looksLikeMultiPartQuery } from "@/lib/mpn-normalize";
-import type { PlatformStats } from "@/lib/marketplace-stats";
 import { formatQuantity } from "@/lib/format";
+import type { PlatformStats } from "@/lib/marketplace-stats";
 import { getPartPagePath } from "@/lib/parts/part-path";
 
 type HomeHeroProps = {
@@ -46,7 +46,7 @@ export function HomeHero({ stats, popularParts = [] }: HomeHeroProps) {
           USParts
         </h1>
         <p className="mt-3 text-base text-slate-600 sm:text-lg">
-          Free electronic component search from verified suppliers
+          Free electronic component search from verified US Based Inventory.
         </p>
 
         <form
@@ -91,15 +91,8 @@ export function HomeHero({ stats, popularParts = [] }: HomeHeroProps) {
           </Link>
         </div>
 
-        <p className="mt-8 text-sm text-slate-500">
-          <span className="font-medium text-[#0a1628]">
-            {formatQuantity(stats.activeListings)}
-          </span>{" "}
-          parts ·{" "}
-          <span className="font-medium text-[#0a1628]">
-            {formatQuantity(stats.activeSuppliers)}
-          </span>{" "}
-          suppliers · Free to search & list
+        <p className="mt-8 text-sm font-medium text-[#0a1628]">
+          Search Millions of unique parts.
         </p>
 
         <p className="mt-6 max-w-2xl mx-auto text-sm leading-6 text-slate-600 sm:text-base sm:leading-7">
