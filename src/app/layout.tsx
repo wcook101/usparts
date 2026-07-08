@@ -3,7 +3,6 @@ import { Geist, Geist_Mono, Roboto_Mono } from "next/font/google";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { MicrosoftClarity } from "@/components/MicrosoftClarity";
-import { PartsBackground } from "@/components/PartsBackground";
 import { getSiteUrl } from "@/lib/site";
 import "./globals.css";
 
@@ -54,7 +53,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#2563eb",
+  themeColor: "#0a1628",
 };
 
 export default function RootLayout({
@@ -67,9 +66,8 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} ${robotoMono.variable} h-full antialiased`}
     >
-      <body className="relative min-h-full text-slate-900">
+      <body className="relative min-h-full bg-white text-[#0a1628]">
         <MicrosoftClarity />
-        <PartsBackground variant="site" idPrefix="site" fixed />
         <Header />
         <main className="relative flex-1">{children}</main>
         <Footer />

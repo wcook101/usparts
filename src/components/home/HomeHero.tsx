@@ -1,36 +1,19 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { looksLikeMultiPartQuery } from "@/lib/mpn-normalize";
 import type { PlatformStats } from "@/lib/marketplace-stats";
 import { formatQuantity } from "@/lib/format";
 import { getPartPagePath } from "@/lib/parts/part-path";
-
-type SearchMode = "single" | "bulk" | "smart";
 
 type HomeHeroProps = {
   stats: PlatformStats;
   popularParts?: string[];
 };
 
-const modes: { id: SearchMode; label: string; href: string }[] = [
-  { id: "single", label: "MPN search", href: "/search" },
-  { id: "bulk", label: "BOM upload", href: "/search?mode=bulk" },
-  { id: "smart", label: "Smart search", href: "/search?mode=smart" },
-];
-
-const placeholders: Record<SearchMode, string> = {
-  single: "Search by manufacturer part number, keyword, or description…",
-  bulk: "Paste part numbers or open BOM upload…",
-  smart: "Describe the component you need in plain language…",
-};
-
 export function HomeHero({ stats, popularParts = [] }: HomeHeroProps) {
   const router = useRouter();
-  const [mode, setMode] = useState<SearchMode>("single");
   const popularTerms =
     popularParts.length > 0
       ? popularParts.slice(0, 4)
@@ -46,157 +29,100 @@ export function HomeHero({ stats, popularParts = [] }: HomeHeroProps) {
     const query = input.value.trim();
     if (!query) {
       event.preventDefault();
-      router.push(modes.find((item) => item.id === mode)?.href ?? "/search");
+      router.push("/search");
       return;
     }
 
-    if (mode === "bulk" || looksLikeMultiPartQuery(query)) {
+    if (looksLikeMultiPartQuery(query)) {
       event.preventDefault();
       router.push(`/search?mode=bulk&mpns=${encodeURIComponent(query)}`);
-      return;
-    }
-
-    if (mode === "smart") {
-      event.preventDefault();
-      router.push(`/search?mode=smart&describe=${encodeURIComponent(query)}`);
     }
   }
 
   return (
-    <section className="relative overflow-hidden border-b border-slate-200 bg-gradient-to-b from-white via-blue-50/40 to-slate-50">
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(37,99,235,0.12),transparent_45%),radial-gradient(circle_at_bottom_left,rgba(15,23,42,0.04),transparent_40%)]"
-      />
+    <section className="border-b border-slate-200 bg-white">
+      <div className="mx-auto max-w-3xl px-4 py-16 text-center sm:px-6 sm:py-20 lg:py-24">
+        <h1 className="text-4xl font-bold tracking-tight text-[#0a1628] sm:text-5xl">
+          USParts
+        </h1>
+        <p className="mt-3 text-base text-slate-600 sm:text-lg">
+          Free electronic component search from verified suppliers
+        </p>
 
-      <div className="relative mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-20 lg:py-24">
-        <div className="flex flex-col items-center gap-8 lg:flex-row lg:items-start lg:gap-10 xl:gap-14">
-          <Link
-            href="/"
-            className="shrink-0 lg:pt-2"
-            aria-label="USParts home"
-          >
-            <Image
-              src="/usparts-logo.png"
-              alt="USParts.com — All roads lead to US parts"
-              width={560}
-              height={240}
-              priority
-              className="h-28 w-auto sm:h-36 lg:h-[9.5rem]"
+        <form
+          action="/search"
+          method="get"
+          onSubmit={handleSubmit}
+          className="mt-10"
+        >
+          <label htmlFor="home-search" className="sr-only">
+            Search part number, manufacturer, or paste BOM
+          </label>
+          <div className="flex flex-col overflow-hidden rounded border border-slate-300 bg-white shadow-sm focus-within:border-[#0a1628] focus-within:ring-1 focus-within:ring-[#0a1628] sm:flex-row">
+            <input
+              id="home-search"
+              type="search"
+              name="q"
+              placeholder="Search part number, manufacturer, or paste BOM"
+              className="min-h-14 flex-1 border-0 bg-transparent px-4 py-4 text-base text-[#0a1628] outline-none placeholder:text-slate-400 sm:px-5"
+              autoComplete="off"
             />
-          </Link>
-
-          <div className="min-w-0 flex-1 text-center lg:text-left">
-            <p className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-blue-700">
-              Free electronic component search
-            </p>
-            <h1 className="mt-6 text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl lg:text-[3.25rem] lg:leading-[1.1]">
-              Search electronic components from US suppliers
-            </h1>
-            <p className="mt-5 max-w-3xl text-lg leading-8 text-slate-600 sm:text-xl lg:max-w-none">
-              Compare pricing, stock, and lead time on semiconductors, ICs, and
-              hard-to-find parts. Paste a BOM, request quotes, or list surplus
-              inventory — free on USParts.
-            </p>
-          </div>
-        </div>
-
-        <div className="mx-auto mt-10 max-w-3xl">
-          <div className="flex flex-wrap items-center justify-center gap-2">
-            {modes.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => setMode(item.id)}
-                className={`min-h-11 touch-manipulation rounded-full px-4 py-2 text-sm font-semibold transition ${
-                  mode === item.id
-                    ? "bg-slate-900 text-white shadow-sm"
-                    : "bg-white text-slate-600 ring-1 ring-slate-200 hover:text-slate-900"
-                }`}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
-
-          <form
-            action="/search"
-            method="get"
-            onSubmit={handleSubmit}
-            className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-200/60"
-          >
-            <div className="flex flex-col sm:flex-row">
-              <input
-                type="search"
-                name="q"
-                placeholder={placeholders[mode]}
-                className="min-h-14 flex-1 border-0 bg-transparent px-4 py-4 text-base text-slate-900 outline-none placeholder:text-slate-400 sm:px-5"
-              />
-              <button
-                type="submit"
-                className="min-h-14 touch-manipulation bg-blue-600 px-8 py-4 text-base font-semibold text-white transition hover:bg-blue-700 sm:shrink-0"
-              >
-                Search parts
-              </button>
-            </div>
-          </form>
-
-          <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-sm text-slate-500">
-            <span>Popular:</span>
-            {popularTerms.map((term) => (
-              <Link
-                key={term}
-                href={
-                  popularParts.length > 0
-                    ? getPartPagePath(term)
-                    : `/search?q=${encodeURIComponent(term)}`
-                }
-                className="rounded-full bg-white px-3 py-1 font-medium text-slate-700 ring-1 ring-slate-200 transition hover:text-blue-700 hover:ring-blue-200"
-              >
-                {term}
-              </Link>
-            ))}
-          </div>
-        </div>
-
-        <div className="mx-auto mt-10 grid max-w-4xl gap-4 sm:grid-cols-3">
-          {[
-            {
-              value: formatQuantity(stats.activeListings),
-              label: "Parts searchable by MPN",
-            },
-            {
-              value: formatQuantity(stats.activeSuppliers),
-              label: "Registered US suppliers",
-            },
-            {
-              value: "Free",
-              label: "BOM search & inventory listing",
-            },
-          ].map((item) => (
-            <div
-              key={item.label}
-              className="rounded-2xl border border-white/80 bg-white/90 px-5 py-4 text-center shadow-sm backdrop-blur-sm"
+            <button
+              type="submit"
+              className="min-h-14 touch-manipulation bg-[#c41230] px-8 py-4 text-base font-semibold text-white transition hover:bg-[#a50e28] sm:shrink-0"
             >
-              <p className="text-2xl font-bold text-slate-900">{item.value}</p>
-              <p className="mt-1 text-sm text-slate-600">{item.label}</p>
-            </div>
-          ))}
-        </div>
+              Search Parts
+            </button>
+          </div>
+        </form>
 
-        <div className="mx-auto mt-8 flex max-w-3xl flex-col gap-3 sm:flex-row sm:justify-center">
+        <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:justify-center">
           <Link
             href="/search?mode=bulk"
-            className="inline-flex min-h-12 flex-1 items-center justify-center rounded-xl bg-blue-600 px-6 py-3.5 text-base font-semibold text-white shadow-sm transition hover:bg-blue-700 sm:flex-none"
+            className="inline-flex min-h-11 items-center justify-center rounded border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-[#0a1628] transition hover:border-slate-400 hover:bg-slate-50"
           >
-            Upload a BOM — search free
+            Upload BOM
           </Link>
           <Link
             href="/company/upload"
-            className="inline-flex min-h-12 flex-1 items-center justify-center rounded-xl border border-slate-300 bg-white px-6 py-3.5 text-base font-semibold text-slate-800 shadow-sm transition hover:bg-slate-50 sm:flex-none"
+            className="inline-flex min-h-11 items-center justify-center rounded border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-[#0a1628] transition hover:border-slate-400 hover:bg-slate-50"
           >
-            List your inventory
+            List Inventory
           </Link>
+        </div>
+
+        <p className="mt-8 text-sm text-slate-500">
+          <span className="font-medium text-[#0a1628]">
+            {formatQuantity(stats.activeListings)}
+          </span>{" "}
+          parts ·{" "}
+          <span className="font-medium text-[#0a1628]">
+            {formatQuantity(stats.activeSuppliers)}
+          </span>{" "}
+          suppliers · Free to search & list
+        </p>
+
+        <p className="mt-6 max-w-2xl mx-auto text-sm leading-6 text-slate-600 sm:text-base sm:leading-7">
+          Find electronic components from U.S. suppliers. Search{" "}
+          {formatQuantity(stats.activeListings)}+ listed parts, upload a BOM,
+          request quotes, and list surplus inventory for free.
+        </p>
+
+        <div className="mt-5 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-sm text-slate-500">
+          <span>Popular:</span>
+          {popularTerms.map((term) => (
+            <Link
+              key={term}
+              href={
+                popularParts.length > 0
+                  ? getPartPagePath(term)
+                  : `/search?q=${encodeURIComponent(term)}`
+              }
+              className="font-mono text-[#0a1628] underline-offset-2 hover:text-[#c41230] hover:underline"
+            >
+              {term}
+            </Link>
+          ))}
         </div>
       </div>
     </section>

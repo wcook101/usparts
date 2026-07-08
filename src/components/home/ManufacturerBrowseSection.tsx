@@ -10,53 +10,65 @@ type ManufacturerBrowseSectionProps = {
 export function ManufacturerBrowseSection({
   manufacturers,
 }: ManufacturerBrowseSectionProps) {
-  const featured = manufacturers.filter((entry) => entry.listingCount > 0).slice(0, 6);
-  const display = featured.length > 0 ? featured : manufacturers.slice(0, 6);
+  const featured = manufacturers
+    .filter((entry) => entry.listingCount > 0)
+    .slice(0, 8);
+  const display = featured.length > 0 ? featured : manufacturers.slice(0, 8);
 
   return (
-    <section className="border-b border-slate-200 bg-slate-50">
-      <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-16">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-2xl">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-600">
+    <section className="border-b border-slate-200 bg-slate-50/50">
+      <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-14">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h2 className="text-xl font-semibold text-[#0a1628] sm:text-2xl">
               Browse by manufacturer
-            </p>
-            <h2 className="mt-3 text-2xl font-semibold text-slate-900 sm:text-3xl">
-              Texas Instruments, Analog Devices, Microchip, and more
             </h2>
-            <p className="mt-3 text-sm leading-7 text-slate-600 sm:text-base">
-              Authority pages for major semiconductor brands — live US stock,
-              top MPNs, and filtered search for procurement teams.
+            <p className="mt-1 text-sm text-slate-600">
+              Texas Instruments, Analog Devices, Microchip, and more.
             </p>
           </div>
           <Link
             href="/manufacturers"
-            className="inline-flex w-fit rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-800"
+            className="text-sm font-semibold text-[#c41230] hover:underline"
           >
-            All manufacturers
+            All manufacturers →
           </Link>
         </div>
 
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {display.map(({ profile, listingCount, partCount }) => (
-            <Link
-              key={profile.slug}
-              href={getManufacturerPagePath(profile.slug)}
-              className="group rounded-2xl border border-slate-200 bg-white p-5 transition hover:border-blue-200 hover:shadow-md"
-            >
-              <h3 className="text-lg font-semibold text-slate-900 group-hover:text-blue-700">
-                {profile.name}
-              </h3>
-              <p className="mt-2 text-sm leading-6 text-slate-600 line-clamp-2">
-                {profile.productFamilies.slice(0, 2).join(" · ")}
-              </p>
-              <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-blue-600">
-                {listingCount > 0
-                  ? `${formatQuantity(partCount)} parts · ${formatQuantity(listingCount)} listings`
-                  : "View manufacturer page"}
-              </p>
-            </Link>
-          ))}
+        <div className="mt-6 overflow-x-auto border border-slate-200 bg-white">
+          <table className="w-full min-w-[32rem] text-left text-sm">
+            <thead className="border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              <tr>
+                <th className="px-4 py-3">Manufacturer</th>
+                <th className="px-4 py-3">Focus</th>
+                <th className="px-4 py-3 text-right">Parts</th>
+                <th className="px-4 py-3 text-right">Listings</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {display.map(({ profile, listingCount, partCount }) => (
+                <tr key={profile.slug} className="hover:bg-slate-50/80">
+                  <td className="px-4 py-3">
+                    <Link
+                      href={getManufacturerPagePath(profile.slug)}
+                      className="font-semibold text-[#0a1628] hover:text-[#c41230]"
+                    >
+                      {profile.name}
+                    </Link>
+                  </td>
+                  <td className="px-4 py-3 text-slate-600">
+                    {profile.productFamilies.slice(0, 2).join(" · ") || "—"}
+                  </td>
+                  <td className="px-4 py-3 text-right tabular-nums text-slate-700">
+                    {partCount > 0 ? formatQuantity(partCount) : "—"}
+                  </td>
+                  <td className="px-4 py-3 text-right tabular-nums text-slate-700">
+                    {listingCount > 0 ? formatQuantity(listingCount) : "—"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     </section>

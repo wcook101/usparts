@@ -2,15 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ManufacturerBrowseSection } from "@/components/home/ManufacturerBrowseSection";
 import { CategoryBrowseSection } from "@/components/home/CategoryBrowseSection";
-import { FeaturesSection } from "@/components/home/FeaturesSection";
 import { GuidesPromoSection } from "@/components/home/GuidesPromoSection";
 import { HomeCtaBanner } from "@/components/home/HomeCtaBanner";
 import { HomeHero } from "@/components/home/HomeHero";
-import { HowItWorksSection } from "@/components/home/HowItWorksSection";
-import { PartsBackground } from "@/components/PartsBackground";
 import { RecentUploadsList } from "@/components/RecentUploadsList";
 import { FeaturedSellersSection } from "@/components/trust/FeaturedSellersSection";
-import { SecurityBadges } from "@/components/trust/SecurityBadges";
 import { TestimonialsSection } from "@/components/trust/TestimonialsSection";
 import { getFeaturedSellers, getRecentListings } from "@/lib/listings";
 import {
@@ -28,11 +24,11 @@ export const metadata: Metadata = {
     absolute: "Electronics Parts Marketplace - Free BOM Search & Inventory",
   },
   description:
-    "Free BOM search and electronics marketplace – list inventory or find parts instantly. Search obsolete semiconductors, ICs, and surplus stock by MPN from US suppliers on USParts.us.",
+    "Find electronic components from U.S. suppliers. Search 350,000+ listed parts, upload a BOM, request quotes, and list surplus inventory for free on USParts.us.",
   openGraph: {
     title: "Electronics Parts Marketplace - Free BOM Search & Inventory",
     description:
-      "Search electronic components from US suppliers. Free MPN search, bulk BOM lookup, and surplus inventory listings.",
+      "Find electronic components from U.S. suppliers. Free MPN search, bulk BOM lookup, and surplus inventory listings.",
   },
   alternates: {
     canonical: "/",
@@ -70,7 +66,7 @@ export default async function HomePage() {
   };
 
   return (
-    <div>
+    <div className="bg-white">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
@@ -78,77 +74,50 @@ export default async function HomePage() {
 
       <HomeHero stats={stats} popularParts={popularParts.map((part) => part.mpn)} />
 
-      <section className="border-b border-slate-200 bg-white py-8">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          <SecurityBadges />
-        </div>
-      </section>
-
-      <GuidesPromoSection />
-
       <CategoryBrowseSection counts={categoryCounts} />
       <ManufacturerBrowseSection manufacturers={manufacturers} />
-      <HowItWorksSection />
-      <FeaturesSection />
-      <FeaturedSellersSection sellers={featuredSellers} />
-      <TestimonialsSection />
 
-      <section className="relative overflow-hidden border-b border-slate-200">
-        <PartsBackground variant="section" idPrefix="home-section" />
-        <div className="relative mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-16">
-          <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <section className="border-b border-slate-200 bg-white">
+        <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-14">
+          <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <h2 className="text-2xl font-semibold text-slate-900 sm:text-3xl">
+              <h2 className="text-xl font-semibold text-[#0a1628] sm:text-2xl">
                 Recent supplier uploads
               </h2>
-              <p className="mt-2 text-sm text-slate-600 sm:text-base">
-                Live inventory from the latest companies to publish stock on
-                USParts.
+              <p className="mt-1 text-sm text-slate-600">
+                Latest inventory published by suppliers on USParts.
               </p>
             </div>
-            <div className="flex flex-wrap gap-3">
-              <Link
-                href="/search"
-                className="inline-flex rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
-              >
-                Search all parts
-              </Link>
-              <Link
-                href="/company/upload"
-                className="inline-flex rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-              >
-                Upload inventory
-              </Link>
-            </div>
+            <Link
+              href="/search"
+              className="text-sm font-semibold text-[#c41230] hover:underline"
+            >
+              Search all parts →
+            </Link>
           </div>
 
           {hasUploads ? (
             <RecentUploadsList groups={recentUploads} />
           ) : (
-            <div className="rounded-2xl border border-dashed border-slate-300 bg-white/90 p-10 text-center shadow-sm backdrop-blur-sm">
-              <p className="text-lg font-medium text-slate-900">No listings yet</p>
+            <div className="border border-dashed border-slate-300 px-6 py-10 text-center">
+              <p className="font-medium text-[#0a1628]">No listings yet</p>
               <p className="mt-2 text-sm text-slate-600">
                 Be the first supplier to publish available components.
               </p>
-              <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
-                <Link
-                  href="/company/upload"
-                  className="inline-flex rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
-                >
-                  Upload inventory
-                </Link>
-                <Link
-                  href="/company"
-                  className="inline-flex rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-                >
-                  Register your company
-                </Link>
-              </div>
+              <Link
+                href="/company/upload"
+                className="mt-4 inline-flex text-sm font-semibold text-[#c41230] hover:underline"
+              >
+                List Inventory →
+              </Link>
             </div>
           )}
         </div>
       </section>
 
+      <FeaturedSellersSection sellers={featuredSellers} />
+      <GuidesPromoSection />
+      <TestimonialsSection />
       <HomeCtaBanner />
     </div>
   );

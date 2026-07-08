@@ -7,89 +7,64 @@ type CategoryBrowseSectionProps = {
   counts: CategoryListingCount[];
 };
 
-function categoryIcon(category: string) {
-  const className = "h-6 w-6 text-blue-600";
-
-  switch (category) {
-    case "INTEGRATED_CIRCUIT":
-      return (
-        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className={className}>
-          <rect x="4" y="4" width="16" height="16" rx="2" stroke="currentColor" strokeWidth="1.75" />
-          <path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-        </svg>
-      );
-    case "SEMICONDUCTOR":
-      return (
-        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className={className}>
-          <path d="M9 3v3M15 3v3M9 18v3M15 18v3M3 9h3M3 15h3M18 9h3M18 15h3" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
-          <rect x="7" y="7" width="10" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.75" />
-        </svg>
-      );
-    default:
-      return (
-        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" className={className}>
-          <path d="M12 3 20 9v6l-8 6-8-6V9l8-6Z" stroke="currentColor" strokeWidth="1.75" strokeLinejoin="round" />
-        </svg>
-      );
-  }
-}
-
 export function CategoryBrowseSection({ counts }: CategoryBrowseSectionProps) {
   const countMap = new Map(counts.map((item) => [item.category, item.count]));
 
   return (
     <section className="border-b border-slate-200 bg-white">
-      <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6 sm:py-16">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-2xl">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-600">
+      <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-14">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h2 className="text-xl font-semibold text-[#0a1628] sm:text-2xl">
               Browse by category
-            </p>
-            <h2 className="mt-3 text-2xl font-semibold text-slate-900 sm:text-3xl">
-              Find semiconductors, ICs, passives, and more
             </h2>
-            <p className="mt-3 text-sm leading-7 text-slate-600 sm:text-base">
-              Search active US supplier inventory by component type — from
-              integrated circuits and memory to connectors and power parts.
+            <p className="mt-1 text-sm text-slate-600">
+              Active US supplier inventory by component type.
             </p>
           </div>
           <Link
             href="/search"
-            className="inline-flex w-fit rounded-lg bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-800"
+            className="text-sm font-semibold text-[#c41230] hover:underline"
           >
-            Search all parts
+            Search all parts →
           </Link>
         </div>
 
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-          {browseCategories.map((item) => {
-            const count = countMap.get(item.category) ?? 0;
-
-            return (
-              <Link
-                key={item.category}
-                href={item.href}
-                className="group rounded-2xl border border-slate-200 bg-slate-50/50 p-5 transition hover:border-blue-200 hover:bg-white hover:shadow-md"
-              >
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 transition group-hover:bg-blue-100">
-                  {categoryIcon(item.category)}
-                </div>
-                <h3 className="mt-4 font-semibold text-slate-900">{item.label}</h3>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
-                  {item.description}
-                </p>
-                <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-blue-600">
-                  {count > 0
-                    ? `${formatQuantity(count)} in stock`
-                    : "Search category"}
-                </p>
-              </Link>
-            );
-          })}
+        <div className="mt-6 overflow-x-auto border border-slate-200">
+          <table className="w-full min-w-[36rem] text-left text-sm">
+            <thead className="border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              <tr>
+                <th className="px-4 py-3">Category</th>
+                <th className="px-4 py-3">Description</th>
+                <th className="px-4 py-3 text-right">Listings</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {browseCategories.map((item) => {
+                const count = countMap.get(item.category) ?? 0;
+                return (
+                  <tr key={item.category} className="hover:bg-slate-50/80">
+                    <td className="px-4 py-3">
+                      <Link
+                        href={item.href}
+                        className="font-semibold text-[#0a1628] hover:text-[#c41230]"
+                      >
+                        {item.label}
+                      </Link>
+                    </td>
+                    <td className="px-4 py-3 text-slate-600">{item.description}</td>
+                    <td className="px-4 py-3 text-right font-medium tabular-nums text-slate-700">
+                      {count > 0 ? formatQuantity(count) : "—"}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
 
         {counts.length > 0 ? (
-          <p className="mt-6 text-sm text-slate-500">
+          <p className="mt-4 text-sm text-slate-500">
             Top category:{" "}
             <span className="font-medium text-slate-700">
               {CATEGORY_LABELS[counts[0]!.category]}
