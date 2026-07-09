@@ -166,6 +166,11 @@ export const pageMetadata = {
     "USParts.us platform admin dashboard for monitoring suppliers, users, listings, orders, imports, and system health.",
     { noindex: true },
   ),
+  adminAnalytics: pageMeta(
+    "Search Activity - Platform Admin",
+    "Review buyer search activity on USParts.us including recent queries, search volume, and top part number searches.",
+    { noindex: true },
+  ),
   adminImport: pageMeta(
     "Admin Import - Supplier Inventory Upload",
     "Import supplier spreadsheets for semiconductors, ICs, and electronic components on USParts.us. Admin imports bypass supplier cooldown limits.",

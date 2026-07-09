@@ -10,11 +10,13 @@ import { SmartSearchForm } from "@/components/SmartSearchForm";
 import { getBuyerDefaults, getSessionUser } from "@/lib/auth";
 import { CATEGORY_LABELS } from "@/lib/format";
 import {
+  hasSearchCriteria,
   RECENT_COMPANIES_LIMIT,
   RECENT_LISTINGS_PER_COMPANY,
   searchListings,
 } from "@/lib/listings";
 import { looksLikeMultiPartQuery } from "@/lib/mpn-normalize";
+import { logSearchEvent } from "@/lib/search-analytics";
 import { pageMetadata, searchResultsMetadata } from "@/lib/seo/page-metadata";
 import { isSmartSearchEnabled } from "@/lib/smart-search";
 import { searchQuerySchema } from "@/lib/validations";
@@ -112,6 +114,29 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
     totalPages,
     recentOnly,
   } = searchResults;
+
+  if (
+    !isBulkMode &&
+    !isSmartMode &&
+    hasSearchCriteria(parsed) &&
+    !recentOnly &&
+    parsed.page === 1
+  ) {
+    const queryParts = [
+      parsed.q?.trim(),
+      parsed.manufacturer ? `mfr:${parsed.manufacturer.trim()}` : null,
+      parsed.category ? `cat:${parsed.category.trim()}` : null,
+    ].filter(Boolean);
+
+    logSearchEvent({
+      mode: "SINGLE",
+      queryText: queryParts.join(" · ") || "filter",
+      resultCount: totalCount,
+      manufacturer: parsed.manufacturer,
+      category: parsed.category,
+      userId: user?.id,
+    });
+  }
 
   const buyerDefaults =
     isBulkMode || isSmartMode ? getBuyerDefaults(user) : null;

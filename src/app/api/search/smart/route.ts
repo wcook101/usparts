@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { getSessionUser } from "@/lib/auth";
+import { logSearchEvent } from "@/lib/search-analytics";
 import { isSmartSearchEnabled, smartSearchListings } from "@/lib/smart-search";
 import { SmartSearchBudgetExceededError } from "@/lib/smart-search-budget";
 import { smartSearchSchema } from "@/lib/validations";
@@ -30,6 +32,18 @@ export async function POST(request: Request) {
 
   try {
     const results = await smartSearchListings(parsed.data);
+    const user = await getSessionUser();
+
+    logSearchEvent({
+      mode: "SMART",
+      queryText: parsed.data.query,
+      resultCount: results.search.totalListingCount,
+      queriedCount: results.suggestedMpns.length,
+      manufacturer: parsed.data.manufacturer,
+      category: parsed.data.category,
+      userId: user?.id,
+    });
+
     return NextResponse.json(results);
   } catch (error) {
     if (error instanceof SmartSearchBudgetExceededError) {

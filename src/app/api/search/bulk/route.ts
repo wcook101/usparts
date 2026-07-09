@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
+import { getSessionUser } from "@/lib/auth";
 import { bulkSearchListings } from "@/lib/listings";
+import { logSearchEvent } from "@/lib/search-analytics";
 import { bulkSearchSchema } from "@/lib/validations";
 
 export async function POST(request: Request) {
@@ -14,5 +16,17 @@ export async function POST(request: Request) {
   }
 
   const results = await bulkSearchListings(parsed.data);
+  const user = await getSessionUser();
+
+  logSearchEvent({
+    mode: "BULK",
+    queryText: parsed.data.mpns,
+    resultCount: results.totalListingCount,
+    queriedCount: results.queriedCount,
+    manufacturer: parsed.data.manufacturer,
+    category: parsed.data.category,
+    userId: user?.id,
+  });
+
   return NextResponse.json(results);
 }

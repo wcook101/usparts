@@ -88,6 +88,12 @@ export default async function AdminPage() {
         </div>
         <div className="flex flex-wrap gap-2">
           <Link
+            href="/admin/analytics"
+            className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          >
+            Search activity
+          </Link>
+          <Link
             href="/admin/companies/new"
             className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
           >
