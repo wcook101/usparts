@@ -88,6 +88,12 @@ export default async function AdminPage() {
         </div>
         <div className="flex flex-wrap gap-2">
           <Link
+            href="/admin/companies/new"
+            className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          >
+            Create company
+          </Link>
+          <Link
             href="/admin/outreach"
             className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
           >
@@ -170,7 +176,14 @@ export default async function AdminPage() {
         <p className="mt-3 text-sm text-slate-600">
           Make sure the <strong>{UPLOAD_EMAIL}</strong> mailbox exists in
           SiteGround and is monitored. Match the sender email to a registered
-          company when possible.
+          company when possible. If they have no company yet,{" "}
+          <Link
+            href="/admin/companies/new"
+            className="font-medium text-blue-700 hover:text-blue-800"
+          >
+            create one for them
+          </Link>{" "}
+          first, then import.
         </p>
       </section>
 
@@ -274,12 +287,23 @@ export default async function AdminPage() {
       </section>
 
       <section className="mt-10">
-        <h2 className="text-lg font-semibold text-slate-900">
-          Accounts without a company
-        </h2>
-        <p className="mt-1 text-sm text-slate-600">
-          Users who signed up but have not completed supplier registration.
-        </p>
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-semibold text-slate-900">
+              Accounts without a company
+            </h2>
+            <p className="mt-1 text-sm text-slate-600">
+              Users who signed up but have not completed supplier registration.
+              You can create a company profile for them.
+            </p>
+          </div>
+          <Link
+            href="/admin/companies/new"
+            className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          >
+            Create company
+          </Link>
+        </div>
         <div className="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
@@ -288,12 +312,13 @@ export default async function AdminPage() {
                   <th className="px-4 py-3">Name</th>
                   <th className="px-4 py-3">Email</th>
                   <th className="px-4 py-3">Signed up</th>
+                  <th className="px-4 py-3">Action</th>
                 </tr>
               </thead>
               <tbody>
                 {overview.recentUsersWithoutCompany.length === 0 ? (
                   <tr>
-                    <td colSpan={3} className="px-4 py-8 text-center text-slate-500">
+                    <td colSpan={4} className="px-4 py-8 text-center text-slate-500">
                       No pending accounts.
                     </td>
                   </tr>
@@ -306,6 +331,14 @@ export default async function AdminPage() {
                       <td className="px-4 py-3 text-slate-700">{account.email}</td>
                       <td className="px-4 py-3 text-slate-700">
                         {formatWhen(account.createdAt)}
+                      </td>
+                      <td className="px-4 py-3">
+                        <Link
+                          href={`/admin/companies/new?email=${encodeURIComponent(account.email)}`}
+                          className="font-medium text-blue-600 hover:text-blue-700"
+                        >
+                          Create company
+                        </Link>
                       </td>
                     </tr>
                   ))

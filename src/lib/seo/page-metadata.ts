@@ -171,6 +171,11 @@ export const pageMetadata = {
     "Import supplier spreadsheets for semiconductors, ICs, and electronic components on USParts.us. Admin imports bypass supplier cooldown limits.",
     { noindex: true },
   ),
+  adminCreateCompany: pageMeta(
+    "Admin Create Company - Supplier Onboarding",
+    "Create a supplier company profile on USParts.us so you can import inventory for vendors who have not registered yet.",
+    { noindex: true },
+  ),
   adminAliases: pageMeta(
     "Part Number Aliases - MPN Search Admin",
     "Manage manufacturer part number aliases so buyers find alternate MPNs, package variants, and equivalent semiconductors during search on USParts.us.",

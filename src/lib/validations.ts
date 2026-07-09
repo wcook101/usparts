@@ -97,10 +97,23 @@ export const createCompanySchema = z.object({
     .min(1, "Add at least one inventory storage location"),
 });
 
+/** Admin creates a supplier company on their behalf (email required). */
+export const adminCreateCompanySchema = createCompanySchema
+  .omit({ email: true })
+  .extend({
+    email: z.string().trim().email(),
+    ownerEmail: z
+      .string()
+      .trim()
+      .transform((value) => (value === "" ? undefined : value))
+      .pipe(z.string().email().optional()),
+  });
+
 export type SearchQuery = z.infer<typeof searchQuerySchema>;
 export type BulkSearchInput = z.infer<typeof bulkSearchSchema>;
 export type CreateListingInput = z.infer<typeof createListingSchema>;
 export type CreateCompanyInput = z.infer<typeof createCompanySchema>;
+export type AdminCreateCompanyInput = z.infer<typeof adminCreateCompanySchema>;
 
 export const createOrderSchema = z.object({
   listingId: z.string().min(1),

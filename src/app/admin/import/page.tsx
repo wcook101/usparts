@@ -46,25 +46,29 @@ export default async function AdminImportPage() {
       </p>
 
       <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-        <strong>Before you import:</strong> make sure the supplier is registered on
-        USParts (or create their company at{" "}
-        <Link href="/company" className="font-medium text-amber-900 underline">
-          For Suppliers
+        <strong>Before you import:</strong> make sure the supplier has a company
+        on USParts. If they emailed inventory but never registered,{" "}
+        <Link
+          href="/admin/companies/new"
+          className="font-medium text-amber-900 underline"
+        >
+          create their company here
         </Link>
-        ). Match the spreadsheet to the correct company name below.
+        , then come back to import. Match the spreadsheet to the correct company
+        name below.
       </div>
 
       {companies.length === 0 ? (
         <div className="mt-8 rounded-xl border border-dashed border-slate-300 bg-white p-10 text-center">
           <p className="text-lg font-medium text-slate-900">No companies yet</p>
           <p className="mt-2 text-sm text-slate-600">
-            Register a supplier company before importing their inventory.
+            Create a supplier company before importing their inventory.
           </p>
           <Link
-            href="/company"
+            href="/admin/companies/new"
             className="mt-5 inline-flex rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
           >
-            Supplier registration
+            Create company
           </Link>
         </div>
       ) : (
