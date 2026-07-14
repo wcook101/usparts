@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { AdminCreateCompanyForm } from "@/components/AdminCreateCompanyForm";
 import { getSessionUser } from "@/lib/auth";
 import { isPlatformAdmin } from "@/lib/admin";
@@ -17,7 +17,7 @@ export default async function AdminCreateCompanyPage({ searchParams }: PageProps
   const user = await getSessionUser();
 
   if (!user) {
-    redirect("/login?next=/admin/companies/new");
+    notFound();
   }
 
   if (!isPlatformAdmin(user.email)) {

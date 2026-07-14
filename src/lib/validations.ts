@@ -237,6 +237,76 @@ export const updateSupplierOutreachSchema = z.object({
 export type CreateSupplierOutreachInput = z.infer<typeof createSupplierOutreachSchema>;
 export type UpdateSupplierOutreachInput = z.infer<typeof updateSupplierOutreachSchema>;
 
+export const customerCrmStatusSchema = z.enum([
+  "LEAD",
+  "CONTACTED",
+  "NURTURING",
+  "SIGNED_UP",
+  "ACTIVE",
+  "LOST",
+  "ARCHIVED",
+]);
+
+export const createCustomerLeadSchema = z.object({
+  name: z.string().trim().max(120).optional().or(z.literal("")),
+  email: z.string().trim().email(),
+  companyName: z.string().trim().max(120).optional().or(z.literal("")),
+  phone: z.string().trim().max(40).optional().or(z.literal("")),
+  source: z.string().trim().max(80).optional().or(z.literal("")),
+  status: customerCrmStatusSchema.optional(),
+  contactedAt: z.string().datetime().optional(),
+  notes: z.string().trim().max(2000).optional().or(z.literal("")),
+});
+
+export const updateCustomerLeadSchema = z.object({
+  name: z.string().trim().max(120).optional().or(z.literal("")),
+  email: z.string().trim().email().optional(),
+  companyName: z.string().trim().max(120).optional().or(z.literal("")),
+  phone: z.string().trim().max(40).optional().or(z.literal("")),
+  source: z.string().trim().max(80).optional().or(z.literal("")),
+  status: customerCrmStatusSchema.optional(),
+  contactedAt: z.string().datetime().optional(),
+  lastFollowUpAt: z.string().datetime().nullable().optional(),
+  notes: z.string().trim().max(2000).optional().or(z.literal("")),
+});
+
+export const sendCustomerLeadEmailSchema = z.object({
+  subject: z.string().trim().min(1).max(180),
+  message: z.string().trim().min(1).max(5000),
+});
+
+export type CreateCustomerLeadInput = z.infer<typeof createCustomerLeadSchema>;
+export type UpdateCustomerLeadInput = z.infer<typeof updateCustomerLeadSchema>;
+export type SendCustomerLeadEmailInput = z.infer<typeof sendCustomerLeadEmailSchema>;
+
+export const priorityAccountStatusSchema = z.enum([
+  "NEEDS_RESEARCH",
+  "RESEARCHING",
+  "EMAIL_FOUND",
+  "READY_TO_CONTACT",
+  "CONTACTED",
+  "WON",
+  "LOST",
+]);
+
+export const updatePriorityAccountSchema = z.object({
+  website: z.string().trim().max(200).optional().or(z.literal("")),
+  decisionMakerName: z.string().trim().max(120).optional().or(z.literal("")),
+  decisionMakerTitle: z.string().trim().max(120).optional().or(z.literal("")),
+  decisionMakerEmail: z
+    .string()
+    .trim()
+    .email()
+    .optional()
+    .or(z.literal("")),
+  phone: z.string().trim().max(40).optional().or(z.literal("")),
+  linkedInUrl: z.string().trim().max(300).optional().or(z.literal("")),
+  researchNotes: z.string().trim().max(4000).optional().or(z.literal("")),
+  status: priorityAccountStatusSchema.optional(),
+});
+
+export type UpdatePriorityAccountInput = z.infer<typeof updatePriorityAccountSchema>;
+
 export const updateProfileSchema = z.object({
   name: z.string().trim().min(2).max(120),
 });

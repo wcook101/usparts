@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { isPlatformAdmin } from "@/lib/admin";
 import { getSearchAnalytics } from "@/lib/search-analytics";
@@ -49,7 +49,7 @@ export default async function AdminAnalyticsPage() {
   const user = await getSessionUser();
 
   if (!user) {
-    redirect("/login?next=/admin/analytics");
+    notFound();
   }
 
   if (!isPlatformAdmin(user.email)) {

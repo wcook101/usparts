@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { SupplierOutreachAdminPanel } from "@/components/SupplierOutreachAdminPanel";
 import { getSessionUser } from "@/lib/auth";
 import { isPlatformAdmin } from "@/lib/admin";
@@ -13,7 +13,7 @@ export default async function AdminOutreachPage() {
   const user = await getSessionUser();
 
   if (!user) {
-    redirect("/login?next=/admin/outreach");
+    notFound();
   }
 
   if (!isPlatformAdmin(user.email)) {

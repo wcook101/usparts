@@ -1,5 +1,5 @@
 import { AuthError } from "@/lib/auth/errors";
-import { requireAuth, type SessionUser } from "@/lib/auth/session";
+import { getSessionUser, type SessionUser } from "@/lib/auth/session";
 
 function parseAdminEmails(): Set<string> {
   const raw = process.env.ADMIN_EMAILS ?? "";
@@ -20,11 +20,12 @@ export function isPlatformAdmin(email: string): boolean {
   return admins.has(email.trim().toLowerCase());
 }
 
+/** Prefer this in admin APIs so non-admins get a generic 404, not a permission leak. */
 export async function requirePlatformAdmin(): Promise<SessionUser> {
-  const user = await requireAuth();
+  const user = await getSessionUser();
 
-  if (!isPlatformAdmin(user.email)) {
-    throw new AuthError("Admin access required", 403);
+  if (!user || !isPlatformAdmin(user.email)) {
+    throw new AuthError("Not found", 404);
   }
 
   return user;

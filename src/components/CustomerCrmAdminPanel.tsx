@@ -1,67 +1,46 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type {
-  SupplierOutreachRecord,
-  SupplierOutreachSummary,
-} from "@/lib/supplier-outreach";
+  CustomerCrmSummary,
+  CustomerLeadRecord,
+} from "@/lib/customer-crm";
 
-type OutreachStatus =
+type CrmStatus =
+  | "LEAD"
   | "CONTACTED"
-  | "FOLLOW_UP"
-  | "REGISTERED"
-  | "INVENTORY_LIVE"
-  | "DECLINED"
+  | "NURTURING"
+  | "SIGNED_UP"
+  | "ACTIVE"
+  | "LOST"
   | "ARCHIVED";
 
-type FilterKey = "all" | "awaiting" | "on_platform" | "closed";
+type FilterKey = "all" | "pipeline" | "customers" | "closed";
 
-const STATUS_OPTIONS: { value: OutreachStatus; label: string }[] = [
-  { value: "CONTACTED", label: "Asked to join" },
-  { value: "FOLLOW_UP", label: "Follow-up sent" },
-  { value: "REGISTERED", label: "Joined USParts" },
-  { value: "INVENTORY_LIVE", label: "Inventory live" },
-  { value: "DECLINED", label: "Declined" },
+const STATUS_OPTIONS: { value: CrmStatus; label: string }[] = [
+  { value: "LEAD", label: "New lead" },
+  { value: "CONTACTED", label: "Contacted" },
+  { value: "NURTURING", label: "Nurturing" },
+  { value: "SIGNED_UP", label: "Signed up" },
+  { value: "ACTIVE", label: "Active customer" },
+  { value: "LOST", label: "Lost" },
   { value: "ARCHIVED", label: "Archived" },
-];
-
-const PROSPECT_IMPORT_LIST: {
-  companyName: string;
-  website?: string;
-}[] = [
-  { companyName: "Smith", website: "smith.com" },
-  { companyName: "NewPower Worldwide", website: "newpower.com" },
-  { companyName: "Rand Technology", website: "randtechnology.com" },
-  { companyName: "Velocity Electronics" },
-  { companyName: "Sourceability", website: "sourceability.com" },
-  { companyName: "Classic Components Corporation" },
-  { companyName: "A2 Global Electronics + Solutions", website: "a2global.com" },
-  { companyName: "Direct Components" },
-  { companyName: "Freedom USA" },
-  { companyName: "C Plus Electronics" },
-  { companyName: "CTrends" },
-  { companyName: "Microchip USA" },
-  { companyName: "Component Electronics Inc." },
-  { companyName: "ASAP Semiconductor" },
-  { companyName: "Megastar Electroniques Inc." },
-  { companyName: "Abacus Technologies" },
-  { companyName: "4 Star Electronics" },
-  { companyName: "Eagle Technology Solutions" },
-  { companyName: "Serendipity Electronics" },
-  { companyName: "Electronic Expediters" },
-  { companyName: "Chip Stock LLC" },
-  { companyName: "NetSource Technology" },
-  { companyName: "VRG Components, Inc" },
-  { companyName: "Inland Empire Components, Inc." },
-  { companyName: "Baxter Electronics" },
 ];
 
 const FILTER_OPTIONS: { value: FilterKey; label: string }[] = [
   { value: "all", label: "All" },
-  { value: "awaiting", label: "Awaiting response" },
-  { value: "on_platform", label: "On platform" },
+  { value: "pipeline", label: "Pipeline" },
+  { value: "customers", label: "On platform" },
   { value: "closed", label: "Closed" },
+];
+
+const SOURCE_SUGGESTIONS = [
+  "Website",
+  "Referral",
+  "Trade show",
+  "Cold outreach",
+  "LinkedIn",
+  "Other",
 ];
 
 function formatWhen(value: string | null) {
@@ -76,18 +55,19 @@ function formatWhen(value: string | null) {
   }).format(new Date(value));
 }
 
-
-function statusBadgeClass(status: OutreachStatus) {
+function statusBadgeClass(status: CrmStatus) {
   switch (status) {
+    case "LEAD":
+      return "bg-sky-100 text-sky-800";
     case "CONTACTED":
       return "bg-blue-100 text-blue-800";
-    case "FOLLOW_UP":
+    case "NURTURING":
       return "bg-amber-100 text-amber-900";
-    case "REGISTERED":
+    case "SIGNED_UP":
       return "bg-violet-100 text-violet-800";
-    case "INVENTORY_LIVE":
+    case "ACTIVE":
       return "bg-green-100 text-green-800";
-    case "DECLINED":
+    case "LOST":
       return "bg-red-100 text-red-800";
     case "ARCHIVED":
       return "bg-slate-100 text-slate-700";
@@ -96,14 +76,18 @@ function statusBadgeClass(status: OutreachStatus) {
   }
 }
 
-function matchesFilter(record: SupplierOutreachRecord, filter: FilterKey) {
+function matchesFilter(record: CustomerLeadRecord, filter: FilterKey) {
   switch (filter) {
-    case "awaiting":
-      return record.status === "CONTACTED" || record.status === "FOLLOW_UP";
-    case "on_platform":
-      return record.status === "REGISTERED" || record.status === "INVENTORY_LIVE";
+    case "pipeline":
+      return (
+        record.status === "LEAD" ||
+        record.status === "CONTACTED" ||
+        record.status === "NURTURING"
+      );
+    case "customers":
+      return record.status === "SIGNED_UP" || record.status === "ACTIVE";
     case "closed":
-      return record.status === "DECLINED" || record.status === "ARCHIVED";
+      return record.status === "LOST" || record.status === "ARCHIVED";
     default:
       return true;
   }
@@ -129,15 +113,21 @@ function SummaryCard({
   );
 }
 
-export function SupplierOutreachAdminPanel() {
-  const [records, setRecords] = useState<SupplierOutreachRecord[]>([]);
-  const [summary, setSummary] = useState<SupplierOutreachSummary | null>(null);
+export function CustomerCrmAdminPanel() {
+  const [records, setRecords] = useState<CustomerLeadRecord[]>([]);
+  const [summary, setSummary] = useState<CustomerCrmSummary | null>(null);
   const [filter, setFilter] = useState<FilterKey>("all");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isImportingProspects, setIsImportingProspects] = useState(false);
   const [actionId, setActionId] = useState<string | null>(null);
+  const [emailLeadId, setEmailLeadId] = useState<string | null>(null);
+  const [emailSubject, setEmailSubject] = useState(
+    "US Parts — free electronic component search",
+  );
+  const [emailMessage, setEmailMessage] = useState(
+    "Quick note to share US Parts (www.usparts.us) — a free marketplace to search electronic components from independent distributors. Happy to walk you through it if useful.",
+  );
   const createFormRef = useRef<HTMLFormElement>(null);
 
   async function loadRecords() {
@@ -145,19 +135,19 @@ export function SupplierOutreachAdminPanel() {
     setError(null);
 
     try {
-      const response = await fetch("/api/admin/supplier-outreach");
+      const response = await fetch("/api/admin/customer-crm");
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.error ?? "Failed to load outreach records");
+        throw new Error(data.error ?? "Failed to load customer CRM");
       }
 
-      setRecords(data.records as SupplierOutreachRecord[]);
-      setSummary(data.summary as SupplierOutreachSummary);
+      setRecords(data.records as CustomerLeadRecord[]);
+      setSummary(data.summary as CustomerCrmSummary);
     } catch (loadError) {
       setError(
         loadError instanceof Error
           ? loadError.message
-          : "Failed to load outreach records",
+          : "Failed to load customer CRM",
       );
     } finally {
       setIsLoading(false);
@@ -186,14 +176,15 @@ export function SupplierOutreachAdminPanel() {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch("/api/admin/supplier-outreach", {
+      const response = await fetch("/api/admin/customer-crm", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          name: formData.get("name"),
+          email: formData.get("email"),
           companyName: formData.get("companyName"),
-          contactName: formData.get("contactName"),
-          contactEmail: formData.get("contactEmail"),
-          website: formData.get("website"),
+          phone: formData.get("phone"),
+          source: formData.get("source"),
           contactedAt: formData.get("contactedAt")
             ? new Date(String(formData.get("contactedAt"))).toISOString()
             : undefined,
@@ -203,110 +194,44 @@ export function SupplierOutreachAdminPanel() {
 
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.error ?? "Failed to add outreach record");
+        throw new Error(data.error ?? "Failed to add lead");
       }
 
       createFormRef.current?.reset();
       await loadRecords();
     } catch (submitError) {
       setError(
-        submitError instanceof Error
-          ? submitError.message
-          : "Failed to add outreach record",
+        submitError instanceof Error ? submitError.message : "Failed to add lead",
       );
     } finally {
       setIsSubmitting(false);
     }
   }
 
-  async function handleImportProspects() {
-    setError(null);
-    setIsImportingProspects(true);
-
-    try {
-      const existingNames = new Set(
-        records.map((record) => record.companyName.trim().toLowerCase()),
-      );
-      let created = 0;
-      let skipped = 0;
-
-      for (const prospect of PROSPECT_IMPORT_LIST) {
-        const key = prospect.companyName.trim().toLowerCase();
-        if (existingNames.has(key)) {
-          skipped += 1;
-          continue;
-        }
-
-        const response = await fetch("/api/admin/supplier-outreach", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            companyName: prospect.companyName,
-            website: prospect.website ?? "",
-            notes:
-              "Imported prospect list (Jul 2026). Distributor / supplier outreach candidate.",
-          }),
-        });
-        const data = await response.json();
-        if (!response.ok) {
-          throw new Error(
-            data.error ?? `Failed to import ${prospect.companyName}`,
-          );
-        }
-
-        existingNames.add(key);
-        created += 1;
-      }
-
-      await loadRecords();
-      if (created === 0 && skipped > 0) {
-        setError(null);
-        window.alert(`All ${skipped} prospects were already in the tracker.`);
-      } else {
-        window.alert(
-          `Imported ${created} prospect${created === 1 ? "" : "s"}${
-            skipped ? ` (${skipped} already tracked)` : ""
-          }.`,
-        );
-      }
-    } catch (importError) {
-      setError(
-        importError instanceof Error
-          ? importError.message
-          : "Failed to import prospects",
-      );
-    } finally {
-      setIsImportingProspects(false);
-    }
-  }
-
-  async function updateRecord(
-    id: string,
-    payload: Record<string, unknown>,
-  ) {
+  async function updateRecord(id: string, payload: Record<string, unknown>) {
     setError(null);
     setActionId(id);
 
     try {
-      const response = await fetch(`/api/admin/supplier-outreach/${id}`, {
+      const response = await fetch(`/api/admin/customer-crm/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.error ?? "Failed to update record");
+        throw new Error(data.error ?? "Failed to update lead");
       }
 
       setRecords((current) =>
         current.map((record) =>
-          record.id === id ? (data.record as SupplierOutreachRecord) : record,
+          record.id === id ? (data.record as CustomerLeadRecord) : record,
         ),
       );
       await loadRecords();
     } catch (updateError) {
       setError(
-        updateError instanceof Error ? updateError.message : "Failed to update record",
+        updateError instanceof Error ? updateError.message : "Failed to update lead",
       );
     } finally {
       setActionId(null);
@@ -318,19 +243,49 @@ export function SupplierOutreachAdminPanel() {
     setActionId(id);
 
     try {
-      const response = await fetch(`/api/admin/supplier-outreach/${id}`, {
+      const response = await fetch(`/api/admin/customer-crm/${id}`, {
         method: "DELETE",
       });
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.error ?? "Failed to delete record");
+        throw new Error(data.error ?? "Failed to delete lead");
       }
 
       setRecords((current) => current.filter((record) => record.id !== id));
       await loadRecords();
     } catch (deleteError) {
       setError(
-        deleteError instanceof Error ? deleteError.message : "Failed to delete record",
+        deleteError instanceof Error ? deleteError.message : "Failed to delete lead",
+      );
+    } finally {
+      setActionId(null);
+    }
+  }
+
+  async function handleSendEmail(id: string) {
+    setError(null);
+    setActionId(id);
+
+    try {
+      const response = await fetch(`/api/admin/customer-crm/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sendEmail: true,
+          subject: emailSubject,
+          message: emailMessage,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error ?? "Failed to send email");
+      }
+
+      setEmailLeadId(null);
+      await loadRecords();
+    } catch (sendError) {
+      setError(
+        sendError instanceof Error ? sendError.message : "Failed to send email",
       );
     } finally {
       setActionId(null);
@@ -349,83 +304,79 @@ export function SupplierOutreachAdminPanel() {
         <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <SummaryCard label="Total tracked" value={summary.total} />
           <SummaryCard
-            label="Awaiting response"
-            value={summary.awaitingResponse}
-            detail="Asked or follow-up sent"
+            label="In pipeline"
+            value={summary.pipeline}
+            detail="Lead / contacted / nurturing"
           />
-          <SummaryCard label="Registered" value={summary.registered} />
-          <SummaryCard
-            label="Inventory live"
-            value={summary.inventoryLive}
-            detail="Uploaded stock"
-          />
+          <SummaryCard label="Signed up" value={summary.signedUp} />
+          <SummaryCard label="Active" value={summary.active} />
           <SummaryCard label="Closed" value={summary.closed} />
         </section>
       ) : null}
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h2 className="text-lg font-semibold text-slate-900">Log a supplier outreach</h2>
-            <p className="mt-2 text-sm text-slate-600">
-              Add a prospect when you ask them to join USParts and upload inventory. If
-              their contact email matches a registered company, the record links
-              automatically and status updates when they import stock.
-            </p>
-          </div>
-          <button
-            type="button"
-            disabled={isImportingProspects || isLoading}
-            onClick={() => void handleImportProspects()}
-            className="rounded-lg border border-blue-300 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-800 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {isImportingProspects
-              ? "Importing…"
-              : "Import 25 distributor prospects"}
-          </button>
-        </div>
+        <h2 className="text-lg font-semibold text-slate-900">Add a customer lead</h2>
+        <p className="mt-2 text-sm text-slate-600">
+          Track buyers and prospects you want to market. When their email matches a
+          signup, the lead links automatically.
+        </p>
 
         <form
           ref={createFormRef}
           onSubmit={handleCreate}
           className="mt-5 grid gap-4 sm:grid-cols-2"
         >
-          <label className="block space-y-2 sm:col-span-2">
-            <span className="text-sm font-medium text-slate-700">Company name</span>
-            <input
-              name="companyName"
-              required
-              placeholder="Acme Components"
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-            />
-          </label>
-
           <label className="block space-y-2">
-            <span className="text-sm font-medium text-slate-700">Contact name</span>
+            <span className="text-sm font-medium text-slate-700">Name</span>
             <input
-              name="contactName"
+              name="name"
               placeholder="Jane Smith"
               className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
           </label>
 
           <label className="block space-y-2">
-            <span className="text-sm font-medium text-slate-700">Contact email</span>
+            <span className="text-sm font-medium text-slate-700">Email</span>
             <input
-              name="contactEmail"
+              name="email"
               type="email"
-              placeholder="jane@acmecomponents.com"
+              required
+              placeholder="jane@example.com"
               className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
           </label>
 
           <label className="block space-y-2">
-            <span className="text-sm font-medium text-slate-700">Website</span>
+            <span className="text-sm font-medium text-slate-700">Company</span>
             <input
-              name="website"
-              placeholder="acmecomponents.com"
+              name="companyName"
+              placeholder="Acme Manufacturing"
               className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
+          </label>
+
+          <label className="block space-y-2">
+            <span className="text-sm font-medium text-slate-700">Phone</span>
+            <input
+              name="phone"
+              placeholder="555-123-4567"
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            />
+          </label>
+
+          <label className="block space-y-2">
+            <span className="text-sm font-medium text-slate-700">Source</span>
+            <input
+              name="source"
+              list="crm-source-suggestions"
+              placeholder="Referral, trade show…"
+              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            />
+            <datalist id="crm-source-suggestions">
+              {SOURCE_SUGGESTIONS.map((source) => (
+                <option key={source} value={source} />
+              ))}
+            </datalist>
           </label>
 
           <label className="block space-y-2">
@@ -443,7 +394,7 @@ export function SupplierOutreachAdminPanel() {
             <textarea
               name="notes"
               rows={3}
-              placeholder="How you reached out, who you spoke with, next steps..."
+              placeholder="How you met them, what they need, next steps…"
               className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
             />
           </label>
@@ -454,7 +405,7 @@ export function SupplierOutreachAdminPanel() {
               disabled={isSubmitting}
               className="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
             >
-              {isSubmitting ? "Saving..." : "Add to tracker"}
+              {isSubmitting ? "Saving..." : "Add to CRM"}
             </button>
           </div>
         </form>
@@ -464,10 +415,10 @@ export function SupplierOutreachAdminPanel() {
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <h2 className="text-lg font-semibold text-slate-900">
-              Outreach pipeline ({filteredRecords.length})
+              Customer pipeline ({filteredRecords.length})
             </h2>
             <p className="mt-1 text-sm text-slate-600">
-              Track follow-ups and see who has joined or uploaded inventory.
+              Market prospects, log follow-ups, and track who signs up.
             </p>
           </div>
 
@@ -489,23 +440,64 @@ export function SupplierOutreachAdminPanel() {
           </div>
         </div>
 
+        {emailLeadId ? (
+          <div className="mt-5 rounded-xl border border-blue-200 bg-blue-50 p-4">
+            <p className="text-sm font-semibold text-slate-900">
+              Send email to{" "}
+              {records.find((record) => record.id === emailLeadId)?.email}
+            </p>
+            <div className="mt-3 grid gap-3">
+              <input
+                value={emailSubject}
+                onChange={(event) => setEmailSubject(event.target.value)}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                placeholder="Subject"
+              />
+              <textarea
+                value={emailMessage}
+                onChange={(event) => setEmailMessage(event.target.value)}
+                rows={5}
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                placeholder="Message"
+              />
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  disabled={actionId === emailLeadId}
+                  onClick={() => void handleSendEmail(emailLeadId)}
+                  className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:bg-slate-300"
+                >
+                  {actionId === emailLeadId ? "Sending…" : "Send email"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEmailLeadId(null)}
+                  className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-white"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
         {isLoading ? (
           <p className="mt-4 text-sm text-slate-500">Loading...</p>
         ) : filteredRecords.length === 0 ? (
           <p className="mt-4 text-sm text-slate-500">
-            No outreach records in this view yet.
+            No customer leads in this view yet.
           </p>
         ) : (
           <div className="mt-4 overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
                 <tr>
-                  <th className="px-3 py-3">Company</th>
                   <th className="px-3 py-3">Contact</th>
+                  <th className="px-3 py-3">Company</th>
                   <th className="px-3 py-3">Status</th>
                   <th className="px-3 py-3">Contacted</th>
-                  <th className="px-3 py-3">Follow-up</th>
-                  <th className="px-3 py-3">Platform</th>
+                  <th className="px-3 py-3">Marketing</th>
+                  <th className="px-3 py-3">Account</th>
                   <th className="px-3 py-3">Notes</th>
                   <th className="px-3 py-3" />
                 </tr>
@@ -514,25 +506,21 @@ export function SupplierOutreachAdminPanel() {
                 {filteredRecords.map((record) => (
                   <tr key={record.id}>
                     <td className="px-3 py-3 align-top">
-                      <p className="font-medium text-slate-900">{record.companyName}</p>
-                      {record.website ? (
-                        <a
-                          href={
-                            record.website.startsWith("http")
-                              ? record.website
-                              : `https://${record.website}`
-                          }
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-600 hover:text-blue-700"
-                        >
-                          {record.website}
-                        </a>
+                      <p className="font-medium text-slate-900">
+                        {record.name ?? "—"}
+                      </p>
+                      <p className="text-slate-500">{record.email}</p>
+                      {record.phone ? (
+                        <p className="text-xs text-slate-500">{record.phone}</p>
+                      ) : null}
+                      {record.source ? (
+                        <p className="mt-1 text-xs text-slate-400">
+                          Source: {record.source}
+                        </p>
                       ) : null}
                     </td>
                     <td className="px-3 py-3 align-top text-slate-700">
-                      <p>{record.contactName ?? "—"}</p>
-                      <p className="text-slate-500">{record.contactEmail ?? "—"}</p>
+                      {record.companyName ?? "—"}
                     </td>
                     <td className="px-3 py-3 align-top">
                       <select
@@ -558,37 +546,39 @@ export function SupplierOutreachAdminPanel() {
                     <td className="px-3 py-3 align-top">
                       <div className="space-y-2">
                         <p className="text-slate-700">
-                          {formatWhen(record.lastFollowUpAt)}
+                          {record.emailCount > 0
+                            ? `${record.emailCount} sent · last ${formatWhen(record.lastEmailedAt)}`
+                            : "No emails yet"}
                         </p>
+                        <button
+                          type="button"
+                          disabled={actionId === record.id}
+                          onClick={() => setEmailLeadId(record.id)}
+                          className="text-xs font-medium text-blue-600 hover:text-blue-700 disabled:text-slate-400"
+                        >
+                          Email prospect
+                        </button>
                         <button
                           type="button"
                           disabled={actionId === record.id}
                           onClick={() =>
                             void updateRecord(record.id, {
-                              status: "FOLLOW_UP",
+                              status: "NURTURING",
                               lastFollowUpAt: new Date().toISOString(),
                             })
                           }
-                          className="text-xs font-medium text-blue-600 hover:text-blue-700 disabled:text-slate-400"
+                          className="block text-xs font-medium text-blue-600 hover:text-blue-700 disabled:text-slate-400"
                         >
                           Mark follow-up today
                         </button>
                       </div>
                     </td>
                     <td className="px-3 py-3 align-top text-slate-700">
-                      {record.company ? (
+                      {record.user ? (
                         <div className="space-y-1">
-                          <Link
-                            href="/admin/import"
-                            className="font-medium text-blue-600 hover:text-blue-700"
-                          >
-                            {record.company.name}
-                          </Link>
+                          <p className="font-medium text-green-700">Signed up</p>
                           <p className="text-xs text-slate-500">
-                            {record.company.listingCount} active listings
-                            {record.company.lastImportAt
-                              ? ` · last import ${formatWhen(record.company.lastImportAt)}`
-                              : ""}
+                            {formatWhen(record.user.createdAt)}
                           </p>
                         </div>
                       ) : (

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { isPlatformAdmin } from "@/lib/admin";
 import { getAdminOverview } from "@/lib/admin-overview";
@@ -62,7 +62,7 @@ export default async function AdminPage() {
   const user = await getSessionUser();
 
   if (!user) {
-    redirect("/login?next=/admin");
+    notFound();
   }
 
   if (!isPlatformAdmin(user.email)) {
@@ -100,10 +100,22 @@ export default async function AdminPage() {
             Create company
           </Link>
           <Link
+            href="/admin/top-accounts"
+            className="rounded-lg border border-blue-300 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-800 hover:bg-blue-100"
+          >
+            Top 25 accounts
+          </Link>
+          <Link
             href="/admin/outreach"
             className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
           >
             Supplier outreach
+          </Link>
+          <Link
+            href="/admin/crm"
+            className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          >
+            Customer CRM
           </Link>
           <Link
             href="/admin/aliases"

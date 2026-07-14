@@ -240,7 +240,15 @@ export function AuthForm({ mode }: AuthFormProps) {
   const [mounted, setMounted] = useState(false);
   const inviteToken = searchParams.get("invite");
   const inviteEmail = searchParams.get("email");
-  const nextPath = searchParams.get("next") || (inviteToken ? `/invite/${inviteToken}` : "/company");
+  const rawNext = searchParams.get("next");
+  // Don't leave /admin in login/signup share URLs for ordinary flows.
+  // Admins who know the path can still navigate there after signing in.
+  const nextPath =
+    rawNext && !rawNext.startsWith("/admin")
+      ? rawNext
+      : inviteToken
+        ? `/invite/${inviteToken}`
+        : "/company";
   const isSignup = mode === "signup";
 
   useEffect(() => {

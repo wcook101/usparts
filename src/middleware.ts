@@ -4,7 +4,7 @@ import { SESSION_COOKIE_NAME } from "@/lib/auth/constants";
 import { getClientIp, rateLimit } from "@/lib/rate-limit";
 import { BULK_RFQ_COOLDOWN_MS } from "@/lib/validations";
 
-const protectedPaths = ["/company/import", "/company/listings/new", "/admin"];
+const protectedPaths = ["/company/import", "/company/listings/new"];
 
 type RateLimitRule = {
   test: (pathname: string, method: string) => boolean;
@@ -112,6 +112,23 @@ export function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
+  // Never advertise /admin or /api/admin: strangers get a normal 404, not a login wall.
+  if (
+    pathname === "/admin" ||
+    pathname.startsWith("/admin/") ||
+    pathname === "/api/admin" ||
+    pathname.startsWith("/api/admin/")
+  ) {
+    const token = request.cookies.get(SESSION_COOKIE_NAME)?.value;
+    if (!token) {
+      if (pathname.startsWith("/api/")) {
+        return NextResponse.json({ error: "Not found" }, { status: 404 });
+      }
+      return NextResponse.rewrite(new URL("/__admin_not_found", request.url));
+    }
+    return NextResponse.next();
+  }
+
   if (!protectedPaths.some((path) => pathname.startsWith(path))) {
     return NextResponse.next();
   }
@@ -131,6 +148,8 @@ export const config = {
   matcher: [
     "/admin",
     "/admin/:path*",
+    "/api/admin",
+    "/api/admin/:path*",
     "/company/import/:path*",
     "/company/listings/new/:path*",
     "/api/auth/login",

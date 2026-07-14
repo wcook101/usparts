@@ -191,6 +191,16 @@ export const pageMetadata = {
     "Track supplier outreach, follow-ups, registrations, and inventory upload progress for the USParts.us electronic component marketplace.",
     { noindex: true },
   ),
+  adminCustomerCrm: pageMeta(
+    "Customer CRM - Buyer Outreach Tracker",
+    "Admin CRM for tracking and marketing prospective buyers on USParts.us. Platform admin only.",
+    { noindex: true },
+  ),
+  adminTopAccounts: pageMeta(
+    "Top 25 Priority Accounts - Decision Maker Research",
+    "Admin research board for USParts.us top supplier prospects: decision-maker emails, titles, and outreach readiness.",
+    { noindex: true },
+  ),
   blog: pageMeta(
     "Blog & Guides - Electronic Component Search Tips",
     "Free guides on BOM search, MPN lookup, supplier quotes, selling surplus inventory, and sourcing obsolete semiconductors on USParts.us.",

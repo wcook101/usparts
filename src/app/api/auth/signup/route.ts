@@ -13,6 +13,7 @@ import {
 } from "@/lib/auth";
 import { resolveCompanyMembership } from "@/lib/auth/membership";
 import { normalizeEmail } from "@/lib/auth/ownership";
+import { linkCustomerLeadOnSignup } from "@/lib/customer-crm";
 import { signupSchema } from "@/lib/validations";
 
 export async function POST(request: Request) {
@@ -92,6 +93,16 @@ export async function POST(request: Request) {
       company,
       membership,
     };
+
+    try {
+      await linkCustomerLeadOnSignup({
+        userId: user.id,
+        email: user.email,
+        name: user.name,
+      });
+    } catch (crmError) {
+      console.error("Customer CRM signup link failed:", crmError);
+    }
 
     const token = await createSession(user.id);
     await setSessionCookie(token);
