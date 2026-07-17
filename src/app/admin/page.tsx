@@ -105,6 +105,12 @@ export default async function AdminPage() {
             Customer CRM
           </Link>
           <Link
+            href="/admin/rfqs"
+            className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          >
+            RFQ activity
+          </Link>
+          <Link
             href="/admin/aliases"
             className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
           >
@@ -209,11 +215,20 @@ export default async function AdminPage() {
           value={overview.stats.orders}
           detail={`+${overview.stats.ordersLast7Days} last 7 days`}
         />
-        <StatCard
-          label="Quotes"
-          value={overview.stats.quotes}
-          detail={`+${overview.stats.quotesLast7Days} last 7 days`}
-        />
+        <Link
+          href="/admin/rfqs"
+          className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-blue-200 hover:bg-blue-50/40"
+        >
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Quotes
+          </p>
+          <p className="mt-2 text-3xl font-bold text-slate-900">
+            {overview.stats.quotes}
+          </p>
+          <p className="mt-1 text-sm text-slate-500">
+            +{overview.stats.quotesLast7Days} last 7 days · view RFQ activity
+          </p>
+        </Link>
       </section>
 
       <section className="mt-10">

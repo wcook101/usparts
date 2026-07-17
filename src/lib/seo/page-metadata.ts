@@ -196,6 +196,11 @@ export const pageMetadata = {
     "Admin CRM for tracking and marketing prospective buyers on USParts.us. Platform admin only.",
     { noindex: true },
   ),
+  adminRfqs: pageMeta(
+    "RFQ Activity - Quote Request Tracker",
+    "Admin view of single-part and bulk RFQ submissions from USParts.us buyers.",
+    { noindex: true },
+  ),
   adminTopAccounts: pageMeta(
     "Top 25 Priority Accounts - Decision Maker Research",
     "Admin research board for USParts.us top supplier prospects: decision-maker emails, titles, and outreach readiness.",
