@@ -3,26 +3,13 @@ import { notFound } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { isPlatformAdmin } from "@/lib/admin";
 import { getAdminOverview } from "@/lib/admin-overview";
+import { formatWhen } from "@/lib/datetime";
 import { UPLOAD_EMAIL } from "@/lib/site";
 import { pageMetadata } from "@/lib/seo/page-metadata";
 
 export const metadata = pageMetadata.adminOverview;
 
 export const dynamic = "force-dynamic";
-
-function formatWhen(value: string | null) {
-  if (!value) {
-    return "—";
-  }
-
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(new Date(value));
-}
 
 function StatCard({
   label,

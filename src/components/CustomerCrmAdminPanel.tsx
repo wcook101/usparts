@@ -5,6 +5,7 @@ import type {
   CustomerCrmSummary,
   CustomerLeadRecord,
 } from "@/lib/customer-crm";
+import { formatWhen } from "@/lib/datetime";
 
 type CrmStatus =
   | "LEAD"
@@ -43,16 +44,8 @@ const SOURCE_SUGGESTIONS = [
   "Other",
 ];
 
-function formatWhen(value: string | null) {
-  if (!value) {
-    return "—";
-  }
-
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  }).format(new Date(value));
+function formatDate(value: string | null) {
+  return formatWhen(value, { time: false });
 }
 
 function statusBadgeClass(status: CrmStatus) {
@@ -541,13 +534,13 @@ export function CustomerCrmAdminPanel() {
                       </select>
                     </td>
                     <td className="px-3 py-3 align-top text-slate-700">
-                      {formatWhen(record.contactedAt)}
+                      {formatDate(record.contactedAt)}
                     </td>
                     <td className="px-3 py-3 align-top">
                       <div className="space-y-2">
                         <p className="text-slate-700">
                           {record.emailCount > 0
-                            ? `${record.emailCount} sent · last ${formatWhen(record.lastEmailedAt)}`
+                            ? `${record.emailCount} sent · last ${formatDate(record.lastEmailedAt)}`
                             : "No emails yet"}
                         </p>
                         <button
@@ -578,7 +571,7 @@ export function CustomerCrmAdminPanel() {
                         <div className="space-y-1">
                           <p className="font-medium text-green-700">Signed up</p>
                           <p className="text-xs text-slate-500">
-                            {formatWhen(record.user.createdAt)}
+                            {formatDate(record.user.createdAt)}
                           </p>
                         </div>
                       ) : (

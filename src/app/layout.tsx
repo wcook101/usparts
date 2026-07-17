@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Roboto_Mono } from "next/font/google";
 import { Footer } from "@/components/Footer";
+import { GoogleAnalytics } from "@/components/GoogleAnalytics";
 import { Header } from "@/components/Header";
 import { MicrosoftClarity } from "@/components/MicrosoftClarity";
 import { getSiteUrl } from "@/lib/site";
@@ -67,6 +68,7 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} ${robotoMono.variable} h-full antialiased`}
     >
       <body className="relative min-h-full bg-white text-[#0a1628]">
+        <GoogleAnalytics />
         <MicrosoftClarity />
         <Header />
         <main className="relative flex-1">{children}</main>

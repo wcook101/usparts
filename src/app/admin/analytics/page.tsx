@@ -2,22 +2,13 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { isPlatformAdmin } from "@/lib/admin";
+import { formatWhen } from "@/lib/datetime";
 import { getSearchAnalytics } from "@/lib/search-analytics";
 import { pageMetadata } from "@/lib/seo/page-metadata";
 
 export const metadata = pageMetadata.adminAnalytics;
 
 export const dynamic = "force-dynamic";
-
-function formatWhen(value: string) {
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(new Date(value));
-}
 
 function modeLabel(mode: string) {
   if (mode === "BULK") return "Bulk";
@@ -156,7 +147,7 @@ export default async function AdminAnalyticsPage() {
             <table className="min-w-full text-sm">
               <thead>
                 <tr className="border-b border-slate-100 bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  <th className="px-4 py-3">When</th>
+                  <th className="px-4 py-3">When (ET)</th>
                   <th className="px-4 py-3">Mode</th>
                   <th className="px-4 py-3">Query</th>
                   <th className="px-4 py-3">Results</th>

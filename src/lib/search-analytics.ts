@@ -1,4 +1,5 @@
 import type { SearchMode } from "@/generated/prisma/client";
+import { startOfTodayEastern } from "@/lib/datetime";
 import { db } from "@/lib/db";
 
 const MAX_QUERY_TEXT_LENGTH = 2000;
@@ -77,9 +78,7 @@ export type SearchAnalytics = {
 
 export async function getSearchAnalytics(): Promise<SearchAnalytics> {
   const now = new Date();
-  const startOfToday = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
-  );
+  const startOfToday = startOfTodayEastern(now);
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 

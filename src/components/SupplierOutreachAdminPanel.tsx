@@ -6,6 +6,7 @@ import type {
   SupplierOutreachRecord,
   SupplierOutreachSummary,
 } from "@/lib/supplier-outreach";
+import { formatWhen } from "@/lib/datetime";
 
 type OutreachStatus =
   | "CONTACTED"
@@ -64,18 +65,9 @@ const FILTER_OPTIONS: { value: FilterKey; label: string }[] = [
   { value: "closed", label: "Closed" },
 ];
 
-function formatWhen(value: string | null) {
-  if (!value) {
-    return "—";
-  }
-
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  }).format(new Date(value));
+function formatDate(value: string | null) {
+  return formatWhen(value, { time: false });
 }
-
 
 function statusBadgeClass(status: OutreachStatus) {
   switch (status) {
@@ -553,12 +545,12 @@ export function SupplierOutreachAdminPanel() {
                       </select>
                     </td>
                     <td className="px-3 py-3 align-top text-slate-700">
-                      {formatWhen(record.contactedAt)}
+                      {formatDate(record.contactedAt)}
                     </td>
                     <td className="px-3 py-3 align-top">
                       <div className="space-y-2">
                         <p className="text-slate-700">
-                          {formatWhen(record.lastFollowUpAt)}
+                          {formatDate(record.lastFollowUpAt)}
                         </p>
                         <button
                           type="button"
@@ -587,7 +579,7 @@ export function SupplierOutreachAdminPanel() {
                           <p className="text-xs text-slate-500">
                             {record.company.listingCount} active listings
                             {record.company.lastImportAt
-                              ? ` · last import ${formatWhen(record.company.lastImportAt)}`
+                              ? ` · last import ${formatDate(record.company.lastImportAt)}`
                               : ""}
                           </p>
                         </div>
