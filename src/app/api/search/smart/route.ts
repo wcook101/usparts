@@ -38,7 +38,7 @@ export async function POST(request: Request) {
     const results = await smartSearchListings(parsed.data);
     const user = await getSessionUser();
 
-    logSearchEvent({
+    await logSearchEvent({
       mode: "SMART",
       queryText: parsed.data.query,
       resultCount: results.search.totalListingCount,

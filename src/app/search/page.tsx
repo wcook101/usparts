@@ -134,7 +134,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
     ].filter(Boolean);
 
     const requestHeaders = await headers();
-    logSearchEvent({
+    await logSearchEvent({
       mode: "SINGLE",
       queryText: queryParts.join(" · ") || "filter",
       resultCount: totalCount,

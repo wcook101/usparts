@@ -22,7 +22,7 @@ export async function POST(request: Request) {
   const results = await bulkSearchListings(parsed.data);
   const user = await getSessionUser();
 
-  logSearchEvent({
+  await logSearchEvent({
     mode: "BULK",
     queryText: parsed.data.mpns,
     resultCount: results.totalListingCount,

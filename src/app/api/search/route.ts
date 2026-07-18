@@ -49,7 +49,7 @@ export async function GET(request: Request) {
       parsed.data.category ? `cat:${parsed.data.category.trim()}` : null,
     ].filter(Boolean);
 
-    logSearchEvent({
+    await logSearchEvent({
       mode: "SINGLE",
       queryText: queryParts.join(" · ") || "filter",
       resultCount: results.totalCount,

@@ -1,6 +1,7 @@
 import type { SearchMode } from "@/generated/prisma/client";
 import { startOfTodayEastern } from "@/lib/datetime";
 import { db } from "@/lib/db";
+import { easternDayBounds } from "@/lib/search-intel/aggregate";
 import {
   classifyVisitor,
   getUserAgentFromHeaders,
@@ -51,15 +52,34 @@ function truncateQueryText(value: string) {
   return `${trimmed.slice(0, MAX_QUERY_TEXT_LENGTH - 1)}…`;
 }
 
-/** Fire-and-forget search logging — never blocks or fails the search response. */
-export function logSearchEvent(input: LogSearchEventInput) {
+type SearchLogFailure = {
+  at: string;
+  message: string;
+  queryText: string;
+  mode: SearchMode;
+};
+
+/** Process-local last failure (for admin/health until a durable store exists). */
+let lastSearchLogFailure: SearchLogFailure | null = null;
+
+export function getLastSearchLogFailure() {
+  return lastSearchLogFailure;
+}
+
+/**
+ * Persist a search event. Must be awaited — fire-and-forget voids are dropped
+ * when the Next.js request lifecycle ends, which silently loses production events.
+ * Failures are logged structured and recorded for the admin pipeline health panel;
+ * they do not fail the search response.
+ */
+export async function logSearchEvent(input: LogSearchEventInput): Promise<void> {
   const queryText = truncateQueryText(input.queryText);
   if (!queryText) {
     return;
   }
 
-  void db.searchEvent
-    .create({
+  try {
+    await db.searchEvent.create({
       data: {
         mode: input.mode,
         queryText,
@@ -72,10 +92,92 @@ export function logSearchEvent(input: LogSearchEventInput) {
         userAgent: normalizeUserAgent(input.userAgent),
         userId: input.userId ?? null,
       },
-    })
-    .catch((error) => {
-      console.error("Failed to log search event:", error);
     });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    lastSearchLogFailure = {
+      at: new Date().toISOString(),
+      message,
+      queryText: queryText.slice(0, 200),
+      mode: input.mode,
+    };
+    console.error(
+      JSON.stringify({
+        event: "search_event_log_failed",
+        mode: input.mode,
+        queryText: queryText.slice(0, 200),
+        message,
+      }),
+    );
+  }
+}
+
+export type SearchPipelineHealth = {
+  lastEventAt: string | null;
+  lastEventQuery: string | null;
+  eventsToday: number;
+  eventsLastHour: number;
+  warehouseLastBuiltAt: string | null;
+  warehouseLastDay: string | null;
+  unprocessedHint: number | null;
+  lastLogFailure: SearchLogFailure | null;
+  stale: boolean;
+  staleReason: string | null;
+};
+
+export async function getSearchPipelineHealth(): Promise<SearchPipelineHealth> {
+  const now = new Date();
+  const startOfToday = startOfTodayEastern(now);
+  const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+  const staleAfterMs = 6 * 60 * 60 * 1000;
+
+  const [latest, eventsToday, eventsLastHour, warehouse] = await Promise.all([
+    db.searchEvent.findFirst({
+      orderBy: { createdAt: "desc" },
+      select: { createdAt: true, queryText: true },
+    }),
+    db.searchEvent.count({ where: { createdAt: { gte: startOfToday } } }),
+    db.searchEvent.count({ where: { createdAt: { gte: oneHourAgo } } }),
+    db.searchIntelDay.findFirst({
+      orderBy: { builtAt: "desc" },
+      select: { builtAt: true, day: true },
+    }),
+  ]);
+
+  let unprocessedHint: number | null = null;
+  if (warehouse?.day) {
+    const { end } = easternDayBounds(warehouse.day);
+    // Events after the end of the last rolled-up Eastern day.
+    unprocessedHint = await db.searchEvent.count({
+      where: { createdAt: { gte: end } },
+    });
+  }
+
+  const lastEventAt = latest?.createdAt.toISOString() ?? null;
+  const ageMs = latest ? now.getTime() - latest.createdAt.getTime() : null;
+  const stale = ageMs == null || ageMs > staleAfterMs;
+  let staleReason: string | null = null;
+  if (!latest) {
+    staleReason = "No SearchEvent rows in the production database.";
+  } else if (ageMs != null && ageMs > staleAfterMs) {
+    staleReason = `No search events in the last ${Math.round(ageMs / 3600000)} hours.`;
+  }
+  if (lastSearchLogFailure) {
+    staleReason = `SearchEvent insert failed at ${lastSearchLogFailure.at}: ${lastSearchLogFailure.message}`;
+  }
+
+  return {
+    lastEventAt,
+    lastEventQuery: latest?.queryText ?? null,
+    eventsToday,
+    eventsLastHour,
+    warehouseLastBuiltAt: warehouse?.builtAt.toISOString() ?? null,
+    warehouseLastDay: warehouse?.day.toISOString().slice(0, 10) ?? null,
+    unprocessedHint,
+    lastLogFailure: lastSearchLogFailure,
+    stale,
+    staleReason,
+  };
 }
 
 export { getUserAgentFromHeaders };

@@ -4,7 +4,10 @@ import { notFound } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { isPlatformAdmin } from "@/lib/admin";
 import { formatWhen } from "@/lib/datetime";
-import { getSearchAnalytics } from "@/lib/search-analytics";
+import {
+  getSearchAnalytics,
+  getSearchPipelineHealth,
+} from "@/lib/search-analytics";
 import { pageMetadata } from "@/lib/seo/page-metadata";
 import { isHumanVisitor, type VisitorLabel } from "@/lib/visitor-classify";
 
@@ -108,7 +111,10 @@ export default async function AdminAnalyticsPage() {
     notFound();
   }
 
-  const analytics = await getSearchAnalytics();
+  const [analytics, pipeline] = await Promise.all([
+    getSearchAnalytics(),
+    getSearchPipelineHealth(),
+  ]);
   const { business, crawl, totals } = analytics;
   const recentHuman = analytics.recent.filter((row) =>
     isHumanVisitor(row.visitorLabel),
@@ -142,6 +148,37 @@ export default async function AdminAnalyticsPage() {
           All events today: {totals.today} · 7d: {totals.last7Days} · 30d:{" "}
           {totals.last30Days} (includes bots; not a commercial KPI)
         </p>
+      </div>
+
+      <div
+        className={
+          pipeline.stale || pipeline.lastLogFailure
+            ? "rounded-xl border border-amber-300 bg-amber-50 px-5 py-4 text-sm text-amber-950"
+            : "rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm text-emerald-950"
+        }
+      >
+        <p className="font-semibold">Search event pipeline</p>
+        <p className="mt-1">
+          Last search event:{" "}
+          {pipeline.lastEventAt ? formatWhen(pipeline.lastEventAt) : "never"}
+          {pipeline.lastEventQuery
+            ? ` · “${pipeline.lastEventQuery.slice(0, 80)}”`
+            : ""}
+        </p>
+        <p className="mt-1">
+          Events today: {pipeline.eventsToday} · Last hour:{" "}
+          {pipeline.eventsLastHour} · Warehouse last built:{" "}
+          {pipeline.warehouseLastBuiltAt
+            ? formatWhen(pipeline.warehouseLastBuiltAt)
+            : "never"}
+          {pipeline.warehouseLastDay
+            ? ` (day ${pipeline.warehouseLastDay})`
+            : ""}{" "}
+          · Unprocessed after rollup: {pipeline.unprocessedHint ?? "—"}
+        </p>
+        {pipeline.staleReason ? (
+          <p className="mt-2 font-medium">{pipeline.staleReason}</p>
+        ) : null}
       </div>
 
       <Panel
