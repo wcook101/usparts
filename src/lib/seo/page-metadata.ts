@@ -171,6 +171,11 @@ export const pageMetadata = {
     "Review buyer search activity on USParts.us including recent queries, search volume, and top part number searches.",
     { noindex: true },
   ),
+  adminSearchIntel: pageMeta(
+    "Search Warehouse - Demand Intelligence",
+    "Nightly search demand warehouse for USParts.us — top parts, manufacturers, zero-result gaps, military demand, and RFQ trends.",
+    { noindex: true },
+  ),
   adminImport: pageMeta(
     "Admin Import - Supplier Inventory Upload",
     "Import supplier spreadsheets for semiconductors, ICs, and electronic components on USParts.us. Admin imports bypass supplier cooldown limits.",

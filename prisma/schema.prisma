@@ -88,6 +88,18 @@ enum SearchMode {
   SMART
 }
 
+enum SearchIntelDimension {
+  PART
+  MANUFACTURER
+  CATEGORY
+  ZERO_RESULT_PART
+  MILITARY_PART
+  SUPPLIER_RFQ
+  RFQ_BY_MANUFACTURER
+  HUMAN_QUERY
+  BOT_QUERY
+}
+
 model User {
   id           String          @id @default(cuid())
   email        String          @unique
@@ -396,6 +408,50 @@ model SearchEvent {
   @@index([queryText])
   @@index([userId])
   @@index([ipAddress])
+}
+
+/** One Eastern-calendar-day KPI rollup from SearchEvent + QuoteRequest. */
+model SearchIntelDay {
+  id                    String   @id @default(cuid())
+  day                   DateTime @db.Date
+  searchesTotal         Int      @default(0)
+  searchesHuman         Int      @default(0)
+  searchesBot           Int      @default(0)
+  searchesUnclassified  Int      @default(0)
+  searchesSingleHuman   Int      @default(0)
+  searchesBulkHuman     Int      @default(0)
+  searchesSmartHuman    Int      @default(0)
+  zeroResultHuman       Int      @default(0)
+  rfqsSubmitted         Int      @default(0)
+  humanSearchConversion Decimal? @db.Decimal(8, 6)
+  builtAt               DateTime @default(now())
+
+  @@unique([day])
+  @@index([day])
+}
+
+/**
+ * Ranked demand snapshots for trend reports and (later) public SEO content.
+ * key is a stable join key (normalized MPN, manufacturer slug, category, companyId).
+ */
+model SearchIntelRank {
+  id              String               @id @default(cuid())
+  day             DateTime             @db.Date
+  dimension       SearchIntelDimension
+  rank            Int
+  key             String
+  label           String
+  searchCount     Int                  @default(0)
+  humanCount      Int                  @default(0)
+  botCount        Int                  @default(0)
+  zeroResultCount Int                  @default(0)
+  rfqCount        Int                  @default(0)
+  listingCount    Int                  @default(0)
+  meta            Json?
+
+  @@unique([day, dimension, key])
+  @@index([day, dimension, rank])
+  @@index([dimension, key])
 }
 
 model SupplierOutreach {

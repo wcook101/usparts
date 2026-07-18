@@ -18,6 +18,8 @@
     "db:import-prospects": "tsx scripts/import-prospect-companies.ts",
     "db:link-company": "tsx scripts/link-company-owner.ts",
     "db:backfill-datasheets": "tsx scripts/backfill-datasheets.ts",
+    "db:search-intel": "tsx scripts/search-intel-nightly.ts",
+    "db:search-intel:backfill": "tsx scripts/search-intel-nightly.ts --backfill --include-today",
     "db:setup": "npm run db:up && npm run db:deploy && npm run db:seed",
     "dev:setup": "npm install && npm run db:setup",
     "verify": "tsx scripts/verify.ts",
