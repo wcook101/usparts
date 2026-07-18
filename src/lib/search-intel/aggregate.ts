@@ -93,24 +93,45 @@ export function easternDayDate(reference: Date): Date {
   return new Date(Date.UTC(year, month - 1, day));
 }
 
+/**
+ * dayDate must be a UTC date-only value from easternDayDate()
+ * (midnight UTC on the Eastern calendar day number).
+ */
 export function easternDayBounds(dayDate: Date): { start: Date; end: Date } {
-  const start = startOfTodayEastern(
-    new Date(dayDate.getTime() + 12 * 60 * 60 * 1000),
+  const ref = new Date(
+    Date.UTC(
+      dayDate.getUTCFullYear(),
+      dayDate.getUTCMonth(),
+      dayDate.getUTCDate(),
+      12,
+      0,
+      0,
+    ),
   );
+  const start = startOfTodayEastern(ref);
   const end = startOfTodayEastern(
     new Date(start.getTime() + 36 * 60 * 60 * 1000),
   );
   return { start, end };
 }
 
-export function listEasternDaysInclusive(from: Date, to: Date): Date[] {
+/** Inclusive range over UTC date-only day keys from easternDayDate(). */
+export function listEasternDaysInclusive(fromDay: Date, toDay: Date): Date[] {
   const days: Date[] = [];
-  let cursor = easternDayDate(from);
-  const end = easternDayDate(to);
-  while (cursor.getTime() <= end.getTime()) {
-    days.push(cursor);
-    const nextRef = new Date(cursor.getTime() + 36 * 60 * 60 * 1000);
-    cursor = easternDayDate(nextRef);
+  let cursor = Date.UTC(
+    fromDay.getUTCFullYear(),
+    fromDay.getUTCMonth(),
+    fromDay.getUTCDate(),
+  );
+  const end = Date.UTC(
+    toDay.getUTCFullYear(),
+    toDay.getUTCMonth(),
+    toDay.getUTCDate(),
+  );
+
+  while (cursor <= end) {
+    days.push(new Date(cursor));
+    cursor += 24 * 60 * 60 * 1000;
   }
   return days;
 }
@@ -144,7 +165,15 @@ export type AggregateDayResult = {
 export async function aggregateSearchIntelDay(
   dayDate: Date,
 ): Promise<AggregateDayResult> {
-  const day = easternDayDate(dayDate);
+  // Expect a UTC date-only key (from easternDayDate). Do not re-run
+  // easternDayDate() here — midnight UTC formats as the previous Eastern day.
+  const day = new Date(
+    Date.UTC(
+      dayDate.getUTCFullYear(),
+      dayDate.getUTCMonth(),
+      dayDate.getUTCDate(),
+    ),
+  );
   const { start, end } = easternDayBounds(day);
 
   const [events, rfqs] = await Promise.all([
@@ -420,15 +449,24 @@ export async function aggregateSearchIntelRange(options?: {
     select: { createdAt: true },
   });
 
-  const todayStart = startOfTodayEastern();
-  const defaultTo = options?.includeToday
-    ? todayStart
-    : new Date(todayStart.getTime() - 12 * 60 * 60 * 1000);
+  const now = new Date();
+  const today = easternDayDate(now);
+  const yesterday = easternDayDate(
+    new Date(startOfTodayEastern(now).getTime() - 12 * 60 * 60 * 1000),
+  );
 
-  const from = options?.from ?? earliest?.createdAt ?? todayStart;
-  const to = options?.to ?? defaultTo;
+  const fromDay = easternDayDate(
+    options?.from ?? earliest?.createdAt ?? now,
+  );
+  const toDay = easternDayDate(
+    options?.to ?? (options?.includeToday ? now : yesterday),
+  );
 
-  const days = listEasternDaysInclusive(from, to);
+  // Guard against inverted ranges (e.g. earliest event later than "yesterday").
+  const startDay = fromDay.getTime() <= toDay.getTime() ? fromDay : toDay;
+  const endDay = fromDay.getTime() <= toDay.getTime() ? toDay : fromDay;
+
+  const days = listEasternDaysInclusive(startDay, endDay);
   const results: AggregateDayResult[] = [];
   for (const day of days) {
     results.push(await aggregateSearchIntelDay(day));

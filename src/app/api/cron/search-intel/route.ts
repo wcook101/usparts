@@ -49,11 +49,13 @@ export async function POST(request: Request) {
     });
   }
 
-  const todayStart = startOfTodayEastern();
+  const now = new Date();
   const target = includeToday
-    ? todayStart
-    : new Date(todayStart.getTime() - 12 * 60 * 60 * 1000);
-  const result = await aggregateSearchIntelDay(easternDayDate(target));
+    ? easternDayDate(now)
+    : easternDayDate(
+        new Date(startOfTodayEastern(now).getTime() - 12 * 60 * 60 * 1000),
+      );
+  const result = await aggregateSearchIntelDay(target);
 
   return NextResponse.json({ ok: true, mode: "nightly", result });
 }
