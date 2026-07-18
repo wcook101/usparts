@@ -96,6 +96,14 @@ export function isHumanVisitor(label: VisitorLabel) {
   );
 }
 
+/**
+ * UA-claimed Google/Microsoft crawlers. True DNS reverse+forward verification
+ * is planned; do not treat this as cryptographically verified ownership yet.
+ */
+export function isClaimedSearchEngineCrawler(label: VisitorLabel) {
+  return label === "Google Search Bot" || label === "Microsoft Search Bot";
+}
+
 export function getUserAgentFromHeaders(headers: Headers) {
   return normalizeUserAgent(headers.get("user-agent"));
 }

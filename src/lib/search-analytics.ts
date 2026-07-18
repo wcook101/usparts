@@ -5,6 +5,7 @@ import {
   classifyVisitor,
   getUserAgentFromHeaders,
   isBotVisitor,
+  isClaimedSearchEngineCrawler,
   isHumanVisitor,
   type VisitorLabel,
 } from "@/lib/visitor-classify";
@@ -80,31 +81,49 @@ export function logSearchEvent(input: LogSearchEventInput) {
 export { getUserAgentFromHeaders };
 
 export type SearchAnalytics = {
-  stats: {
-    today: number;
-    last7Days: number;
-    last30Days: number;
-    byMode: {
+  business: {
+    humanSearchesToday: number;
+    humanSearchesLast7Days: number;
+    knownSuppliersToday: number;
+    returningToday: number;
+    rfqsToday: number;
+    /** Submitted RFQs ÷ human searches today; null when no human searches. */
+    humanSearchConversion: number | null;
+    byModeHuman30d: {
       single: number;
       bulk: number;
       smart: number;
     };
-    visitorsToday: {
-      human: number;
-      bot: number;
-      google: number;
-      microsoft: number;
-      meta: number;
-      unknownScrapers: number;
-      knownSuppliers: number;
-      returning: number;
-      unclassified: number;
-    };
+    topHumanQueries: Array<{
+      queryText: string;
+      count: number;
+    }>;
   };
-  topQueries: Array<{
-    queryText: string;
-    count: number;
-  }>;
+  crawl: {
+    botSearchesToday: number;
+    googleToday: number;
+    microsoftToday: number;
+    metaToday: number;
+    unknownScrapersToday: number;
+    /**
+     * UA-claimed Google + Microsoft crawlers today.
+     * DNS reverse+forward verification is not applied yet.
+     */
+    claimedSearchEngineToday: number;
+    /** Claimed search-engine crawlers ÷ total bot searches; null when no bots. */
+    crawlerDiscovery: number | null;
+    unclassifiedToday: number;
+    topUnknownScraperIps: Array<{
+      ipAddress: string;
+      count: number;
+    }>;
+  };
+  /** Total search events (bots + humans) — not a commercial KPI. */
+  totals: {
+    today: number;
+    last7Days: number;
+    last30Days: number;
+  };
   recent: Array<{
     id: string;
     mode: SearchMode;
@@ -126,38 +145,42 @@ type UserCompanyHint = {
   memberships: Array<{ id: string }>;
 };
 
+type ClassifiableRow = {
+  ipAddress: string | null;
+  userAgent: string | null;
+  user: UserCompanyHint | null;
+  queryText?: string;
+  mode?: SearchMode;
+  createdAt: Date;
+};
+
 function isKnownSupplierUser(user: UserCompanyHint | null | undefined) {
   if (!user) return false;
   return Boolean(user.company || user.memberships.length > 0);
 }
 
-function emptyVisitorToday() {
-  return {
-    human: 0,
-    bot: 0,
-    google: 0,
-    microsoft: 0,
-    meta: 0,
-    unknownScrapers: 0,
-    knownSuppliers: 0,
-    returning: 0,
-    unclassified: 0,
-  };
+function labelForRow(
+  row: ClassifiableRow,
+  returningIpSet: Set<string>,
+  seenIpInWindow: Set<string>,
+) {
+  const ip = row.ipAddress;
+  const returning =
+    Boolean(ip && returningIpSet.has(ip)) ||
+    Boolean(ip && seenIpInWindow.has(ip));
+  if (ip) seenIpInWindow.add(ip);
+
+  return classifyVisitor({
+    userAgent: row.userAgent,
+    ipAddress: row.ipAddress,
+    isKnownSupplier: isKnownSupplierUser(row.user),
+    isReturningVisitor: returning,
+  });
 }
 
-function bumpVisitorToday(
-  stats: ReturnType<typeof emptyVisitorToday>,
-  label: VisitorLabel,
-) {
-  if (isHumanVisitor(label)) stats.human += 1;
-  if (isBotVisitor(label)) stats.bot += 1;
-  if (label === "Google Search Bot") stats.google += 1;
-  if (label === "Microsoft Search Bot") stats.microsoft += 1;
-  if (label === "Meta AI") stats.meta += 1;
-  if (label === "Unknown Scraper") stats.unknownScrapers += 1;
-  if (label === "Known Supplier") stats.knownSuppliers += 1;
-  if (label === "Returning Visitor") stats.returning += 1;
-  if (label === "Unclassified") stats.unclassified += 1;
+function ratio(numerator: number, denominator: number): number | null {
+  if (denominator <= 0) return null;
+  return numerator / denominator;
 }
 
 export async function getSearchAnalytics(): Promise<SearchAnalytics> {
@@ -166,57 +189,40 @@ export async function getSearchAnalytics(): Promise<SearchAnalytics> {
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
+  const userInclude = {
+    select: {
+      email: true,
+      company: { select: { id: true } },
+      memberships: { select: { id: true }, take: 1 },
+    },
+  } as const;
+
   const [
     today,
     last7Days,
     last30Days,
-    modeGroups,
-    topGroups,
+    rfqsToday,
     recentRows,
-    todayRows,
+    last30dRows,
   ] = await Promise.all([
     db.searchEvent.count({ where: { createdAt: { gte: startOfToday } } }),
     db.searchEvent.count({ where: { createdAt: { gte: sevenDaysAgo } } }),
     db.searchEvent.count({ where: { createdAt: { gte: thirtyDaysAgo } } }),
-    db.searchEvent.groupBy({
-      by: ["mode"],
-      where: { createdAt: { gte: thirtyDaysAgo } },
-      _count: { _all: true },
-    }),
-    db.searchEvent.groupBy({
-      by: ["queryText"],
-      where: { createdAt: { gte: thirtyDaysAgo } },
-      _count: { _all: true },
-      orderBy: { _count: { queryText: "desc" } },
-      take: 20,
-    }),
+    db.quoteRequest.count({ where: { createdAt: { gte: startOfToday } } }),
     db.searchEvent.findMany({
       orderBy: { createdAt: "desc" },
       take: 75,
-      include: {
-        user: {
-          select: {
-            email: true,
-            company: { select: { id: true } },
-            memberships: { select: { id: true }, take: 1 },
-          },
-        },
-      },
+      include: { user: userInclude },
     }),
     db.searchEvent.findMany({
-      where: { createdAt: { gte: startOfToday } },
+      where: { createdAt: { gte: thirtyDaysAgo } },
       select: {
-        id: true,
         createdAt: true,
         ipAddress: true,
         userAgent: true,
-        user: {
-          select: {
-            email: true,
-            company: { select: { id: true } },
-            memberships: { select: { id: true }, take: 1 },
-          },
-        },
+        queryText: true,
+        mode: true,
+        user: userInclude,
       },
       orderBy: { createdAt: "asc" },
     }),
@@ -226,7 +232,7 @@ export async function getSearchAnalytics(): Promise<SearchAnalytics> {
   for (const row of recentRows) {
     if (row.ipAddress) ipsForReturning.add(row.ipAddress);
   }
-  for (const row of todayRows) {
+  for (const row of last30dRows) {
     if (row.ipAddress) ipsForReturning.add(row.ipAddress);
   }
 
@@ -236,7 +242,7 @@ export async function getSearchAnalytics(): Promise<SearchAnalytics> {
       by: ["ipAddress"],
       where: {
         ipAddress: { in: [...ipsForReturning] },
-        createdAt: { lt: startOfToday },
+        createdAt: { lt: thirtyDaysAgo },
       },
       _count: { _all: true },
     });
@@ -247,33 +253,74 @@ export async function getSearchAnalytics(): Promise<SearchAnalytics> {
     }
   }
 
-  // Same-day return: IP already searched earlier today.
-  const seenIpToday = new Set<string>();
-  const visitorsToday = emptyVisitorToday();
-  for (const row of todayRows) {
-    const ip = row.ipAddress;
-    const returning =
-      Boolean(ip && returningIpSet.has(ip)) ||
-      Boolean(ip && seenIpToday.has(ip));
-    if (ip) seenIpToday.add(ip);
+  let humanSearchesToday = 0;
+  let humanSearchesLast7Days = 0;
+  let knownSuppliersToday = 0;
+  let returningToday = 0;
+  let botSearchesToday = 0;
+  let googleToday = 0;
+  let microsoftToday = 0;
+  let metaToday = 0;
+  let unknownScrapersToday = 0;
+  let claimedSearchEngineToday = 0;
+  let unclassifiedToday = 0;
+  const byModeHuman30d = { single: 0, bulk: 0, smart: 0 };
+  const humanQueryCounts = new Map<string, number>();
+  const unknownScraperIpCounts = new Map<string, number>();
+  const seenIpIn30d = new Set<string>();
 
-    const label = classifyVisitor({
-      userAgent: row.userAgent,
-      ipAddress: row.ipAddress,
-      isKnownSupplier: isKnownSupplierUser(row.user),
-      isReturningVisitor: returning,
-    });
-    bumpVisitorToday(visitorsToday, label);
+  for (const row of last30dRows) {
+    const label = labelForRow(row, returningIpSet, seenIpIn30d);
+    const isToday = row.createdAt >= startOfToday;
+    const isLast7 = row.createdAt >= sevenDaysAgo;
+
+    if (isHumanVisitor(label)) {
+      if (isToday) humanSearchesToday += 1;
+      if (isLast7) humanSearchesLast7Days += 1;
+      if (row.mode === "SINGLE") byModeHuman30d.single += 1;
+      if (row.mode === "BULK") byModeHuman30d.bulk += 1;
+      if (row.mode === "SMART") byModeHuman30d.smart += 1;
+      humanQueryCounts.set(
+        row.queryText,
+        (humanQueryCounts.get(row.queryText) ?? 0) + 1,
+      );
+    }
+
+    if (isToday) {
+      if (label === "Known Supplier") knownSuppliersToday += 1;
+      if (label === "Returning Visitor") returningToday += 1;
+      if (label === "Unclassified") unclassifiedToday += 1;
+      if (isBotVisitor(label)) {
+        botSearchesToday += 1;
+        if (label === "Google Search Bot") googleToday += 1;
+        if (label === "Microsoft Search Bot") microsoftToday += 1;
+        if (label === "Meta AI") metaToday += 1;
+        if (label === "Unknown Scraper") {
+          unknownScrapersToday += 1;
+          if (row.ipAddress) {
+            unknownScraperIpCounts.set(
+              row.ipAddress,
+              (unknownScraperIpCounts.get(row.ipAddress) ?? 0) + 1,
+            );
+          }
+        }
+        if (isClaimedSearchEngineCrawler(label)) {
+          claimedSearchEngineToday += 1;
+        }
+      }
+    }
   }
 
-  const byMode = { single: 0, bulk: 0, smart: 0 };
-  for (const row of modeGroups) {
-    if (row.mode === "SINGLE") byMode.single = row._count._all;
-    if (row.mode === "BULK") byMode.bulk = row._count._all;
-    if (row.mode === "SMART") byMode.smart = row._count._all;
-  }
+  const topHumanQueries = [...humanQueryCounts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 20)
+    .map(([queryText, count]) => ({ queryText, count }));
 
-  // For recent rows, also treat multiple appearances in the recent window as returning.
+  const topUnknownScraperIps = [...unknownScraperIpCounts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 15)
+    .map(([ipAddress, count]) => ({ ipAddress, count }));
+
   const recentIpCounts = new Map<string, number>();
   for (const row of recentRows) {
     if (!row.ipAddress) continue;
@@ -284,17 +331,32 @@ export async function getSearchAnalytics(): Promise<SearchAnalytics> {
   }
 
   return {
-    stats: {
+    business: {
+      humanSearchesToday,
+      humanSearchesLast7Days,
+      knownSuppliersToday,
+      returningToday,
+      rfqsToday,
+      humanSearchConversion: ratio(rfqsToday, humanSearchesToday),
+      byModeHuman30d,
+      topHumanQueries,
+    },
+    crawl: {
+      botSearchesToday,
+      googleToday,
+      microsoftToday,
+      metaToday,
+      unknownScrapersToday,
+      claimedSearchEngineToday,
+      crawlerDiscovery: ratio(claimedSearchEngineToday, botSearchesToday),
+      unclassifiedToday,
+      topUnknownScraperIps,
+    },
+    totals: {
       today,
       last7Days,
       last30Days,
-      byMode,
-      visitorsToday,
     },
-    topQueries: topGroups.map((row) => ({
-      queryText: row.queryText,
-      count: row._count._all,
-    })),
     recent: recentRows.map((row) => {
       const ip = row.ipAddress;
       const returning =
