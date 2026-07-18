@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { ListingResultsList } from "@/components/ListingResultsList";
 import { MultiPartSearchForm } from "@/components/MultiPartSearchForm";
@@ -16,6 +17,7 @@ import {
   searchListings,
 } from "@/lib/listings";
 import { looksLikeMultiPartQuery } from "@/lib/mpn-normalize";
+import { getClientIp } from "@/lib/rate-limit";
 import { logSearchEvent } from "@/lib/search-analytics";
 import { pageMetadata, searchResultsMetadata } from "@/lib/seo/page-metadata";
 import { isSmartSearchEnabled } from "@/lib/smart-search";
@@ -134,6 +136,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
       resultCount: totalCount,
       manufacturer: parsed.manufacturer,
       category: parsed.category,
+      ipAddress: getClientIp(await headers()),
       userId: user?.id,
     });
   }

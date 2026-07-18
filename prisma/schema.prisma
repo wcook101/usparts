@@ -385,6 +385,7 @@ model SearchEvent {
   queriedCount Int?
   manufacturer String?
   category     String?
+  ipAddress    String?
   userId       String?
   user         User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
   createdAt    DateTime   @default(now())
@@ -393,6 +394,7 @@ model SearchEvent {
   @@index([mode, createdAt])
   @@index([queryText])
   @@index([userId])
+  @@index([ipAddress])
 }
 
 model SupplierOutreach {

@@ -11,8 +11,18 @@ export type LogSearchEventInput = {
   queriedCount?: number;
   manufacturer?: string | null;
   category?: string | null;
+  ipAddress?: string | null;
   userId?: string | null;
 };
+
+function normalizeIpAddress(value?: string | null) {
+  const trimmed = value?.trim();
+  if (!trimmed || trimmed === "unknown") {
+    return null;
+  }
+
+  return trimmed.slice(0, 100);
+}
 
 function truncateQueryText(value: string) {
   const trimmed = value.trim();
@@ -40,6 +50,7 @@ export function logSearchEvent(input: LogSearchEventInput) {
           typeof input.queriedCount === "number" ? input.queriedCount : null,
         manufacturer: input.manufacturer?.trim() || null,
         category: input.category?.trim() || null,
+        ipAddress: normalizeIpAddress(input.ipAddress),
         userId: input.userId ?? null,
       },
     })
@@ -71,6 +82,7 @@ export type SearchAnalytics = {
     queriedCount: number | null;
     manufacturer: string | null;
     category: string | null;
+    ipAddress: string | null;
     userEmail: string | null;
     createdAt: string;
   }>;
@@ -134,6 +146,7 @@ export async function getSearchAnalytics(): Promise<SearchAnalytics> {
       queriedCount: row.queriedCount,
       manufacturer: row.manufacturer,
       category: row.category,
+      ipAddress: row.ipAddress,
       userEmail: row.user?.email ?? null,
       createdAt: row.createdAt.toISOString(),
     })),

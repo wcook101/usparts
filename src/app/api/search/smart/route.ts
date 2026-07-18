@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
+import { getClientIp } from "@/lib/rate-limit";
 import { logSearchEvent } from "@/lib/search-analytics";
 import { isSmartSearchEnabled, smartSearchListings } from "@/lib/smart-search";
 import { SmartSearchBudgetExceededError } from "@/lib/smart-search-budget";
@@ -41,6 +42,7 @@ export async function POST(request: Request) {
       queriedCount: results.suggestedMpns.length,
       manufacturer: parsed.data.manufacturer,
       category: parsed.data.category,
+      ipAddress: getClientIp(request.headers),
       userId: user?.id,
     });
 

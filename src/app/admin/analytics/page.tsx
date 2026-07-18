@@ -151,6 +151,7 @@ export default async function AdminAnalyticsPage() {
                   <th className="px-4 py-3">Mode</th>
                   <th className="px-4 py-3">Query</th>
                   <th className="px-4 py-3">Results</th>
+                  <th className="px-4 py-3">IP</th>
                   <th className="px-4 py-3">User</th>
                 </tr>
               </thead>
@@ -158,7 +159,7 @@ export default async function AdminAnalyticsPage() {
                 {analytics.recent.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={5}
+                      colSpan={6}
                       className="px-4 py-8 text-center text-slate-500"
                     >
                       No search activity yet.
@@ -186,6 +187,9 @@ export default async function AdminAnalyticsPage() {
                       </td>
                       <td className="px-4 py-3 text-slate-700">
                         {row.resultCount}
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 font-mono text-xs text-slate-700">
+                        {row.ipAddress ?? "—"}
                       </td>
                       <td className="px-4 py-3 text-slate-500">
                         {row.userEmail ?? "Anonymous"}

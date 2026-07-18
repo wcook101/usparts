@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { bulkSearchListings } from "@/lib/listings";
+import { getClientIp } from "@/lib/rate-limit";
 import { logSearchEvent } from "@/lib/search-analytics";
 import { bulkSearchSchema } from "@/lib/validations";
 
@@ -25,6 +26,7 @@ export async function POST(request: Request) {
     queriedCount: results.queriedCount,
     manufacturer: parsed.data.manufacturer,
     category: parsed.data.category,
+    ipAddress: getClientIp(request.headers),
     userId: user?.id,
   });
 
