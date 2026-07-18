@@ -4,6 +4,7 @@ import { getSessionUser } from "@/lib/auth";
 import { isPlatformAdmin } from "@/lib/admin";
 import { getAdminOverview } from "@/lib/admin-overview";
 import { formatWhen } from "@/lib/datetime";
+import { getProductionFingerprint } from "@/lib/production-fingerprint";
 import { UPLOAD_EMAIL } from "@/lib/site";
 import { pageMetadata } from "@/lib/seo/page-metadata";
 
@@ -57,9 +58,66 @@ export default async function AdminPage() {
   }
 
   const overview = await getAdminOverview();
+  const fingerprint = getProductionFingerprint();
+  const dbLabel = [
+    fingerprint.database.host,
+    fingerprint.database.port ? `:${fingerprint.database.port}` : "",
+    fingerprint.database.name ? `/${fingerprint.database.name}` : "",
+  ]
+    .join("")
+    .replace(/^:/, "") || "unavailable";
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+      <div
+        className={
+          fingerprint.matchesExpected
+            ? "mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-950"
+            : "mb-6 rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-950"
+        }
+      >
+        <p className="font-semibold tracking-wide">
+          {fingerprint.matchesExpected
+            ? "Production fingerprint"
+            : "Production fingerprint MISMATCH"}
+        </p>
+        <dl className="mt-2 grid gap-1 font-mono text-xs sm:grid-cols-2">
+          <div>
+            <dt className="inline opacity-70">Project: </dt>
+            <dd className="inline">{fingerprint.projectName ?? "—"}</dd>
+          </div>
+          <div>
+            <dt className="inline opacity-70">Environment: </dt>
+            <dd className="inline">{fingerprint.environmentName ?? "—"}</dd>
+          </div>
+          <div>
+            <dt className="inline opacity-70">Service: </dt>
+            <dd className="inline">{fingerprint.serviceName ?? "—"}</dd>
+          </div>
+          <div>
+            <dt className="inline opacity-70">Database: </dt>
+            <dd className="inline break-all">{dbLabel}</dd>
+          </div>
+          <div>
+            <dt className="inline opacity-70">Git commit: </dt>
+            <dd className="inline">{fingerprint.gitCommit ?? "—"}</dd>
+          </div>
+          <div>
+            <dt className="inline opacity-70">Deployment time: </dt>
+            <dd className="inline">
+              {fingerprint.deploymentTime ?? "— (set at image build)"}
+            </dd>
+          </div>
+        </dl>
+        {!fingerprint.matchesExpected && fingerprint.mismatchReasons.length > 0 ? (
+          <ul className="mt-2 list-disc pl-5 text-xs">
+            {fingerprint.mismatchReasons.map((reason) => (
+              <li key={reason}>{reason}</li>
+            ))}
+          </ul>
+        ) : null}
+      </div>
+
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-blue-600">

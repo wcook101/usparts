@@ -2,6 +2,27 @@
 
 USParts is an electronic component marketplace where suppliers list available inventory and buyers search for parts to fill production and repair orders.
 
+## Production (Railway) — sole live project
+
+| Item | Value |
+|------|--------|
+| **Project** | `elegant-light` |
+| **Service** | `usparts` |
+| **Domain** | [https://www.usparts.us](https://www.usparts.us) |
+| **Deploy** | GitHub auto-deploy from `wcook101/usparts` |
+
+There is a separate Railway project formerly named `USParts` that must **not** be deployed to. Treat it as retired (`RETIRED-DO-NOT-DEPLOY`). Live traffic, Postgres data, and cron jobs only belong on **elegant-light**.
+
+Before any CLI deploy:
+
+```bash
+railway link --project elegant-light --environment production --service usparts
+npm run predeploy   # aborts unless project/service/domain match
+npm run railway:up  # predeploy + railway up --service usparts
+```
+
+`ALLOW_WRONG_RAILWAY_PROJECT=1` bypasses the guard (emergencies only).
+
 **Current goal:** run as a **development site** on `192.168.1.153` on your local network. Get everything working there before exposing it on the public internet.
 
 ## Stack
@@ -107,7 +128,7 @@ Phase A (LAN) is handled above. When you have a public domain:
 
 ## API endpoints
 
-- `GET /api/health` — health check
+- `GET /api/health` — health check (includes production fingerprint + search pipeline)
 - `GET /api/search?q=STM32` — search listings
 - `POST /api/companies` — register a supplier
 - `POST /api/listings` — publish inventory
