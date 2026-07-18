@@ -5,6 +5,7 @@ import { isPlatformAdmin } from "@/lib/admin";
 import { formatWhen } from "@/lib/datetime";
 import { getSearchAnalytics } from "@/lib/search-analytics";
 import { pageMetadata } from "@/lib/seo/page-metadata";
+import type { VisitorLabel } from "@/lib/visitor-classify";
 
 export const metadata = pageMetadata.adminAnalytics;
 
@@ -14,6 +15,35 @@ function modeLabel(mode: string) {
   if (mode === "BULK") return "Bulk";
   if (mode === "SMART") return "Describe";
   return "Single";
+}
+
+function visitorTone(label: VisitorLabel) {
+  switch (label) {
+    case "Google Search Bot":
+    case "Microsoft Search Bot":
+    case "Meta AI":
+      return "bg-emerald-50 text-emerald-800 ring-emerald-200";
+    case "Unknown Scraper":
+      return "bg-amber-50 text-amber-900 ring-amber-200";
+    case "Known Supplier":
+      return "bg-blue-50 text-blue-800 ring-blue-200";
+    case "Returning Visitor":
+      return "bg-violet-50 text-violet-800 ring-violet-200";
+    case "Human Visitor":
+      return "bg-slate-100 text-slate-800 ring-slate-200";
+    default:
+      return "bg-slate-50 text-slate-600 ring-slate-200";
+  }
+}
+
+function VisitorBadge({ label }: { label: VisitorLabel }) {
+  return (
+    <span
+      className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${visitorTone(label)}`}
+    >
+      {label}
+    </span>
+  );
 }
 
 function StatCard({
@@ -48,6 +78,7 @@ export default async function AdminAnalyticsPage() {
   }
 
   const analytics = await getSearchAnalytics();
+  const v = analytics.stats.visitorsToday;
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
@@ -65,19 +96,38 @@ export default async function AdminAnalyticsPage() {
           Search activity
         </h1>
         <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-          See whether buyers are searching the site — recent queries, volume over
-          time, and which search modes they use. Logging starts from when this
-          feature was deployed.
+          Buyer and crawler demand on your inventory. Search engines querying
+          parts is a healthy SEO signal — not noise to ignore.
         </p>
       </div>
 
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Searches today" value={analytics.stats.today} />
+        <StatCard label="Human searches today" value={v.human} />
+        <StatCard label="Bot searches today" value={v.bot} />
         <StatCard
           label="Last 7 days"
           value={analytics.stats.last7Days}
           detail={`${analytics.stats.last30Days} in last 30 days`}
         />
+      </section>
+
+      <section className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard label="Google searches" value={v.google} />
+        <StatCard label="Microsoft searches" value={v.microsoft} />
+        <StatCard label="Meta searches" value={v.meta} />
+        <StatCard
+          label="Unknown scrapers"
+          value={v.unknownScrapers}
+          detail={
+            v.knownSuppliers || v.returning || v.unclassified
+              ? `${v.knownSuppliers} suppliers · ${v.returning} returning · ${v.unclassified} unclassified`
+              : undefined
+          }
+        />
+      </section>
+
+      <section className="mt-4 grid gap-4 sm:grid-cols-2">
         <StatCard
           label="Single / Bulk / Describe"
           value={
@@ -140,7 +190,8 @@ export default async function AdminAnalyticsPage() {
       <section className="mt-10">
         <h2 className="text-lg font-semibold text-slate-900">Recent searches</h2>
         <p className="mt-1 text-sm text-slate-600">
-          Newest first. Result count is how many listings matched.
+          Newest first. Visitor type is inferred from user-agent, login, and
+          return visits. Result count is how many listings matched.
         </p>
         <div className="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
           <div className="overflow-x-auto">
@@ -152,6 +203,7 @@ export default async function AdminAnalyticsPage() {
                   <th className="px-4 py-3">Query</th>
                   <th className="px-4 py-3">Results</th>
                   <th className="px-4 py-3">IP</th>
+                  <th className="px-4 py-3">Visitor</th>
                   <th className="px-4 py-3">User</th>
                 </tr>
               </thead>
@@ -159,7 +211,7 @@ export default async function AdminAnalyticsPage() {
                 {analytics.recent.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={6}
+                      colSpan={7}
                       className="px-4 py-8 text-center text-slate-500"
                     >
                       No search activity yet.
@@ -191,8 +243,11 @@ export default async function AdminAnalyticsPage() {
                       <td className="whitespace-nowrap px-4 py-3 font-mono text-xs text-slate-700">
                         {row.ipAddress ?? "—"}
                       </td>
+                      <td className="px-4 py-3">
+                        <VisitorBadge label={row.visitorLabel} />
+                      </td>
                       <td className="px-4 py-3 text-slate-500">
-                        {row.userEmail ?? "Anonymous"}
+                        {row.userEmail ?? "—"}
                       </td>
                     </tr>
                   ))

@@ -18,7 +18,10 @@ import {
 } from "@/lib/listings";
 import { looksLikeMultiPartQuery } from "@/lib/mpn-normalize";
 import { getClientIp } from "@/lib/rate-limit";
-import { logSearchEvent } from "@/lib/search-analytics";
+import {
+  getUserAgentFromHeaders,
+  logSearchEvent,
+} from "@/lib/search-analytics";
 import { pageMetadata, searchResultsMetadata } from "@/lib/seo/page-metadata";
 import { isSmartSearchEnabled } from "@/lib/smart-search";
 import { searchQuerySchema } from "@/lib/validations";
@@ -130,13 +133,15 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
       parsed.category ? `cat:${parsed.category.trim()}` : null,
     ].filter(Boolean);
 
+    const requestHeaders = await headers();
     logSearchEvent({
       mode: "SINGLE",
       queryText: queryParts.join(" · ") || "filter",
       resultCount: totalCount,
       manufacturer: parsed.manufacturer,
       category: parsed.category,
-      ipAddress: getClientIp(await headers()),
+      ipAddress: getClientIp(requestHeaders),
+      userAgent: getUserAgentFromHeaders(requestHeaders),
       userId: user?.id,
     });
   }

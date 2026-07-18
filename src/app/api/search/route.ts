@@ -2,7 +2,10 @@ import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { hasSearchCriteria, searchListings } from "@/lib/listings";
 import { getClientIp } from "@/lib/rate-limit";
-import { logSearchEvent } from "@/lib/search-analytics";
+import {
+  getUserAgentFromHeaders,
+  logSearchEvent,
+} from "@/lib/search-analytics";
 import { searchQuerySchema } from "@/lib/validations";
 
 const corsHeaders = {
@@ -53,6 +56,7 @@ export async function GET(request: Request) {
       manufacturer: parsed.data.manufacturer,
       category: parsed.data.category,
       ipAddress: getClientIp(request.headers),
+      userAgent: getUserAgentFromHeaders(request.headers),
       userId: user?.id,
     });
   }

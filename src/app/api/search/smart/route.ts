@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { getClientIp } from "@/lib/rate-limit";
-import { logSearchEvent } from "@/lib/search-analytics";
+import {
+  getUserAgentFromHeaders,
+  logSearchEvent,
+} from "@/lib/search-analytics";
 import { isSmartSearchEnabled, smartSearchListings } from "@/lib/smart-search";
 import { SmartSearchBudgetExceededError } from "@/lib/smart-search-budget";
 import { smartSearchSchema } from "@/lib/validations";
@@ -43,6 +46,7 @@ export async function POST(request: Request) {
       manufacturer: parsed.data.manufacturer,
       category: parsed.data.category,
       ipAddress: getClientIp(request.headers),
+      userAgent: getUserAgentFromHeaders(request.headers),
       userId: user?.id,
     });
 

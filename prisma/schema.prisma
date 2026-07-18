@@ -386,6 +386,7 @@ model SearchEvent {
   manufacturer String?
   category     String?
   ipAddress    String?
+  userAgent    String?
   userId       String?
   user         User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
   createdAt    DateTime   @default(now())
