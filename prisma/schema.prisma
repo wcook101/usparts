@@ -410,6 +410,39 @@ model SearchEvent {
   @@index([ipAddress])
 }
 
+/**
+ * Per-IP network and location cache for search analytics (see src/lib/ip-intel.ts).
+ * Looked up once per IP and reused, so admin panels never re-query a provider.
+ */
+model IpIntel {
+  ip          String   @id
+  countryCode String?
+  countryName String?
+  continent   String?
+  region      String?
+  city        String?
+  asn         Int?
+  asnName     String?
+  asnDomain   String?
+  registry    String?
+  /** Reverse DNS (PTR) hostname — often the strongest company signal. */
+  hostname    String?
+  /** Best-guess organization behind the IP: company if identifiable, else ISP. */
+  orgName     String?
+  orgDomain   String?
+  /** Datacenter / cloud range: human labels on these deserve a second look. */
+  isHosting   Boolean  @default(false)
+  source      String?
+  lookupError String?
+  attempts    Int      @default(0)
+  checkedAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([countryCode])
+  @@index([asn])
+  @@index([checkedAt])
+}
+
 /** One Eastern-calendar-day KPI rollup from SearchEvent + QuoteRequest. */
 model SearchIntelDay {
   id                    String   @id @default(cuid())

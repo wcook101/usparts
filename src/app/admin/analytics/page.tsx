@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { getSessionUser } from "@/lib/auth";
 import { isPlatformAdmin } from "@/lib/admin";
 import { formatWhen } from "@/lib/datetime";
+import { countryFlagEmoji } from "@/lib/ip-intel";
 import {
   getSearchAnalytics,
   getSearchPipelineHealth,
@@ -142,7 +143,9 @@ export default async function AdminAnalyticsPage() {
           Business demand and crawl discovery are measured separately. Bot
           volume is an SEO signal — not buyer demand. Visitor labels are
           user-agent based for now; DNS reverse/forward verification for Google
-          and Microsoft is planned after several days of UA data.
+          and Microsoft is planned after several days of UA data. Each search IP
+          is resolved once to a country, network operator, and — when reverse DNS
+          names one — a company.
         </p>
         <p className="mt-2 text-xs text-slate-500">
           All events today: {totals.today} · 7d: {totals.last7Days} · 30d:{" "}
@@ -268,10 +271,63 @@ export default async function AdminAnalyticsPage() {
 
         <div>
           <h3 className="text-sm font-semibold text-slate-900">
+            Where human searches come from (30d)
+          </h3>
+          <p className="mt-1 text-sm text-slate-600">
+            Resolved from the searcher&apos;s IP.{" "}
+            {business.geoCoverage == null
+              ? "No locations resolved yet — enrichment fills in as the admin page and nightly job run."
+              : `${formatRatio(business.geoCoverage)} of human searches have a resolved country so far.`}
+          </p>
+          <div className="mt-3 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-100 bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                    <th className="px-4 py-3">Country</th>
+                    <th className="px-4 py-3">Human searches</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {business.topCountries.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={2}
+                        className="px-4 py-8 text-center text-slate-500"
+                      >
+                        No locations resolved yet.
+                      </td>
+                    </tr>
+                  ) : (
+                    business.topCountries.map((row) => (
+                      <tr
+                        key={row.countryCode ?? row.countryName}
+                        className="border-b border-slate-50"
+                      >
+                        <td className="px-4 py-3 text-slate-800">
+                          <CountryLabel
+                            countryCode={row.countryCode}
+                            countryName={row.countryName}
+                          />
+                        </td>
+                        <td className="px-4 py-3 text-slate-700">{row.count}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h3 className="text-sm font-semibold text-slate-900">
             Recent human / supplier searches
           </h3>
           <p className="mt-1 text-sm text-slate-600">
             Newest first among humans, returning visitors, and known suppliers.
+            Company names come from the IP&apos;s reverse DNS, so consumer and
+            mobile networks show only the ISP.
           </p>
           <RecentTable rows={recentHuman} empty="No human search activity yet." />
         </div>
@@ -361,6 +417,99 @@ export default async function AdminAnalyticsPage() {
           />
         </div>
       </Panel>
+
+      <p className="text-xs leading-5 text-slate-500">
+        Location, network, and company data are resolved once per IP from reverse
+        DNS, the Team Cymru IP-to-ASN service, ipwho.is, and{" "}
+        <a
+          className="underline hover:text-slate-700"
+          href="https://ipinfo.io"
+          rel="noreferrer"
+          target="_blank"
+        >
+          IPinfo
+        </a>{" "}
+        Lite, then cached. A “Datacenter” tag on a human-labeled row usually means
+        a scraper, not a buyer.
+      </p>
+    </div>
+  );
+}
+
+type RecentRow = Awaited<ReturnType<typeof getSearchAnalytics>>["recent"][number];
+
+function CountryLabel({
+  countryCode,
+  countryName,
+}: {
+  countryCode: string | null;
+  countryName: string;
+}) {
+  const flag = countryFlagEmoji(countryCode);
+  return (
+    <span>
+      {flag ? (
+        <span className="mr-1.5" aria-hidden="true">
+          {flag}
+        </span>
+      ) : null}
+      {countryName}
+    </span>
+  );
+}
+
+function LocationCell({ row }: { row: RecentRow }) {
+  const flag = countryFlagEmoji(row.countryCode);
+  return (
+    <div className="min-w-36">
+      <p className="text-slate-700">
+        {flag ? (
+          <span className="mr-1.5" aria-hidden="true">
+            {flag}
+          </span>
+        ) : null}
+        {row.location ?? "Not resolved"}
+      </p>
+      <p className="mt-0.5 font-mono text-xs text-slate-400">
+        {row.ipAddress ?? "—"}
+      </p>
+    </div>
+  );
+}
+
+function OrgCell({ row }: { row: RecentRow }) {
+  if (!row.companyName && !row.networkName && !row.hostname) {
+    return <span className="text-slate-400">—</span>;
+  }
+
+  return (
+    <div className="space-y-0.5">
+      {row.companyName ? (
+        <p className="font-medium text-slate-900">
+          {row.companyName}
+          {row.companyIsRegistered ? (
+            <span className="ml-1.5 rounded-full bg-blue-50 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-blue-700 ring-1 ring-inset ring-blue-200">
+              Registered
+            </span>
+          ) : null}
+        </p>
+      ) : null}
+      {row.networkName ? (
+        <p className="text-xs text-slate-600">
+          {row.networkName}
+          {row.asn ? ` · AS${row.asn}` : ""}
+        </p>
+      ) : null}
+      {row.hostname ? (
+        <p className="truncate font-mono text-[11px] text-slate-400">
+          {row.hostname}
+        </p>
+      ) : null}
+      {row.isHosting ? (
+        <span className="inline-flex rounded-full bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-900 ring-1 ring-inset ring-amber-200">
+          Datacenter
+        </span>
+      ) : null}
     </div>
   );
 }
@@ -369,7 +518,7 @@ function RecentTable({
   rows,
   empty,
 }: {
-  rows: Awaited<ReturnType<typeof getSearchAnalytics>>["recent"];
+  rows: RecentRow[];
   empty: string;
 }) {
   return (
@@ -382,7 +531,8 @@ function RecentTable({
               <th className="px-4 py-3">Mode</th>
               <th className="px-4 py-3">Query</th>
               <th className="px-4 py-3">Results</th>
-              <th className="px-4 py-3">IP</th>
+              <th className="px-4 py-3">Where</th>
+              <th className="px-4 py-3">Company / network</th>
               <th className="px-4 py-3">Visitor</th>
               <th className="px-4 py-3">User</th>
             </tr>
@@ -390,7 +540,7 @@ function RecentTable({
           <tbody>
             {rows.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-slate-500">
+                <td colSpan={8} className="px-4 py-8 text-center text-slate-500">
                   {empty}
                 </td>
               </tr>
@@ -415,8 +565,11 @@ function RecentTable({
                     ) : null}
                   </td>
                   <td className="px-4 py-3 text-slate-700">{row.resultCount}</td>
-                  <td className="whitespace-nowrap px-4 py-3 font-mono text-xs text-slate-700">
-                    {row.ipAddress ?? "—"}
+                  <td className="px-4 py-3">
+                    <LocationCell row={row} />
+                  </td>
+                  <td className="max-w-xs px-4 py-3">
+                    <OrgCell row={row} />
                   </td>
                   <td className="px-4 py-3">
                     <VisitorBadge label={row.visitorLabel} />

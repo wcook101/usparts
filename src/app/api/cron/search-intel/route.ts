@@ -5,6 +5,7 @@ import {
   easternDayDate,
 } from "@/lib/search-intel/aggregate";
 import { startOfTodayEastern } from "@/lib/datetime";
+import { backfillRecentIpIntel } from "@/lib/ip-intel";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -56,8 +57,10 @@ export async function POST(request: Request) {
         new Date(startOfTodayEastern(now).getTime() - 12 * 60 * 60 * 1000),
       );
   const result = await aggregateSearchIntelDay(target);
+  // Warm per-IP location/network cache so admin panels never wait on providers.
+  const ipIntel = await backfillRecentIpIntel();
 
-  return NextResponse.json({ ok: true, mode: "nightly", result });
+  return NextResponse.json({ ok: true, mode: "nightly", result, ipIntel });
 }
 
 export async function GET(request: Request) {

@@ -1,6 +1,12 @@
 import type { SearchMode } from "@/generated/prisma/client";
 import { startOfTodayEastern } from "@/lib/datetime";
 import { db } from "@/lib/db";
+import {
+  formatIpLocation,
+  getCachedIpCountries,
+  getIpIntelMap,
+  guessCompanyDomain,
+} from "@/lib/ip-intel";
 import { easternDayBounds } from "@/lib/search-intel/aggregate";
 import {
   classifyVisitor,
@@ -200,6 +206,14 @@ export type SearchAnalytics = {
       queryText: string;
       count: number;
     }>;
+    /** Human searches by country over 30 days, from cached IP intel. */
+    topCountries: Array<{
+      countryCode: string | null;
+      countryName: string;
+      count: number;
+    }>;
+    /** Share of 30d human searches whose IP has a resolved country. */
+    geoCoverage: number | null;
   };
   crawl: {
     botSearchesToday: number;
@@ -238,6 +252,19 @@ export type SearchAnalytics = {
     userEmail: string | null;
     visitorLabel: VisitorLabel;
     createdAt: string;
+    /** "Buenos Aires, Argentina" when known. */
+    location: string | null;
+    countryCode: string | null;
+    /** Company named by reverse DNS, or one of our registered companies. */
+    companyName: string | null;
+    companyDomain: string | null;
+    companyIsRegistered: boolean;
+    /** ISP or AS operator — the network, not necessarily the visitor. */
+    networkName: string | null;
+    hostname: string | null;
+    asn: number | null;
+    /** Datacenter / cloud IP: suspect when labeled human. */
+    isHosting: boolean;
   }>;
 };
 
@@ -366,8 +393,10 @@ export async function getSearchAnalytics(): Promise<SearchAnalytics> {
   let unknownScrapersToday = 0;
   let claimedSearchEngineToday = 0;
   let unclassifiedToday = 0;
+  let humanSearches30d = 0;
   const byModeHuman30d = { single: 0, bulk: 0, smart: 0 };
   const humanQueryCounts = new Map<string, number>();
+  const humanIpCounts = new Map<string, number>();
   const unknownScraperIpCounts = new Map<string, number>();
   const seenIpIn30d = new Set<string>();
 
@@ -377,6 +406,7 @@ export async function getSearchAnalytics(): Promise<SearchAnalytics> {
     const isLast7 = row.createdAt >= sevenDaysAgo;
 
     if (isHumanVisitor(label)) {
+      humanSearches30d += 1;
       if (isToday) humanSearchesToday += 1;
       if (isLast7) humanSearchesLast7Days += 1;
       if (row.mode === "SINGLE") byModeHuman30d.single += 1;
@@ -386,6 +416,12 @@ export async function getSearchAnalytics(): Promise<SearchAnalytics> {
         row.queryText,
         (humanQueryCounts.get(row.queryText) ?? 0) + 1,
       );
+      if (row.ipAddress) {
+        humanIpCounts.set(
+          row.ipAddress,
+          (humanIpCounts.get(row.ipAddress) ?? 0) + 1,
+        );
+      }
     }
 
     if (isToday) {
@@ -432,6 +468,59 @@ export async function getSearchAnalytics(): Promise<SearchAnalytics> {
     );
   }
 
+  // Visible rows get enriched inline (bounded); the 30d country rollup uses
+  // whatever the cache already holds so this render stays fast.
+  const [intelByIp, countryByHumanIp] = await Promise.all([
+    getIpIntelMap([...recentIpCounts.keys()]),
+    getCachedIpCountries([...humanIpCounts.keys()]),
+  ]);
+
+  const countryCounts = new Map<
+    string,
+    { countryCode: string | null; countryName: string; count: number }
+  >();
+  let humanSearchesWithCountry = 0;
+  for (const [ip, count] of humanIpCounts) {
+    const country = countryByHumanIp.get(ip);
+    if (!country?.countryCode) continue;
+
+    humanSearchesWithCountry += count;
+    const existing = countryCounts.get(country.countryCode);
+    if (existing) {
+      existing.count += count;
+    } else {
+      countryCounts.set(country.countryCode, {
+        countryCode: country.countryCode,
+        countryName: country.countryName ?? country.countryCode,
+        count,
+      });
+    }
+  }
+
+  const topCountries = [...countryCounts.values()]
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 12);
+
+  const companyDomains = new Set<string>();
+  for (const intel of intelByIp.values()) {
+    const domain = guessCompanyDomain(intel);
+    if (domain) companyDomains.add(domain);
+  }
+
+  const registeredCompanies =
+    companyDomains.size > 0
+      ? await db.company.findMany({
+          where: { emailDomain: { in: [...companyDomains] } },
+          select: { name: true, emailDomain: true },
+        })
+      : [];
+  const companyNameByDomain = new Map(
+    registeredCompanies.map((company) => [
+      company.emailDomain.toLowerCase(),
+      company.name,
+    ]),
+  );
+
   return {
     business: {
       humanSearchesToday,
@@ -442,6 +531,8 @@ export async function getSearchAnalytics(): Promise<SearchAnalytics> {
       humanSearchConversion: ratio(rfqsToday, humanSearchesToday),
       byModeHuman30d,
       topHumanQueries,
+      topCountries,
+      geoCoverage: ratio(humanSearchesWithCountry, humanSearches30d),
     },
     crawl: {
       botSearchesToday,
@@ -465,6 +556,12 @@ export async function getSearchAnalytics(): Promise<SearchAnalytics> {
         Boolean(ip && returningIpSet.has(ip)) ||
         Boolean(ip && (recentIpCounts.get(ip) ?? 0) > 1);
 
+      const intel = ip ? (intelByIp.get(ip) ?? null) : null;
+      const companyDomain = intel ? guessCompanyDomain(intel) : null;
+      const registeredName = companyDomain
+        ? (companyNameByDomain.get(companyDomain) ?? null)
+        : null;
+
       return {
         id: row.id,
         mode: row.mode,
@@ -482,6 +579,15 @@ export async function getSearchAnalytics(): Promise<SearchAnalytics> {
           isReturningVisitor: returning,
         }),
         createdAt: row.createdAt.toISOString(),
+        location: intel ? formatIpLocation(intel) : null,
+        countryCode: intel?.countryCode ?? null,
+        companyName: registeredName ?? companyDomain,
+        companyDomain,
+        companyIsRegistered: Boolean(registeredName),
+        networkName: intel?.orgName ?? intel?.asnName ?? null,
+        hostname: intel?.hostname ?? null,
+        asn: intel?.asn ?? null,
+        isHosting: intel?.isHosting ?? false,
       };
     }),
   };
