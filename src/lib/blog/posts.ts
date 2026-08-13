@@ -358,7 +358,7 @@ export const blogPosts: BlogPost[] = [
       {
         heading: "How to format a BOM for upload",
         paragraphs: [
-          "You do not need a formal ERP export. A simple list of MPNs — one per line or separated by spaces — is enough to start. Include manufacturer names in your internal worksheet if you have them, but the search engine primarily matches on part numbers and known aliases.",
+          "You do not need a formal ERP export. A simple list of MPNs — one per line or separated by spaces — is enough to start. Include manufacturer names in your internal worksheet if you have them, but our part search primarily matches on part numbers and known aliases.",
         ],
         bullets: [
           "One MPN per line is easiest to review",

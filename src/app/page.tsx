@@ -15,14 +15,17 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: {
-    absolute: "Electronics Parts Marketplace - Free BOM Search & Inventory",
+    // 55 characters, so Google does not truncate it. "Marketplace" is deliberate and
+    // consistent sitewide: it puts us alongside buy/sell exchanges rather than against
+    // aggregated part-search engines, which is a fight over a different keyword set.
+    absolute: "Electronic Component Marketplace | ICs & Semiconductors",
   },
   description:
-    "Find electronic components from U.S. suppliers. Search listed parts, upload a BOM, request quotes, and list surplus inventory for free on USParts.us.",
+    "Source hard-to-find ICs, semiconductors and obsolete electronic components from US suppliers. Check price and availability, cross-reference parts, or upload a BOM free.",
   openGraph: {
-    title: "Electronics Parts Marketplace - Free BOM Search & Inventory",
+    title: "Electronic Component Marketplace | ICs & Semiconductors",
     description:
-      "Find electronic components from U.S. suppliers. Free MPN search, bulk BOM lookup, and surplus inventory listings.",
+      "Buy and sell ICs, semiconductors, obsolete and surplus electronic components. Free MPN search, price and availability, bulk BOM lookup, and US supplier listings.",
   },
   alternates: {
     canonical: "/",
@@ -44,7 +47,7 @@ export default async function HomePage() {
     name: "USParts",
     url: siteUrl,
     description:
-      "Free electronic component search and marketplace for BOM lookup, MPN search, and US supplier inventory.",
+      "Free electronic component marketplace for ICs, semiconductors, obsolete and surplus parts, with MPN search, BOM lookup, and US supplier inventory.",
     potentialAction: {
       "@type": "SearchAction",
       target: {

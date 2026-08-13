@@ -40,10 +40,11 @@ export function HomeHero({ popularParts = [] }: HomeHeroProps) {
     <section className="border-b border-slate-200 bg-white">
       <div className="mx-auto max-w-3xl px-4 py-16 text-center sm:px-6 sm:py-20 lg:py-24">
         <h1 className="text-4xl font-bold tracking-tight text-[#0a1628] sm:text-5xl">
-          USParts
+          Electronic Component Marketplace for ICs &amp; Semiconductors
         </h1>
         <p className="mt-3 text-base text-slate-600 sm:text-lg">
-          Free electronic component search from verified US Based Inventory.
+          Source hard-to-find, obsolete, and surplus inventory from US-based
+          suppliers &mdash; or list your excess stock free.
         </p>
 
         <form
@@ -89,12 +90,14 @@ export function HomeHero({ popularParts = [] }: HomeHeroProps) {
         </div>
 
         <p className="mt-8 text-sm font-medium text-[#0a1628]">
-          Search Millions of unique parts.
+          Search millions of unique part numbers for price and availability.
         </p>
 
         <p className="mt-6 max-w-2xl mx-auto text-sm leading-6 text-slate-600 sm:text-base sm:leading-7">
-          Find electronic components from U.S. suppliers. Search listed parts,
-          upload a BOM, request quotes, and list surplus inventory for free.
+          Check stock on integrated circuits, semiconductors, and passives,
+          cross-reference an obsolete or allocated MPN, and request quotes
+          directly from US distributors. Paste a BOM to price a whole build at
+          once. Free for buyers and suppliers.
         </p>
 
         <div className="mt-5 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-sm text-slate-500">

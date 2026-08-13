@@ -26,24 +26,24 @@ const robotoMono = Roboto_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(getSiteUrl()),
   title: {
-    default: "Electronics Parts Marketplace - Free BOM Search & Inventory",
+    default: "Electronic Component Marketplace | ICs & Semiconductors",
     template: "%s | USParts",
   },
   description:
-    "Free BOM search and electronics marketplace – list inventory or find parts instantly. Search obsolete semiconductors, ICs, and surplus stock by MPN from US suppliers on USParts.us.",
+    "Free electronic component marketplace for ICs, semiconductors, and obsolete or surplus stock. Search by MPN for price and availability from US suppliers, or list inventory free.",
   openGraph: {
     type: "website",
     locale: "en_US",
     siteName: "USParts",
-    title: "Electronics Parts Marketplace - Free BOM Search & Inventory",
+    title: "Electronic Component Marketplace | ICs & Semiconductors",
     description:
-      "Find obsolete semiconductors, integrated circuits, and surplus electronic parts from US suppliers. Free MPN search, bulk BOM lookup, and quote requests.",
+      "Find obsolete semiconductors, integrated circuits, and surplus electronic parts from US suppliers. Free MPN search, price and availability, bulk BOM lookup, and quote requests.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "USParts.us | Free Obsolete Semiconductor & Electronic Component Search",
+    title: "USParts.us | ICs, Semiconductors & Obsolete Parts Marketplace",
     description:
-      "Search manufacturer part numbers, compare US supplier stock, and run bulk BOM lookups for semiconductors and electronic components — free.",
+      "Search manufacturer part numbers for price and availability, cross-reference obsolete parts, and run bulk BOM lookups for ICs and semiconductors — free.",
   },
   verification: {
     google: "7v20lSf51vU3qHgGO_QwMALrcWE-bzP9pihlTsJfnC8",
