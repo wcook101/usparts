@@ -19,6 +19,7 @@ import {
   type ImportRowError,
   type NormalizedImportRow,
 } from "@/lib/inventory-import";
+import { notifyInventoryUploaded } from "@/lib/notifications";
 import type { ImportMode } from "@/lib/validations";
 import {
   listingMatchKeyFromCreateRow,
@@ -283,7 +284,10 @@ export async function importInventory(
 ): Promise<ImportInventoryResult> {
   const company = await db.company.findUnique({
     where: { id: input.companyId },
-    include: { inventoryLocations: true },
+    include: {
+      inventoryLocations: true,
+      owner: { select: { email: true } },
+    },
   });
 
   if (!company) {
@@ -483,6 +487,20 @@ export async function importInventory(
   });
 
   result.lastImportAt = lastImportAt?.toISOString() ?? null;
+
+  if (created + updated > 0) {
+    try {
+      await notifyInventoryUploaded({
+        companyName: company.name,
+        recipients: [company.email, company.owner?.email ?? ""],
+        fileName: input.fileName,
+        created,
+        updated,
+      });
+    } catch (error) {
+      console.error("Inventory upload receipt email failed:", error);
+    }
+  }
 
   return result;
 }

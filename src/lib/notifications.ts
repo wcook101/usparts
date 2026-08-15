@@ -323,6 +323,51 @@ export async function notifyBulkRfqVendorBundle(input: {
   });
 }
 
+export async function notifyInventoryUploaded(input: {
+  companyName: string;
+  recipients: string[];
+  fileName: string;
+  created: number;
+  updated: number;
+}): Promise<void> {
+  const recipients = Array.from(
+    new Set(
+      input.recipients
+        .map((email) => email.trim())
+        .filter((email) => email.includes("@")),
+    ),
+  );
+  if (recipients.length === 0) {
+    return;
+  }
+
+  const liveCount = input.created + input.updated;
+  const dashboardUrl = appUrl("/company/dashboard");
+  const subject = "Your inventory has been uploaded and is now live";
+  const text = [
+    `Hello ${input.companyName},`,
+    "",
+    "Your inventory has been uploaded and is now live.",
+    "",
+    `File: ${input.fileName}`,
+    `Listings published: ${liveCount.toLocaleString()} (${input.created.toLocaleString()} new, ${input.updated.toLocaleString()} updated)`,
+    "",
+    `Buyers can now find these parts on USParts. Review your listings: ${dashboardUrl}`,
+    "",
+    `Questions? Email ${SUPPORT_EMAIL}.`,
+  ].join("\n");
+
+  await Promise.all(
+    recipients.map((to) =>
+      sendEmail({
+        to,
+        subject,
+        text,
+      }),
+    ),
+  );
+}
+
 export async function notifyBulkRfqBuyerConfirmation(input: {
   buyerName: string;
   buyerEmail: string;
