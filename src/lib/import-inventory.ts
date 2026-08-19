@@ -32,38 +32,6 @@ import {
   skippedRowFromNormalized,
   type SkippedImportRow,
 } from "@/lib/import-listing-key";
-import { formatInventoryLocation } from "@/lib/format";
-import type { ImportFileFormat } from "@/lib/import-file";
-import { normalizeMpn } from "@/lib/mpn-normalize";
-import {
-  assertImportAllowed,
-  MAX_IMPORT_ROWS,
-  resolveLastImportAtAfterImport,
-} from "@/lib/import-limits";
-import {
-  applyColumnMap,
-  getFieldValue,
-  normalizeImportRow,
-  parseImportContent,
-  stripExcludedMappings,
-  validateColumnMap,
-  type ColumnMap,
-  type ImportRowError,
-  type NormalizedImportRow,
-} from "@/lib/inventory-import";
-import {
-  notifyInventoryUploaded,
-  type InventoryUploadReceipt,
-} from "@/lib/notifications";
-import type { ImportMode } from "@/lib/validations";
-import {
-  listingMatchKeyFromCreateRow,
-  listingMatchKeyFromDb,
-  MAX_SKIPPED_ROWS_IN_RESULT,
-  rowListingMatchKey,
-  skippedRowFromNormalized,
-  type SkippedImportRow,
-} from "@/lib/import-listing-key";
 
 const BATCH_SIZE = 1_000;
 const BATCH_TRANSACTION_TIMEOUT_MS = 180_000;
