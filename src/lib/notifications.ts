@@ -1,6 +1,12 @@
-import { appUrl, sendEmail } from "@/lib/email";
+import { appUrl, formatEmailError, sendEmail } from "@/lib/email";
 import { formatPrice } from "@/lib/format";
 import { SUPPORT_EMAIL } from "@/lib/site";
+
+export type InventoryUploadReceipt = {
+  status: "sent" | "skipped" | "failed";
+  recipients: string[];
+  message: string;
+};
 
 type OrderNotification = {
   id: string;
@@ -329,24 +335,29 @@ export async function notifyInventoryUploaded(input: {
   fileName: string;
   created: number;
   updated: number;
-}): Promise<void> {
+}): Promise<InventoryUploadReceipt> {
   const recipients = Array.from(
     new Set(
       input.recipients
-        .map((email) => email.trim())
+        .map((email) => email.trim().toLowerCase())
         .filter((email) => email.includes("@")),
     ),
   );
   if (recipients.length === 0) {
-    return;
+    return {
+      status: "skipped",
+      recipients: [],
+      message: "No company or owner email on file, so no upload receipt was sent.",
+    };
   }
 
   const liveCount = input.created + input.updated;
   const dashboardUrl = appUrl("/company/dashboard");
-  const subject = "Your inventory has been uploaded and is now live";
+  const subject = "Upload receipt: your inventory is now live";
   const text = [
     `Hello ${input.companyName},`,
     "",
+    "This is your upload receipt from USParts.",
     "Your inventory has been uploaded and is now live.",
     "",
     `File: ${input.fileName}`,
@@ -357,7 +368,7 @@ export async function notifyInventoryUploaded(input: {
     `Questions? Email ${SUPPORT_EMAIL}.`,
   ].join("\n");
 
-  await Promise.all(
+  const results = await Promise.allSettled(
     recipients.map((to) =>
       sendEmail({
         to,
@@ -366,6 +377,44 @@ export async function notifyInventoryUploaded(input: {
       }),
     ),
   );
+
+  const sent = recipients.filter((_, index) => results[index]?.status === "fulfilled");
+  const failed = results
+    .map((result, index) =>
+      result.status === "rejected"
+        ? {
+            to: recipients[index],
+            error: formatEmailError(result.reason),
+          }
+        : null,
+    )
+    .filter((item): item is { to: string; error: string } => item !== null);
+
+  if (failed.length === 0) {
+    return {
+      status: "sent",
+      recipients: sent,
+      message: `Upload receipt emailed to ${sent.join(", ")}.`,
+    };
+  }
+
+  const failureText = failed
+    .map((item) => `${item.to} (${item.error})`)
+    .join("; ");
+
+  if (sent.length === 0) {
+    return {
+      status: "failed",
+      recipients: [],
+      message: `Upload receipt failed: ${failureText}`,
+    };
+  }
+
+  return {
+    status: "failed",
+    recipients: sent,
+    message: `Upload receipt emailed to ${sent.join(", ")}. Failed for ${failureText}.`,
+  };
 }
 
 export async function notifyBulkRfqBuyerConfirmation(input: {

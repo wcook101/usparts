@@ -187,6 +187,12 @@ export default async function AdminPage() {
             Import inventory
           </Link>
           <Link
+            href="/admin/upload-receipts"
+            className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          >
+            Upload receipt
+          </Link>
+          <Link
             href="/search"
             className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
           >
@@ -245,6 +251,10 @@ export default async function AdminPage() {
           it on{" "}
           <Link href="/admin/import" className="font-medium text-blue-700 hover:text-blue-800">
             Import inventory for a supplier
+          </Link>
+          . Sent emails are listed under{" "}
+          <Link href="/admin/upload-receipts" className="font-medium text-blue-700 hover:text-blue-800">
+            Upload receipt
           </Link>
           .
         </p>

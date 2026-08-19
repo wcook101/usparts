@@ -96,6 +96,16 @@ export default async function AdminImportPage() {
           <span className="font-mono font-medium">{UPLOAD_EMAIL}</span>. When that
           happens, download the attachment from your mailbox and import it here.
         </p>
+        <p className="mt-2">
+          After listings go live, USParts sends an <strong>upload receipt</strong>{" "}
+          to the supplier&apos;s company email and owner email. The import results
+          screen reports whether that upload receipt was sent. Past receipts are
+          listed under{" "}
+          <Link href="/admin/upload-receipts" className="font-medium text-blue-700 hover:text-blue-800">
+            Upload receipt
+          </Link>
+          .
+        </p>
       </section>
     </div>
   );

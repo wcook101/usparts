@@ -19,7 +19,42 @@ import {
   type ImportRowError,
   type NormalizedImportRow,
 } from "@/lib/inventory-import";
-import { notifyInventoryUploaded } from "@/lib/notifications";
+import {
+  notifyInventoryUploaded,
+  type InventoryUploadReceipt,
+} from "@/lib/notifications";
+import type { ImportMode } from "@/lib/validations";
+import {
+  listingMatchKeyFromCreateRow,
+  listingMatchKeyFromDb,
+  MAX_SKIPPED_ROWS_IN_RESULT,
+  rowListingMatchKey,
+  skippedRowFromNormalized,
+  type SkippedImportRow,
+} from "@/lib/import-listing-key";
+import { formatInventoryLocation } from "@/lib/format";
+import type { ImportFileFormat } from "@/lib/import-file";
+import { normalizeMpn } from "@/lib/mpn-normalize";
+import {
+  assertImportAllowed,
+  MAX_IMPORT_ROWS,
+  resolveLastImportAtAfterImport,
+} from "@/lib/import-limits";
+import {
+  applyColumnMap,
+  getFieldValue,
+  normalizeImportRow,
+  parseImportContent,
+  stripExcludedMappings,
+  validateColumnMap,
+  type ColumnMap,
+  type ImportRowError,
+  type NormalizedImportRow,
+} from "@/lib/inventory-import";
+import {
+  notifyInventoryUploaded,
+  type InventoryUploadReceipt,
+} from "@/lib/notifications";
 import type { ImportMode } from "@/lib/validations";
 import {
   listingMatchKeyFromCreateRow,
@@ -33,6 +68,35 @@ import {
 const BATCH_SIZE = 1_000;
 const BATCH_TRANSACTION_TIMEOUT_MS = 180_000;
 const UPDATE_CONCURRENCY = 25;
+
+async function saveUploadReceipt(input: {
+  companyId: string;
+  fileName: string;
+  created: number;
+  updated: number;
+  receipt: InventoryUploadReceipt;
+}): Promise<void> {
+  try {
+    await db.uploadReceipt.create({
+      data: {
+        companyId: input.companyId,
+        fileName: input.fileName,
+        recipients: input.receipt.recipients,
+        status:
+          input.receipt.status === "sent"
+            ? "SENT"
+            : input.receipt.status === "failed"
+              ? "FAILED"
+              : "SKIPPED",
+        message: input.receipt.message,
+        createdCount: input.created,
+        updatedCount: input.updated,
+      },
+    });
+  } catch (error) {
+    console.error("Failed to save upload receipt:", error);
+  }
+}
 
 type ListingWriteResult = {
   created: number;
@@ -244,6 +308,7 @@ export type ImportInventoryResult = {
   skippedRows: SkippedImportRow[];
   errors: ImportRowError[];
   lastImportAt: string | null;
+  receiptEmail: InventoryUploadReceipt;
 };
 
 type LocationOption = {
@@ -377,6 +442,20 @@ export async function importInventory(
       data: { lastImportAt: null },
     });
 
+    const receiptEmail: InventoryUploadReceipt = {
+      status: "skipped",
+      recipients: [],
+      message: "No listings were published, so no upload receipt was sent.",
+    };
+
+    await saveUploadReceipt({
+      companyId: company.id,
+      fileName: input.fileName,
+      created: 0,
+      updated: 0,
+      receipt: receiptEmail,
+    });
+
     return {
       format,
       mode: input.mode,
@@ -390,6 +469,7 @@ export async function importInventory(
       skippedRows,
       errors,
       lastImportAt: null,
+      receiptEmail,
     };
   }
 
@@ -464,7 +544,7 @@ export async function importInventory(
     });
   }
 
-  const result = {
+  const result: ImportInventoryResult = {
     format,
     mode: input.mode,
     totalRows: rows.length,
@@ -476,7 +556,12 @@ export async function importInventory(
     skippedRowCount: ignoredRows + errors.length + mergedDuplicates,
     skippedRows,
     errors: errors.slice(0, 100),
-    lastImportAt: null as string | null,
+    lastImportAt: null,
+    receiptEmail: {
+      status: "skipped",
+      recipients: [],
+      message: "No listings were published, so no upload receipt was sent.",
+    },
   };
 
   const lastImportAt = resolveLastImportAtAfterImport(result);
@@ -490,7 +575,7 @@ export async function importInventory(
 
   if (created + updated > 0) {
     try {
-      await notifyInventoryUploaded({
+      result.receiptEmail = await notifyInventoryUploaded({
         companyName: company.name,
         recipients: [company.email, company.owner?.email ?? ""],
         fileName: input.fileName,
@@ -499,8 +584,21 @@ export async function importInventory(
       });
     } catch (error) {
       console.error("Inventory upload receipt email failed:", error);
+      result.receiptEmail = {
+        status: "failed",
+        recipients: [],
+        message: "Upload receipt failed. Check server logs for details.",
+      };
     }
   }
+
+  await saveUploadReceipt({
+    companyId: company.id,
+    fileName: input.fileName,
+    created,
+    updated,
+    receipt: result.receiptEmail,
+  });
 
   return result;
 }

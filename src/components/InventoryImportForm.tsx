@@ -57,6 +57,11 @@ type ImportResult = {
   skippedRows?: SkippedImportRow[];
   errors: { rowNumber: number; message: string }[];
   lastImportAt: string | null;
+  receiptEmail?: {
+    status: "sent" | "skipped" | "failed";
+    recipients: string[];
+    message: string;
+  };
 };
 
 type InventoryImportFormProps = {
@@ -363,6 +368,19 @@ export function InventoryImportForm({
             part number, manufacturer, date code, quantity, and price) — only the last
             of each group was kept.
           </p>
+        ) : null}
+
+        {result.receiptEmail ? (
+          <div
+            className={
+              result.receiptEmail.status === "failed"
+                ? "mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950"
+                : "mt-4 rounded-lg border border-green-200 bg-white px-4 py-3 text-sm text-slate-700"
+            }
+          >
+            <p className="font-medium text-slate-900">Upload receipt</p>
+            <p className="mt-1">{result.receiptEmail.message}</p>
+          </div>
         ) : null}
 
         <ImportSkippedRowsPanel

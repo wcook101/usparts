@@ -206,6 +206,11 @@ export const pageMetadata = {
     "Admin view of single-part and bulk RFQ submissions from USParts.us buyers.",
     { noindex: true },
   ),
+  adminUploadReceipts: pageMeta(
+    "Upload Receipt - Inventory Import Emails",
+    "Admin log of upload receipt emails sent after supplier inventory imports on USParts.us.",
+    { noindex: true },
+  ),
   adminTopAccounts: pageMeta(
     "Top 25 Priority Accounts - Decision Maker Research",
     "Admin research board for USParts.us top supplier prospects: decision-maker emails, titles, and outreach readiness.",
