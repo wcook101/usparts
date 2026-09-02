@@ -1,7 +1,7 @@
 import type { PartCategory } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
 import type { ListingWithCompany } from "@/lib/listings";
-import { normalizeMpn, parseSingleLetterPackageVariant, bulkQueryMatchesListing, isSingleLetterPackageVariantSibling } from "@/lib/mpn-normalize";
+import { normalizeMpn, parseSingleLetterPackageVariant, bulkQueryMatchesListing, isSingleLetterPackageVariantSibling, looksLikeSingleMpnQuery } from "@/lib/mpn-normalize";
 import { collectDatasheetUrls } from "@/lib/datasheet";
 import { getDatasheetSourcesForMpn } from "@/lib/datasheet-catalog";
 import { lookupAliasTargets } from "@/lib/part-aliases";
@@ -297,6 +297,26 @@ function buildPartPageData(
     relatedParts: [],
     lastUpdated: listings[0]?.updatedAt ?? new Date(),
   };
+}
+
+/**
+ * If this query is a single MPN with an existing part landing page, return that
+ * path. Family/prefix matches that span multiple MPNs stay on search.
+ */
+export async function getCanonicalPartPathForQuery(
+  query: string,
+): Promise<string | null> {
+  const trimmed = query.trim();
+  if (!looksLikeSingleMpnQuery(trimmed)) {
+    return null;
+  }
+
+  const part = await getPartPageDataWithoutRedirect(trimmed);
+  if (!part || part.matchType === "family") {
+    return null;
+  }
+
+  return getPartPagePath(part.mpn);
 }
 
 export async function getPartPageData(mpnSlug: string): Promise<PartPageData | null> {

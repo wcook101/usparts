@@ -9,6 +9,7 @@ import {
   datasheetViewPath,
   isLikelyPdfUrl,
 } from "@/lib/datasheet";
+import { getPartPagePath } from "@/lib/parts/part-path";
 
 type DatasheetSectionProps = {
   mpn: string;
@@ -166,7 +167,7 @@ export function DatasheetSection({
             </Link>
           ) : null}
           <Link
-            href={`/search?q=${encodeURIComponent(mpn)}`}
+            href={getPartPagePath(mpn)}
             className="inline-flex rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50"
           >
             View all supplier offers

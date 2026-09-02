@@ -41,15 +41,20 @@ export async function generateMetadata({ params }: ListingPageProps) {
   const stockLabel = formatQuantity(listing.quantity);
   const priceLabel = formatListingPrice(listing.price, listing.currency);
 
-  return listingMetadata({
-    mpn: listing.mpn,
-    manufacturer: listing.manufacturer,
-    description: listing.description,
-    categoryLabel,
-    conditionLabel,
-    stockLabel,
-    priceLabel,
-  });
+  return {
+    ...listingMetadata({
+      mpn: listing.mpn,
+      manufacturer: listing.manufacturer,
+      description: listing.description,
+      categoryLabel,
+      conditionLabel,
+      stockLabel,
+      priceLabel,
+    }),
+    alternates: {
+      canonical: getPartPagePath(listing.mpn),
+    },
+  };
 }
 
 export default async function ListingPage({ params }: ListingPageProps) {

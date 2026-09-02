@@ -14,7 +14,7 @@ type PartSupplierListingsProps = {
 
 export function PartSupplierListings({ listings, mpn }: PartSupplierListingsProps) {
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+    <section id="offers" className="rounded-2xl border border-slate-200 bg-white shadow-sm">
       <div className="border-b border-slate-200 px-5 py-4 sm:px-6">
         <h2 className="text-xl font-semibold text-slate-900">Current stock & pricing</h2>
         <p className="mt-1 text-sm text-slate-600">

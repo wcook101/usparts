@@ -128,6 +128,20 @@ export function looksLikeMultiPartQuery(input: string): boolean {
   return parseMpnList(input).length > 1;
 }
 
+/**
+ * A compact manufacturer part number (has digits), not a keyword or BOM list.
+ * Used to send Google and users to /parts/{MPN} instead of search-result URLs.
+ */
+export function looksLikeSingleMpnQuery(input: string): boolean {
+  const entries = parseMpnList(input);
+  if (entries.length !== 1) {
+    return false;
+  }
+
+  const normalized = entries[0]!.normalized;
+  return normalized.length >= 3 && /[0-9]/.test(normalized);
+}
+
 /** e.g. NE555H → { base: "NE555", suffix: "H" } — same die, different package suffix. */
 export function parseSingleLetterPackageVariant(
   mpn: string,

@@ -33,13 +33,18 @@ export function seoDescription(description: string): string {
 function pageMeta(
   title: string,
   description: string,
-  options?: { noindex?: boolean },
+  options?: { noindex?: boolean; follow?: boolean },
 ): PageMeta {
   return {
     title: seoTitle(title),
     description: seoDescription(description),
     ...(options?.noindex
-      ? { robots: { index: false, follow: false } as const }
+      ? {
+          robots: {
+            index: false,
+            follow: options.follow ?? false,
+          } as const,
+        }
       : {}),
   };
 }
@@ -223,6 +228,7 @@ export const pageMetadata = {
   listingNotFound: pageMeta(
     "Part Not Found - Electronic Component Listing",
     "This electronic component listing is no longer available on USParts.us. Search MPNs to find in-stock semiconductors and ICs from US suppliers.",
+    { noindex: true, follow: true },
   ),
   editListingNotFound: pageMeta(
     "Edit Listing - Supplier Inventory Management",
@@ -238,6 +244,7 @@ export function searchResultsMetadata(label: string): PageMeta {
   return pageMeta(
     title,
     `Find ${cleanLabel} in stock from US electronics suppliers. Compare pricing, quantity, lead time, and condition for obsolete semiconductors, ICs, and hard-to-find components on USParts.us.`,
+    { noindex: true, follow: true },
   );
 }
 
@@ -270,7 +277,7 @@ export function listingMetadata(input: {
       ? input.description.trim()
       : builtDescription;
 
-  return pageMeta(title, description);
+  return pageMeta(title, description, { noindex: true, follow: true });
 }
 
 export function editListingMetadata(input: {
@@ -348,6 +355,7 @@ export function partPageNotFoundMetadata(mpn: string): PageMeta {
   return pageMeta(
     `${mpn} - Part Not Found`,
     `No active US supplier listings found for ${mpn}. Search MPNs and BOMs for semiconductors, ICs, and electronic components on USParts.us.`,
+    { noindex: true, follow: true },
   );
 }
 

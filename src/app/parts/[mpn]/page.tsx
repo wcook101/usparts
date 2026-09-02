@@ -182,10 +182,10 @@ export default async function PartPage({ params }: PartPageProps) {
               </Link>
             ) : null}
             <Link
-              href={`/search?q=${encodeURIComponent(part.mpn)}`}
+              href="#offers"
               className="inline-flex min-h-12 items-center justify-center rounded-xl border border-slate-300 bg-white px-6 py-3 text-base font-semibold text-slate-800 hover:bg-slate-50"
             >
-              Search all offers
+              View supplier offers
             </Link>
             <Link
               href={`/search?mode=bulk&mpns=${encodeURIComponent(part.mpn)}`}

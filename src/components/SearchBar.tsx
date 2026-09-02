@@ -77,11 +77,7 @@ export function QuickSearchLinks({ popularParts = [] }: { popularParts?: string[
       {examples.map((term) => (
         <Link
           key={term}
-          href={
-            popularParts.length > 0
-              ? getPartPagePath(term)
-              : `/search?q=${encodeURIComponent(term)}`
-          }
+          href={getPartPagePath(term)}
           className="rounded-full border border-slate-200 bg-white px-3 py-1 text-slate-700 transition hover:border-blue-300 hover:text-blue-700"
         >
           {term}

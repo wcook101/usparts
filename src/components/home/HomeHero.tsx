@@ -105,11 +105,7 @@ export function HomeHero({ popularParts = [] }: HomeHeroProps) {
           {popularTerms.map((term) => (
             <Link
               key={term}
-              href={
-                popularParts.length > 0
-                  ? getPartPagePath(term)
-                  : `/search?q=${encodeURIComponent(term)}`
-              }
+              href={getPartPagePath(term)}
               className="font-mono text-[#0a1628] underline-offset-2 hover:text-[#c41230] hover:underline"
             >
               {term}

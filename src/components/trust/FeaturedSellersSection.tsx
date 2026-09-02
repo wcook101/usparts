@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { FeaturedSeller } from "@/lib/listings";
 import { formatQuantity } from "@/lib/format";
+import { getPartPagePath } from "@/lib/parts/part-path";
 
 type FeaturedSellersSectionProps = {
   sellers: FeaturedSeller[];
@@ -16,7 +17,7 @@ function formatLocation(seller: FeaturedSeller): string {
 
 function sellerSearchHref(seller: FeaturedSeller): string {
   if (seller.sampleMpn) {
-    return `/search?q=${encodeURIComponent(seller.sampleMpn)}`;
+    return getPartPagePath(seller.sampleMpn);
   }
   return `/search?q=${encodeURIComponent(seller.name)}`;
 }

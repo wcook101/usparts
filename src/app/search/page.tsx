@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { headers } from "next/headers";
-import { redirect } from "next/navigation";
+import { permanentRedirect, redirect } from "next/navigation";
 import { ListingResultsList } from "@/components/ListingResultsList";
 import { MultiPartSearchForm } from "@/components/MultiPartSearchForm";
 import { MultiPartSearchLimits } from "@/components/MultiPartSearchLimits";
@@ -16,7 +16,8 @@ import {
   RECENT_LISTINGS_PER_COMPANY,
   searchListings,
 } from "@/lib/listings";
-import { looksLikeMultiPartQuery } from "@/lib/mpn-normalize";
+import { looksLikeMultiPartQuery, looksLikeSingleMpnQuery } from "@/lib/mpn-normalize";
+import { getCanonicalPartPathForQuery } from "@/lib/parts/part-pages";
 import { getClientIp } from "@/lib/rate-limit";
 import {
   getUserAgentFromHeaders,
@@ -34,20 +35,67 @@ type SearchMode = "single" | "bulk" | "smart";
 
 export const dynamic = "force-dynamic";
 
+function firstStringParam(
+  value: string | string[] | undefined,
+): string {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+async function partCanonicalForSearch(input: {
+  mode: SearchMode;
+  q: string;
+  mpns: string;
+  manufacturer: string;
+  category: string;
+}): Promise<string | null> {
+  if (input.manufacturer || input.category || input.mode === "smart") {
+    return null;
+  }
+
+  const mpnQuery = input.mode === "bulk" ? input.mpns || input.q : input.q;
+  if (!mpnQuery || !looksLikeSingleMpnQuery(mpnQuery)) {
+    return null;
+  }
+
+  return getCanonicalPartPathForQuery(mpnQuery);
+}
+
 export async function generateMetadata({
   searchParams,
 }: SearchPageProps): Promise<Metadata> {
   const params = await searchParams;
-  const q = typeof params.q === "string" ? params.q.trim() : "";
-  const manufacturer =
-    typeof params.manufacturer === "string" ? params.manufacturer.trim() : "";
-  const modeParam = typeof params.mode === "string" ? params.mode : "single";
+  const q = firstStringParam(params.q);
+  const mpns = firstStringParam(params.mpns);
+  const manufacturer = firstStringParam(params.manufacturer);
+  const category = firstStringParam(params.category);
+  const describe = firstStringParam(params.describe);
+  const modeParam = firstStringParam(params.mode) || "single";
   const mode: SearchMode =
     modeParam === "bulk" ? "bulk" : modeParam === "smart" ? "smart" : "single";
 
-  if (q || manufacturer) {
-    const label = [q, manufacturer].filter(Boolean).join(" · ");
-    return searchResultsMetadata(label);
+  const hasResultParams = Boolean(
+    q ||
+      manufacturer ||
+      category ||
+      (mode === "bulk" && mpns) ||
+      (mode === "smart" && describe),
+  );
+
+  if (hasResultParams) {
+    const label = [q || mpns, manufacturer, category].filter(Boolean).join(" · ");
+    const canonical = await partCanonicalForSearch({
+      mode,
+      q,
+      mpns,
+      manufacturer,
+      category,
+    });
+
+    return {
+      ...searchResultsMetadata(label || "Search results"),
+      robots: { index: false, follow: true },
+      ...(canonical ? { alternates: { canonical } } : {}),
+    };
   }
 
   if (mode === "bulk") {
@@ -95,6 +143,31 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   }
 
   const user = await getSessionUser();
+
+  if (
+    !isBulkMode &&
+    !isSmartMode &&
+    parsed.q &&
+    !parsed.manufacturer &&
+    !parsed.category &&
+    looksLikeSingleMpnQuery(parsed.q)
+  ) {
+    const partPath = await getCanonicalPartPathForQuery(parsed.q);
+    if (partPath) {
+      const requestHeaders = await headers();
+      await logSearchEvent({
+        mode: "SINGLE",
+        queryText: parsed.q.trim(),
+        resultCount: 1,
+        manufacturer: parsed.manufacturer,
+        category: parsed.category,
+        ipAddress: getClientIp(requestHeaders),
+        userAgent: getUserAgentFromHeaders(requestHeaders),
+        userId: user?.id,
+      });
+      permanentRedirect(partPath);
+    }
+  }
   const smartSearchEnabled = isSmartSearchEnabled();
 
   const searchResults =
